@@ -1,0 +1,13 @@
+[build]
+public_url = "./"
+minify = "on_release"
+
+[[hooks]]
+stage = "pre_build"
+command = "tailwindcss"
+command_arguments = [
+    "-i",
+    "resources/style.css",
+    "-o",
+    "resources/tailwind.css",
+]

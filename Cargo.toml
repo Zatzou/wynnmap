@@ -1,0 +1,16 @@
+[package]
+name = "wynnmap"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+console_error_panic_hook = "0.1.7"
+leaflet = "0.4.1"
+leptos = { version = "0.7.7", features = ["csr"] }
+leptos-leaflet = { version = "0.9.2", features = ["csr"] }
+rand = "0.9.0"
+reqwest = { version = "0.12.12", features = ["json"] }
+serde = { version = "1.0.218", features = ["derive", "rc"] }
+serde_json = "1.0.139"
+wasm-bindgen = "0.2.100"
+web-sys = "0.3.77"

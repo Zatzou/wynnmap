@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@font-face {
+    font-family: "Roboto";
+    src: url("./Roboto-VariableFont_wdth,wght.ttf") format("truetype-variations");
+}
+
+html {
+    font-family: "Roboto", sans-serif;
+}
+
+.leaflet-image-layer {
+    image-rendering: crisp-edges;
+}
