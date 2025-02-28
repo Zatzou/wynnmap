@@ -46,6 +46,8 @@ pub struct Territory {
     #[serde(rename = "guildColor")]
     pub color: Option<String>,
 
+    pub acquired: chrono::DateTime<chrono::Utc>,
+
     pub location: Location,
 }
 
