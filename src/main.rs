@@ -56,7 +56,7 @@ pub fn App() -> impl IntoView {
             <div>
                 <For
                     each=move || terrs.get().into_iter()
-                    key=|(k, _)| k.clone()
+                    key=|(k, v)| (k.clone(), v.guild.clone())
                     children=move |(_, v)| {
                         let width = v.location.width();
                         let height = v.location.height();
@@ -96,16 +96,17 @@ pub fn App() -> impl IntoView {
                         let color = move || {
                             let time = time.get();
 
-                            if time < 600 {
-                                "background-color: oklch(0.637 0.237 25.331 / .6);"
-                            } else if time < 1800 {
-                                "background-color: oklch(0.705 0.213 47.604 / .6);"
-                            } else if time < 3600 {
-                                "background-color: oklch(0.769 0.188 70.08 / .6);"
-                            } else if time < 36000 {
-                                "background-color: oklch(0.795 0.184 86.047 / .6);"
-                            } else {
+                            // times based on treasury
+                            if time < 3600 {
+                                "background-color: oklch(0.723 0.219 149.579 / .6)"
+                            } else if time < (3600 * 24) {
                                 "background-color: oklch(0.768 0.233 130.85 / .6);"
+                            } else if time < (3600 * 24 * 5) {
+                                "background-color: oklch(0.795 0.184 86.047 / .6);"
+                            } else if time < (3600 * 24 * 12) {
+                                "background-color: oklch(0.705 0.213 47.604 / .6);"
+                            } else {
+                                "background-color: oklch(0.637 0.237 25.331 / .6);"
                             }
                         };
 
