@@ -74,7 +74,11 @@ pub fn App() -> impl IntoView {
                         let (time, set_time) = signal(time);
 
                         set_interval(move || {
-                            set_time.update(|t| *t += 1);
+                            let now = chrono::Utc::now();
+
+                            let time = now.signed_duration_since(v.acquired).num_seconds();
+
+                            set_time.set(time);
                         }, Duration::from_millis(1000));
 
                         let timestr = move || {
