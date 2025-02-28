@@ -56,7 +56,7 @@ pub fn App() -> impl IntoView {
                         let col = format!("{}, {}, {}", col.0, col.1, col.2);
 
                         view! {
-                            <div class="shitmap-item guildterr" style={format!("width: {}px; height: {}px; transform: translate({}px, {}px); background-color: rgba({}, 0.35); border: 3px solid rgb({}); border-radius: 3px", width, height, left, top, col, col)}>
+                            <div class="shitmap-item guildterr" style={format!("width: {}px; height: {}px; transform: translate({}px, {}px); background-color: rgba({}, 0.35); border-color: rgb({});", width, height, left, top, col, col)}>
                                     <h3 class="font-bold text-3xl text-white textshadow">{v.guild_prefix}</h3>
                             </div>
                         }
