@@ -32,8 +32,8 @@ pub fn ShitMap(children: Children) -> impl IntoView {
             let pos = position.get();
 
             set_pos.set((
-                pos.0 + e.movement_x() as f64 / zoom.get(),
-                pos.1 + e.movement_y() as f64 / zoom.get(),
+                pos.0 + f64::from(e.movement_x()) / zoom.get(),
+                pos.1 + f64::from(e.movement_y()) / zoom.get(),
             ));
         }
 
@@ -62,7 +62,7 @@ pub fn ShitMap(children: Children) -> impl IntoView {
 
         // get the mouse position
         let mpos = mousepos2.lock().unwrap();
-        let mpos = (mpos.0 as f64, mpos.1 as f64);
+        let mpos = (f64::from(mpos.0), f64::from(mpos.1));
 
         // calculate the new zoom level
         let zoom = zoom.get();
@@ -138,8 +138,8 @@ pub fn ShitMap(children: Children) -> impl IntoView {
 
                 // update the position
                 set_pos.set((
-                    pos.0 + ((npos.0 - tpos[0].0) as f64) / zoom.get(),
-                    pos.1 + ((npos.1 - tpos[0].1) as f64) / zoom.get(),
+                    pos.0 + f64::from(npos.0 - tpos[0].0) / zoom.get(),
+                    pos.1 + f64::from(npos.1 - tpos[0].1) / zoom.get(),
                 ));
             }
             // zoom
@@ -158,11 +158,10 @@ pub fn ShitMap(children: Children) -> impl IntoView {
 
                 // calculate the distance between the touches
                 let dist =
-                    (((npos.0.0 - npos.1.0).pow(2) + (npos.0.1 - npos.1.1).pow(2)) as f64).sqrt();
+                    f64::from((npos.0.0 - npos.1.0).pow(2) + (npos.0.1 - npos.1.1).pow(2)).sqrt();
 
                 // calculate the distance between the touches before the zoom
-                let opos = (((tpos[0].0 - tpos[1].0).pow(2) + (tpos[0].1 - tpos[1].1).pow(2))
-                    as f64)
+                let opos = f64::from((tpos[0].0 - tpos[1].0).pow(2) + (tpos[0].1 - tpos[1].1).pow(2))
                     .sqrt();
 
                 // calculate the delta
@@ -177,8 +176,8 @@ pub fn ShitMap(children: Children) -> impl IntoView {
                 // calculate the zoom compensation transform
                 // https://stackoverflow.com/a/27611642
                 let mpos = (
-                    (npos.0.0 + npos.1.0) as f64 / 2.0,
-                    (npos.0.1 + npos.1.1) as f64 / 2.0,
+                    f64::from(npos.0.0 + npos.1.0) / 2.0,
+                    f64::from(npos.0.1 + npos.1.1) / 2.0,
                 );
 
                 let ctrans = zcomptrans.get();

@@ -14,27 +14,27 @@ pub struct WynntilsMapTile {
 
 impl WynntilsMapTile {
     pub fn left_side(&self) -> f64 {
-        self.x1.min(self.x2) as f64
+        f64::from(self.x1.min(self.x2))
     }
 
     pub fn right_side(&self) -> f64 {
-        self.x1.max(self.x2) as f64
+        f64::from(self.x1.max(self.x2))
     }
 
     pub fn top_side(&self) -> f64 {
-        self.z1.min(self.z2) as f64
+        f64::from(self.z1.min(self.z2))
     }
 
     pub fn bottom_side(&self) -> f64 {
-        self.z1.max(self.z2) as f64
+        f64::from(self.z1.max(self.z2))
     }
 
     pub fn width(&self) -> f64 {
-        self.x1.abs_diff(self.x2) as f64
+        f64::from(self.x1.abs_diff(self.x2))
     }
 
     pub fn height(&self) -> f64 {
-        self.z1.abs_diff(self.z2) as f64
+        f64::from(self.z1.abs_diff(self.z2))
     }
 }
 
@@ -83,26 +83,26 @@ pub struct Location {
 
 impl Location {
     pub fn width(&self) -> f64 {
-        self.start_x.abs_diff(self.end_x) as f64
+        f64::from(self.start_x.abs_diff(self.end_x))
     }
 
     pub fn height(&self) -> f64 {
-        self.start_z.abs_diff(self.end_z) as f64
+        f64::from(self.start_z.abs_diff(self.end_z))
     }
 
     pub fn left_side(&self) -> f64 {
-        self.start_x.min(self.end_x) as f64
+        f64::from(self.start_x.min(self.end_x))
     }
 
     pub fn right_side(&self) -> f64 {
-        self.start_x.max(self.end_x) as f64
+        f64::from(self.start_x.max(self.end_x))
     }
 
     pub fn top_side(&self) -> f64 {
-        self.start_z.min(self.end_z) as f64
+        f64::from(self.start_z.min(self.end_z))
     }
 
     pub fn bottom_side(&self) -> f64 {
-        self.start_z.max(self.end_z) as f64
+        f64::from(self.start_z.max(self.end_z))
     }
 }
