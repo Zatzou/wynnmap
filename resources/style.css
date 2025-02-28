@@ -45,45 +45,30 @@ html::before {
 }
 
 .icon-emerald {
-    image-rendering: pixelated;
-    width: 16px;
-    height: 16px;
-    background-image: url("./merchant.png");
-    background-position: -16px 0;
-    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.5));
+    background-position: 0 -20px;
 }
 
 .icon-crops {
-    image-rendering: pixelated;
-    width: 16px;
-    height: 16px;
-    background-image: url("./profession.png");
-    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.5));
+    background-position: 0 0;
 }
 
 .icon-fish {
-    image-rendering: pixelated;
-    width: 16px;
-    height: 16px;
-    background-image: url("./profession.png");
-    background-position: -16px 0;
-    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.5));
+    background-position: -20px 0;
 }
 
 .icon-ores {
-    image-rendering: pixelated;
-    width: 16px;
-    height: 16px;
-    background-image: url("./profession.png");
-    background-position: -32px 0;
-    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.5));
+    background-position: -40px 0;
 }
 
 .icon-wood {
+    background-position: -60px 0;
+}
+
+[class^="icon-"] {
+    width: 20px;
+    height: 20px;
+    background-image: url("./icons.png");
+}
+.shitmap-zoomedin [class^="icon-"] {
     image-rendering: pixelated;
-    width: 16px;
-    height: 16px;
-    background-image: url("./profession.png");
-    background-position: -48px 0;
-    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.5));
 }
