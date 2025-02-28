@@ -1,0 +1,30 @@
+.shitmap-container {
+    overflow: hidden;
+}
+
+.shitmap-inner {
+    /* transition: transform 0.5s; */
+}
+
+.shitmap-zoomer {
+    /* transition: transform-origin 0.25s; */
+    transform-origin: 0 0;
+}
+
+.shitmap-zoomer-transitions {
+    transition: transform 0.25s;
+}
+
+.shitmap-zoomedin .shitmap-tile {
+    image-rendering: pixelated;
+}
+
+.shitmap-tile {
+    position: absolute;
+    max-width: unset;
+}
+
+.shitmap-item {
+    position: absolute;
+    pointer-events: none;
+}

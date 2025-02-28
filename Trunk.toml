@@ -2,6 +2,9 @@
 public_url = "./"
 minify = "on_release"
 
+[serve]
+addresses = ["0.0.0.0"]
+
 [[hooks]]
 stage = "pre_build"
 command = "tailwindcss"

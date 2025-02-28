@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 
-use custom_mapcontainer::MapContainerSCRS;
 use leptos::prelude::*;
-use leptos_leaflet::prelude::*;
+use shitmap::ShitMap;
 
-mod custom_mapcontainer;
+mod shitmap;
 mod types;
 mod wynntils_map;
 
@@ -24,38 +23,46 @@ pub fn App() -> impl IntoView {
     let terrs = Memo::new(move |_| terrs.get().map(|t| t.take()).unwrap_or(HashMap::new()));
 
     view! {
-        <MapContainerSCRS style="height: 100vh;" class="bg-neutral-950" center={Position::new(2000.0, 0.0)} min_zoom=-3.0 zoom=0.0 set_view=true enable_high_accuracy=true>
-            // <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
+        <ShitMap>
+            // map tiles
+            <div>
             {move || tiles().iter().map(|tile| {
+                let url = tile.url.as_ref().to_string();
                 view! {
-                    <ImageOverlay
-                        url={tile.url.as_ref()}
-                        bounds={Bounds::new(
-                            Position::new(-tile.z1 as f64, tile.x1 as f64),
-                            Position::new(-tile.z2 as f64 - 1.0, tile.x2 as f64 + 1.0),
-                        )}
-                        attribution="&copy; <a href=\"https://wynntils.com\">Wynntils</a>"
+                    <img
+                        src={url}
+                        // bounds={Bounds::new(
+                        //     Position::new(-tile.z1 as f64, tile.x1 as f64),
+                        //     Position::new(-tile.z2 as f64 - 1.0, tile.x2 as f64 + 1.0),
+                        // )}
+                        class="shitmap-tile"
+                        style={format!("width: {}px; height: {}px; transform: translate({}px, {}px);", tile.width() + 1.0, tile.height() + 1.0, tile.left_side(), tile.top_side())}
                     />
                 }
             }).collect_view()}
+            </div>
 
-            <For
-                each=move || terrs.get().into_iter()
-                key=|(k, _)| k.clone()
-                children=move |(k, v)| {
-                    let pos = v.location.into_posvec();
-                    let middle = v.location.middle();
-                    let col = v.get_color();
+            // territories
+            <div>
+                <For
+                    each=move || terrs.get().into_iter()
+                    key=|(k, _)| k.clone()
+                    children=move |(_, v)| {
+                        let width = v.location.width();
+                        let height = v.location.height();
+                        let left = v.location.left_side();
+                        let top = v.location.top_side();
+                        let col = v.get_color();
+                        let col = format!("{}, {}, {}", col.0, col.1, col.2);
 
-                    view! {
-                        <Polygon positions={pos} color={col} />
-                        <Tooltip position={middle} permanent=true direction="center">
-                            <h3 class="font-bold text-3xl text-white">{v.guild_prefix}</h3>
-                        </Tooltip>
+                        view! {
+                            <div class="shitmap-item guildterr" style={format!("width: {}px; height: {}px; transform: translate({}px, {}px); background-color: rgba({}, 0.35); border: 3px solid rgb({}); border-radius: 3px", width, height, left, top, col, col)}>
+                                    <h3 class="font-bold text-3xl text-white textshadow">{v.guild_prefix}</h3>
+                            </div>
+                        }
                     }
-                }
-            />
-        </MapContainerSCRS>
+                />
+            </div>
+        </ShitMap>
     }
 }

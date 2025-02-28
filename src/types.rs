@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use leptos_leaflet::prelude::Position;
+use crc32fast::Hasher;
 use serde::Deserialize;
 
 #[derive(Clone, Deserialize)]
@@ -10,6 +10,32 @@ pub struct WynntilsMapTile {
     pub x2: i32,
     pub z1: i32,
     pub z2: i32,
+}
+
+impl WynntilsMapTile {
+    pub fn left_side(&self) -> f64 {
+        self.x1.min(self.x2) as f64
+    }
+
+    pub fn right_side(&self) -> f64 {
+        self.x1.max(self.x2) as f64
+    }
+
+    pub fn top_side(&self) -> f64 {
+        self.z1.min(self.z2) as f64
+    }
+
+    pub fn bottom_side(&self) -> f64 {
+        self.z1.max(self.z2) as f64
+    }
+
+    pub fn width(&self) -> f64 {
+        self.x1.abs_diff(self.x2) as f64
+    }
+
+    pub fn height(&self) -> f64 {
+        self.z1.abs_diff(self.z2) as f64
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]
@@ -24,8 +50,22 @@ pub struct Territory {
 }
 
 impl Territory {
-    pub fn get_color(&self) -> String {
-        self.color.clone().unwrap_or_else(|| "#000000".to_string())
+    pub fn get_color(&self) -> (u8, u8, u8) {
+        if let Some(color) = &self.color {
+            let col = u32::from_str_radix(&color[1..], 16)
+                .unwrap_or(0)
+                .to_ne_bytes();
+
+            (col[2], col[1], col[0])
+        } else {
+            let mut hasher = Hasher::new();
+            hasher.update(self.guild.as_bytes());
+            let hash = hasher.finalize();
+
+            let bytes: Vec<u8> = hash.to_ne_bytes().into_iter().rev().collect();
+
+            (bytes[1], bytes[2], bytes[3])
+        }
     }
 }
 
@@ -42,19 +82,27 @@ pub struct Location {
 }
 
 impl Location {
-    pub fn into_posvec(&self) -> Vec<Position> {
-        vec![
-            Position::new(-self.start_z as f64, self.start_x as f64),
-            Position::new(-self.end_z as f64, self.start_x as f64),
-            Position::new(-self.end_z as f64, self.end_x as f64),
-            Position::new(-self.start_z as f64, self.end_x as f64),
-        ]
+    pub fn width(&self) -> f64 {
+        self.start_x.abs_diff(self.end_x) as f64
     }
 
-    pub fn middle(&self) -> Position {
-        Position::new(
-            (-self.start_z as f64 + -self.end_z as f64) / 2.0,
-            (self.start_x as f64 + self.end_x as f64) / 2.0,
-        )
+    pub fn height(&self) -> f64 {
+        self.start_z.abs_diff(self.end_z) as f64
+    }
+
+    pub fn left_side(&self) -> f64 {
+        self.start_x.min(self.end_x) as f64
+    }
+
+    pub fn right_side(&self) -> f64 {
+        self.start_x.max(self.end_x) as f64
+    }
+
+    pub fn top_side(&self) -> f64 {
+        self.start_z.min(self.end_z) as f64
+    }
+
+    pub fn bottom_side(&self) -> f64 {
+        self.start_z.max(self.end_z) as f64
     }
 }
