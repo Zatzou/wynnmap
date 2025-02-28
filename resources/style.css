@@ -50,7 +50,6 @@ html::before {
     height: 16px;
     background-image: url("./merchant.png");
     background-position: -16px 0;
-    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.5));
 }
 
 .icon-crops {
@@ -58,7 +57,6 @@ html::before {
     width: 16px;
     height: 16px;
     background-image: url("./profession.png");
-    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.5));
 }
 
 .icon-fish {
@@ -67,7 +65,6 @@ html::before {
     height: 16px;
     background-image: url("./profession.png");
     background-position: -16px 0;
-    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.5));
 }
 
 .icon-ores {
@@ -76,7 +73,6 @@ html::before {
     height: 16px;
     background-image: url("./profession.png");
     background-position: -32px 0;
-    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.5));
 }
 
 .icon-wood {
@@ -85,5 +81,4 @@ html::before {
     height: 16px;
     background-image: url("./profession.png");
     background-position: -48px 0;
-    filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.5));
 }
