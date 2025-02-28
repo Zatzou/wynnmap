@@ -45,21 +45,18 @@ html::before {
 }
 
 .icon-emerald {
-
-    background-position: 0px -20px;
+    background-position: 0 -20px;
 }
 
 .icon-crops {
-
+    background-position: 0 0;
 }
 
 .icon-fish {
-
     background-position: -20px 0;
 }
 
 .icon-ores {
-
     background-position: -40px 0;
 }
 
