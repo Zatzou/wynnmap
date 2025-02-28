@@ -161,8 +161,9 @@ pub fn ShitMap(children: Children) -> impl IntoView {
                     f64::from((npos.0.0 - npos.1.0).pow(2) + (npos.0.1 - npos.1.1).pow(2)).sqrt();
 
                 // calculate the distance between the touches before the zoom
-                let opos = f64::from((tpos[0].0 - tpos[1].0).pow(2) + (tpos[0].1 - tpos[1].1).pow(2))
-                    .sqrt();
+                let opos =
+                    f64::from((tpos[0].0 - tpos[1].0).pow(2) + (tpos[0].1 - tpos[1].1).pow(2))
+                        .sqrt();
 
                 // calculate the delta
                 let delta = dist - opos;
@@ -196,7 +197,7 @@ pub fn ShitMap(children: Children) -> impl IntoView {
 
     view! {
         // outermost container used for containing the map
-        <div class="bg-neutral-950 shitmap-container" style="height: 100vh;" on:mousemove={ondrag} on:mousedown={dragstart} on:mouseup={dragend} on:mouseleave={dragend} on:wheel={zoomchange} on:touchstart={touchstart} on:touchmove={ontouchdrag}>
+        <div class="shitmap-container" style="height: 100vh;" on:mousemove={ondrag} on:mousedown={dragstart} on:mouseup={dragend} on:mouseleave={dragend} on:wheel={zoomchange} on:touchstart={touchstart} on:touchmove={ontouchdrag}>
             // the zoomer container used for zooming
             // this is used to apply the zoom animations
             <div class="shitmap-zoomer" class:shitmap-zoomer-transitions={move || !touchzoom.get()} style={move || format!("transform: translate3D({}px, {}px, 0) scale({});", zcomptrans.get().0, zcomptrans.get().1, zoom.get())}>
