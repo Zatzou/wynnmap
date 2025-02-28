@@ -108,3 +108,52 @@ impl Location {
         f64::from(self.start_z.max(self.end_z))
     }
 }
+
+#[derive(Debug, Deserialize, Clone, PartialEq)]
+pub struct ExTerrInfo {
+    pub resources: TerrRes,
+
+    #[serde(rename = "Trading routes")]
+    pub conns: Option<Vec<String>>,
+}
+
+#[derive(Debug, Deserialize, Clone, PartialEq)]
+pub struct TerrRes {
+    pub emeralds: Arc<str>,
+    pub ore: Arc<str>,
+    pub crops: Arc<str>,
+    pub fish: Arc<str>,
+    pub wood: Arc<str>,
+}
+
+impl TerrRes {
+    pub fn has_emeralds(&self) -> bool {
+        *self.emeralds != *"0" && *self.emeralds != *"9000"
+    }
+
+    pub fn has_ore(&self) -> bool {
+        *self.ore != *"0"
+    }
+
+    pub fn has_crops(&self) -> bool {
+        *self.crops != *"0"
+    }
+
+    pub fn has_fish(&self) -> bool {
+        *self.fish != *"0"
+    }
+
+    pub fn has_wood(&self) -> bool {
+        *self.wood != *"0"
+    }
+
+    pub fn has_res(&self) -> (bool, bool, bool, bool, bool) {
+        (
+            self.has_emeralds(),
+            self.has_crops(),
+            self.has_fish(),
+            self.has_ore(),
+            self.has_wood(),
+        )
+    }
+}

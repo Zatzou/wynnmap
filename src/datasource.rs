@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::types::{Territory, WynntilsMapTile};
+use crate::types::{ExTerrInfo, Territory, WynntilsMapTile};
 
 pub async fn load_map_tiles() -> Option<Vec<WynntilsMapTile>> {
     let r = reqwest::get("https://raw.githubusercontent.com/Wynntils/Static-Storage/refs/heads/main/Reference/maps.json").await.unwrap();
@@ -24,4 +24,13 @@ pub async fn get_wynntils_terrs() -> Result<HashMap<String, Territory>, reqwest:
 #[derive(Debug, Deserialize, Clone)]
 struct TerrApi {
     territories: HashMap<String, Territory>,
+}
+
+pub async fn get_extra_terr_info() -> Result<HashMap<String, ExTerrInfo>, reqwest::Error> {
+    let resp: HashMap<String, ExTerrInfo> = reqwest::get("https://raw.githubusercontent.com/jakematt123/Wynncraft-Territory-Info/refs/heads/main/territories.json")
+        .await?
+        .json()
+        .await?;
+
+    Ok(resp)
 }

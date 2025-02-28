@@ -3,9 +3,9 @@ use std::{collections::HashMap, time::Duration};
 use leptos::prelude::*;
 use shitmap::ShitMap;
 
+mod datasource;
 mod shitmap;
 mod types;
-mod wynntils_map;
 
 fn main() {
     #[cfg(debug_assertions)]
@@ -18,10 +18,12 @@ fn main() {
 pub fn App() -> impl IntoView {
     let (tupd, set_tupd) = signal(());
 
-    let tiles = LocalResource::new(async move || wynntils_map::load_map_tiles().await.unwrap());
+    let tiles = LocalResource::new(async move || datasource::load_map_tiles().await.unwrap());
+    let extradata =
+        LocalResource::new(async move || datasource::get_extra_terr_info().await.unwrap());
     let terrs = LocalResource::new(move || {
         tupd.track();
-        let e = async || wynntils_map::get_wynntils_terrs().await.unwrap();
+        let e = async || datasource::get_wynntils_terrs().await.unwrap();
         e()
     });
 
@@ -34,6 +36,7 @@ pub fn App() -> impl IntoView {
     );
 
     let tiles = move || tiles.get().map(|t| t.take()).unwrap_or(Vec::new());
+    let extradata = move || extradata.get().map(|t| t.take()).unwrap_or(HashMap::new());
     let terrs = Memo::new(move |_| terrs.get().map(|t| t.take()).unwrap_or(HashMap::new()));
 
     view! {
@@ -57,7 +60,7 @@ pub fn App() -> impl IntoView {
                 <For
                     each=move || terrs.get().into_iter()
                     key=|(k, v)| (k.clone(), v.guild.clone())
-                    children=move |(_, v)| {
+                    children=move |(k, v)| {
                         let width = v.location.width();
                         let height = v.location.height();
                         let left = v.location.left_side();
@@ -83,9 +86,9 @@ pub fn App() -> impl IntoView {
                             let seconds = time % 60;
 
                             if days > 0 {
-                                format!("{}d {}h {}m", days, hours, minutes)
+                                format!("{}d {}h", days, hours)
                             } else if hours > 0 {
-                                format!("{}h {}m {}s", hours, minutes, seconds)
+                                format!("{}h {}m", hours, minutes)
                             } else if minutes > 0 {
                                 format!("{}m {}s", minutes, seconds)
                             } else {
@@ -110,10 +113,30 @@ pub fn App() -> impl IntoView {
                             }
                         };
 
+                        let tkey = k.clone();
+                        let extra = Memo::new(move |_| extradata().get(&tkey).cloned());
+
+                        let res = Memo::new(move |_| {
+                            if let Some(e) = extra.get() {
+                                e.resources.has_res()
+                            } else {
+                                (false, false, false, false, false)
+                            }
+                        });
+
                         view! {
                             <div class="shitmap-item guildterr" style={format!("width: {}px; height: {}px; transform: translate({}px, {}px); background-color: rgba({}, 0.35); border-color: rgb({});", width, height, left, top, col, col)}>
                                     <h3 class="font-bold text-3xl text-white textshadow">{v.guild_prefix.clone()}</h3>
-                                    <h4 class="px-2 rounded-2xl text-sm text-center" style={move || color}>{timestr}</h4>
+                                    <div class="flex pb-1">
+                                        // this is here so that tailwinds cli realizes that this class is used
+                                        // class="hidden"
+                                        <div class="icon-emerald" class:hidden={move || !res.get().0}></div>
+                                        <div class="icon-crops" class:hidden={move || !res.get().1}></div>
+                                        <div class="icon-fish" class:hidden={move || !res.get().2}></div>
+                                        <div class="icon-ores" class:hidden={move || !res.get().3}></div>
+                                        <div class="icon-wood" class:hidden={move || !res.get().4}></div>
+                                    </div>
+                                    <h4 class="px-2 rounded-2xl text-sm text-center whitespace-nowrap" style={move || color}>{timestr}</h4>
                             </div>
                         }
                     }
