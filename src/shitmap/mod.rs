@@ -57,12 +57,15 @@ pub fn ShitMap(children: Children) -> impl IntoView {
     let zoomchange = move |e: WheelEvent| {
         e.prevent_default();
 
+        // we are zooming with the mouse so enable the transition
         set_touchzoom.set(false);
 
+        // get the mouse position
         let mpos = mousepos2.lock().unwrap();
         let mpos = (mpos.0 as f64, mpos.1 as f64);
-        let zoom = zoom.get();
 
+        // calculate the new zoom level
+        let zoom = zoom.get();
         let newzoom = if e.delta_y() > 0.0 {
             zoom / 2.0
         } else {
@@ -88,23 +91,27 @@ pub fn ShitMap(children: Children) -> impl IntoView {
     let updatetouchpos = |tl: &TouchList| -> Vec<(i32, i32)> {
         let mut positions = Vec::new();
 
+        // iterate over the touches and store the positions
         let mut x = 0;
         while x < tl.length() {
             let touch = tl.get(x).unwrap();
+
             positions.push((touch.client_x(), touch.client_y()));
+
             x += 1;
         }
 
         positions
     };
 
-    // detect when a touch starts
+    // detect when a touch starts and update the active touches
     let touchstart = move |e: TouchEvent| {
         e.prevent_default();
 
         *tpos.lock().unwrap() = updatetouchpos(&e.touches());
     };
 
+    // handle the touch events for dragging and zooming
     let ontouchdrag = move |e: TouchEvent| {
         e.prevent_default();
 
@@ -122,21 +129,25 @@ pub fn ShitMap(children: Children) -> impl IntoView {
         match tpos.len() {
             // drag
             1 => {
+                // current position
                 let pos = position.get();
+
+                // new delta
                 let touch = tl.get(0).unwrap();
                 let npos = (touch.client_x(), touch.client_y());
 
+                // update the position
                 set_pos.set((
                     pos.0 + ((npos.0 - tpos[0].0) as f64) / zoom.get(),
                     pos.1 + ((npos.1 - tpos[0].1) as f64) / zoom.get(),
                 ));
-
-                *tpos = updatetouchpos(&tl);
             }
             // zoom
             2 => {
+                // we are zooming with touch so disable the transition as the transition would make the zooming look laggy
                 set_touchzoom.set(true);
 
+                // get the touch positions
                 let touch1 = tl.get(0).unwrap();
                 let touch2 = tl.get(1).unwrap();
 
@@ -145,20 +156,26 @@ pub fn ShitMap(children: Children) -> impl IntoView {
                     (touch2.client_x(), touch2.client_y()),
                 );
 
+                // calculate the distance between the touches
                 let dist =
                     (((npos.0.0 - npos.1.0).pow(2) + (npos.0.1 - npos.1.1).pow(2)) as f64).sqrt();
 
+                // calculate the distance between the touches before the zoom
                 let opos = (((tpos[0].0 - tpos[1].0).pow(2) + (tpos[0].1 - tpos[1].1).pow(2))
                     as f64)
                     .sqrt();
 
+                // calculate the delta
                 let delta = dist - opos;
 
+                // calculate the new zoom level
                 let zoom = zoom.get();
                 let newzoom = (zoom + (delta / 300.0 * zoom)).max(0.1);
 
                 set_zoom.set(newzoom);
 
+                // calculate the zoom compensation transform
+                // https://stackoverflow.com/a/27611642
                 let mpos = (
                     (npos.0.0 + npos.1.0) as f64 / 2.0,
                     (npos.0.1 + npos.1.1) as f64 / 2.0,
@@ -169,16 +186,23 @@ pub fn ShitMap(children: Children) -> impl IntoView {
                 let n = (i.0 * newzoom, i.1 * newzoom);
                 let c = (mpos.0 - n.0, mpos.1 - n.1);
                 set_zcomptrans.set(c);
-
-                *tpos = updatetouchpos(&tl);
             }
             _ => {}
         }
+
+        // update the touch positions after the event
+        // this ensures that we can calculate deltas correctly
+        *tpos = updatetouchpos(&tl);
     };
 
     view! {
+        // outermost container used for containing the map
         <div class="bg-neutral-950 shitmap-container" style="height: 100vh;" on:mousemove={ondrag} on:mousedown={dragstart} on:mouseup={dragend} on:mouseleave={dragend} on:wheel={zoomchange} on:touchstart={touchstart} on:touchmove={ontouchdrag}>
+            // the zoomer container used for zooming
+            // this is used to apply the zoom animations
             <div class="shitmap-zoomer" class:shitmap-zoomer-transitions={move || !touchzoom.get()} style={move || format!("transform: translate3D({}px, {}px, 0) scale({});", zcomptrans.get().0, zcomptrans.get().1, zoom.get())}>
+                // the inner container used for moving the map
+                // this container contains the map contents and is moved when the map is dragged
                 <div class="shitmap-inner" class:shitmap-zoomedin={move || zoom.get() > 1.0} style={move || format!("transform: translate3D({}px, {}px, 0);", position.get().0, position.get().1)}>
                     {children()}
                 </div>

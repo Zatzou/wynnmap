@@ -31,10 +31,6 @@ pub fn App() -> impl IntoView {
                 view! {
                     <img
                         src={url}
-                        // bounds={Bounds::new(
-                        //     Position::new(-tile.z1 as f64, tile.x1 as f64),
-                        //     Position::new(-tile.z2 as f64 - 1.0, tile.x2 as f64 + 1.0),
-                        // )}
                         class="shitmap-tile"
                         style={format!("width: {}px; height: {}px; transform: translate({}px, {}px);", tile.width() + 1.0, tile.height() + 1.0, tile.left_side(), tile.top_side())}
                     />
