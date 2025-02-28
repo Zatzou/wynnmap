@@ -1,14 +1,15 @@
 .shitmap-container {
     overflow: hidden;
+    backface-visibility: hidden;
 }
 
 .shitmap-inner {
-    /* transition: transform 0.5s; */
+    backface-visibility: hidden;
 }
 
 .shitmap-zoomer {
-    /* transition: transform-origin 0.25s; */
     transform-origin: 0 0;
+    backface-visibility: hidden;
 }
 
 .shitmap-zoomer-transitions {

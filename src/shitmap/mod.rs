@@ -155,7 +155,7 @@ pub fn ShitMap(children: Children) -> impl IntoView {
                 let delta = dist - opos;
 
                 let zoom = zoom.get();
-                let newzoom = (zoom + delta / 200.0).max(0.1);
+                let newzoom = (zoom + (delta / 300.0 * zoom)).max(0.1);
 
                 set_zoom.set(newzoom);
 
@@ -179,7 +179,7 @@ pub fn ShitMap(children: Children) -> impl IntoView {
     view! {
         <div class="bg-neutral-950 shitmap-container" style="height: 100vh;" on:mousemove={ondrag} on:mousedown={dragstart} on:mouseup={dragend} on:mouseleave={dragend} on:wheel={zoomchange} on:touchstart={touchstart} on:touchmove={ontouchdrag}>
             <div class="shitmap-zoomer" class:shitmap-zoomer-transitions={move || !touchzoom.get()} style={move || format!("transform: translate3D({}px, {}px, 0) scale({});", zcomptrans.get().0, zcomptrans.get().1, zoom.get())}>
-                <div class="shitmap-inner" class:shitmap-zoomedin={move || zoom.get() > 1.0} style={move || format!("transform: translate({}px, {}px);", position.get().0, position.get().1)}>
+                <div class="shitmap-inner" class:shitmap-zoomedin={move || zoom.get() > 1.0} style={move || format!("transform: translate3D({}px, {}px, 0);", position.get().0, position.get().1)}>
                     {children()}
                 </div>
             </div>
