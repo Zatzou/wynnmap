@@ -45,40 +45,31 @@ html::before {
 }
 
 .icon-emerald {
-    image-rendering: pixelated;
-    width: 20px;
-    height: 20px;
-    background-image: url("./icons.png");
+
     background-position: 0px -20px;
 }
 
 .icon-crops {
-    image-rendering: pixelated;
-    width: 20px;
-    height: 20px;
-    background-image: url("./icons.png");
+
 }
 
 .icon-fish {
-    image-rendering: pixelated;
-    width: 20px;
-    height: 20px;
-    background-image: url("./icons.png");
+
     background-position: -20px 0;
 }
 
 .icon-ores {
-    image-rendering: pixelated;
-    width: 20px;
-    height: 20px;
-    background-image: url("./icons.png");
+
     background-position: -40px 0;
 }
 
 .icon-wood {
+    background-position: -60px 0;
+}
+
+[class^="icon-"] {
     image-rendering: pixelated;
     width: 20px;
     height: 20px;
     background-image: url("./icons.png");
-    background-position: -60px 0;
 }
