@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::{Get, Memo};
 use crate::types::{ExTerrInfo, Territory};
 
@@ -39,5 +40,8 @@ pub fn create_route_paths(terrs: Memo<HashMap<String, Territory>>, extradata: Ha
                  coords_end.0, coords_end.1 // x and y of ending point
             );
     }
+
+    console_log(&pathing);
+
     pathing
 }
