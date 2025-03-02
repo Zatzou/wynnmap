@@ -73,11 +73,11 @@ pub fn App() -> impl IntoView {
                     "
                     <use
                         href=\"#connpath\"
-                        style=\"stroke:black;stroke-width:5;\"
+                        style=\"stroke:black;stroke-width:4;\"
                     />
                     <use
                         href=\"#connpath\"
-                        style=\"stroke:white;stroke-width:3;\"
+                        style=\"stroke:white;stroke-width:2;\"
                     />
                     "
                 }/>
