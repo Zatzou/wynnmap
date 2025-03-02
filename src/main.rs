@@ -61,13 +61,26 @@ pub fn App() -> impl IntoView {
             </div>
 
             // conns
-            <svg style="position:absolute; overflow:visible;"><path
-                d={move || conn_path()}
-                style="\
-                fill:none;\
-                stroke:black;\
-                stroke-width:3;\
-                stroke-linecap:round;"/>
+            <svg style="position: absolute;overflow: visible;">
+                <path
+                    id="connpath"
+                    d={move || conn_path()}
+                    style="fill:none;"
+                    stroke-linecap="round"
+                />
+                <g inner_html=
+                {
+                    "
+                    <use
+                        href=\"#connpath\"
+                        style=\"stroke:black;stroke-width:5;\"
+                    />
+                    <use
+                        href=\"#connpath\"
+                        style=\"stroke:white;stroke-width:3;\"
+                    />
+                    "
+                }/>
             </svg>
 
             // territories

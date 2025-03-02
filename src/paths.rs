@@ -37,8 +37,5 @@ pub fn create_route_paths(terrs: HashMap<String, Territory>, extradata: HashMap<
                  coords_end.0, coords_end.1 // x and y of ending point
             );
     }
-
-    console_log(&pathing);
-
     pathing
 }
