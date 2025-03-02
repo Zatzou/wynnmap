@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::{Get, Memo};
 use crate::types::{ExTerrInfo, Territory};
 
