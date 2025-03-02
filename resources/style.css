@@ -74,3 +74,72 @@ html::before {
 .shitmap-zoomedin [class^="icon-"] {
     image-rendering: pixelated;
 }
+
+
+
+/* checkbox styles */
+
+/* Customize the label (the container) */
+.checkbox-contain {
+    display: block;
+    position: relative;
+    padding-left: 1.2em;
+    margin-bottom: 0.5em;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Hide the browser's default checkbox */
+.checkbox-contain input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+    top: 0.2em;
+    height: 1em;
+    width: 1em;
+    background-color: #00ffaa;
+}
+
+/* On mouse-over */
+.checkbox-contain:hover input ~ .checkmark {
+    background-color: #ff00ff;
+}
+
+/* When the checkbox is checked (DISABLED) */
+/* .checkbox-container input:checked ~ .checkmark {
+    background-color: var(--fr-500);
+} */
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+/* Show the checkmark when checked */
+.checkbox-contain input:checked ~ .checkmark:after {
+    display: block;
+}
+
+/* Style the checkmark/indicator */
+.checkbox-contain .checkmark:after {
+    left: 0.29em;
+    top: 0.08em;
+    width: 0.4em;
+    height: 0.75em;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
