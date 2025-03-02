@@ -15,8 +15,8 @@ pub fn create_route_paths(terrs: Memo<HashMap<String, Territory>>, extradata: Ha
     let mut terr_conns: HashSet<(String, String)> = HashSet::new();
     let _ = extradata.iter().map(
         |(ke,va)| {
+            let a = ke;
             for b in va.clone().conns.unwrap_or(Vec::from([])) {
-                let a = ke;
                 // a = orig terr
                 // b = conn terr
                 if a.clone() < b {
