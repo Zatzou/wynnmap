@@ -3,8 +3,7 @@ use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::{Get, Memo};
 use crate::types::{ExTerrInfo, Territory};
 
-pub fn create_route_paths(terrs: Memo<HashMap<String, Territory>>, extradata: HashMap<String, ExTerrInfo>) -> String {
-    let terrs = terrs.get();
+pub fn create_route_paths(terrs: HashMap<String, Territory>, extradata: HashMap<String, ExTerrInfo>) -> String {
 
     let mut terr_mid_coords: HashMap<String, (f64, f64)> = HashMap::new();
     for i in terrs {

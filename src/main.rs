@@ -42,7 +42,7 @@ pub fn App() -> impl IntoView {
     let terrs = Memo::new(move |_| terrs.get().map(|t| t.take()).unwrap_or(HashMap::new()));
 
 
-    let conn_path = move || paths::create_route_paths(terrs, extradata());
+    let conn_path = move || paths::create_route_paths(terrs.get(), extradata());
 
     view! {
         <ShitMap>
@@ -62,7 +62,7 @@ pub fn App() -> impl IntoView {
 
             // conns
             <svg style="position: absolute;"><path
-                d={conn_path()}
+                d={move || conn_path()}
                 style="fill:none;stroke:black;stroke-width:3;"
             /></svg>
 
