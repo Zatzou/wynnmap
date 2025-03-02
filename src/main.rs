@@ -5,7 +5,6 @@ use shitmap::ShitMap;
 
 mod datasource;
 mod shitmap;
-mod types;
 
 fn main() {
     #[cfg(debug_assertions)]
