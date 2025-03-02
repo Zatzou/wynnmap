@@ -129,7 +129,7 @@ impl Location {
 pub struct ExTerrInfo {
     pub resources: TerrRes,
 
-    #[serde(rename = "Trading routes")]
+    #[serde(rename = "Trading Routes")]
     pub conns: Option<Vec<String>>,
 }
 
