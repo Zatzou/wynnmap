@@ -1,16 +1,16 @@
-use std::{collections::HashMap, time::Duration};
-
 use leptos::prelude::*;
 use shitmap::ShitMap;
+use std::{collections::HashMap, time::Duration};
 
 mod datasource;
+mod paths;
 mod shitmap;
 
 fn main() {
     #[cfg(debug_assertions)]
     console_error_panic_hook::set_once();
 
-    leptos::mount::mount_to_body(|| view! { <App />});
+    mount_to_body(|| view! { <App />});
 }
 
 #[component]
@@ -38,6 +38,8 @@ pub fn App() -> impl IntoView {
     let extradata = move || extradata.get().map(|t| t.take()).unwrap_or(HashMap::new());
     let terrs = Memo::new(move |_| terrs.get().map(|t| t.take()).unwrap_or(HashMap::new()));
 
+    let conn_path = move || paths::create_route_paths(terrs.get(), extradata());
+
     view! {
         <ShitMap>
             // map tiles
@@ -53,6 +55,29 @@ pub fn App() -> impl IntoView {
                 }
             }).collect_view()}
             </div>
+
+            // conns
+            <svg style="position: absolute;overflow: visible;">
+                <path
+                    id="connpath"
+                    d={move || conn_path()}
+                    style="fill:none;"
+                    stroke-linecap="round"
+                />
+                <g inner_html=
+                {
+                    "
+                    <use
+                        href=\"#connpath\"
+                        style=\"stroke:black;stroke-width:4;\"
+                    />
+                    <use
+                        href=\"#connpath\"
+                        style=\"stroke:white;stroke-width:2;\"
+                    />
+                    "
+                }/>
+            </svg>
 
             // territories
             <div>
