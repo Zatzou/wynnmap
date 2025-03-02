@@ -13,21 +13,19 @@ pub fn create_route_paths(terrs: HashMap<String, Territory>, extradata: HashMap<
     }
 
     let mut terr_conns: HashSet<(String, String)> = HashSet::new();
-    let _ = extradata.iter().map(
-        |(ke,va)| {
-            let a = ke;
-            for b in va.clone().conns.unwrap_or(Vec::from([])) {
-                // a = orig terr
-                // b = conn terr
-                if a.clone() < b {
-                    terr_conns.insert((a.clone(),b));
-                } else {
-                    terr_conns.insert((b, a.clone()));
-                }
-
+    for (ke, va) in &extradata{
+        let a = ke;
+        for b in va.clone().conns.unwrap_or(Vec::from([])) {
+            // a = orig terr
+            // b = conn terr
+            if a.clone() < b {
+                terr_conns.insert((a.clone(),b));
+            } else {
+                terr_conns.insert((b, a.clone()));
             }
+
         }
-    );
+    };
 
     let mut pathing = String::new();
     for i in terr_conns {
