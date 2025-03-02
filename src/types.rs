@@ -69,6 +69,12 @@ impl Territory {
             (bytes[1], bytes[2], bytes[3])
         }
     }
+    pub fn get_midpoint(&self) -> (f64, f64) {
+        (
+            self.location.midpoint_x(),
+            self.location.midpoint_y()
+        )
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]
@@ -106,6 +112,16 @@ impl Location {
 
     pub fn bottom_side(&self) -> f64 {
         f64::from(self.start_z.max(self.end_z))
+    }
+
+    // calculate midpoint on x (horizontal scale)
+    pub fn midpoint_x(&self) -> f64 {
+        (self.left_side() + self.right_side())/2.0
+    }
+
+    // calculate midpoint on y (vertical scale)
+    pub fn midpoint_y(&self) -> f64 {
+        (self.top_side() + self.bottom_side())/2.0
     }
 }
 
