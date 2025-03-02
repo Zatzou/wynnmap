@@ -15,6 +15,13 @@ fn main() {
 
 #[component]
 pub fn App() -> impl IntoView {
+    let (show_sidebar, set_show_sidebar) = signal(false);
+    let show_terrs = RwSignal::new(true);
+    let show_conns = RwSignal::new(true);
+    let show_res = RwSignal::new(true);
+    let show_timers = RwSignal::new(true);
+    let show_guild_leaderboard = RwSignal::new(true);
+
     let (tupd, set_tupd) = signal(());
 
     let tiles = LocalResource::new(async move || datasource::load_map_tiles().await.unwrap());
@@ -40,6 +47,22 @@ pub fn App() -> impl IntoView {
 
     let conn_path = move || paths::create_route_paths(terrs.get(), extradata());
 
+    let guild_leaderboard = move || {
+        let mut leadb = HashMap::new();
+
+        for (k, v) in terrs.get() {
+            let guild = v.guild.clone();
+            let terr = leadb.entry(guild).or_insert(0);
+            *terr += 1;
+        }
+
+        let mut leadb: Vec<_> = leadb.into_iter().collect();
+
+        leadb.sort_by(|a, b| b.1.cmp(&a.1));
+
+        leadb
+    };
+
     view! {
         <ShitMap>
             // map tiles
@@ -57,7 +80,7 @@ pub fn App() -> impl IntoView {
             </div>
 
             // conns
-            <svg style="position: absolute;overflow: visible;">
+            <svg style="position: absolute;overflow: visible;" class:hidden={move || !show_conns.get()}>
                 <path
                     id="connpath"
                     d={move || conn_path()}
@@ -80,7 +103,7 @@ pub fn App() -> impl IntoView {
             </svg>
 
             // territories
-            <div>
+            <div class:hidden={move || !show_terrs.get()}>
                 <For
                     each=move || terrs.get().into_iter()
                     key=|(k, v)| (k.clone(), v.guild.clone())
@@ -155,7 +178,7 @@ pub fn App() -> impl IntoView {
                         view! {
                             <div class="shitmap-item guildterr" style={format!("width: {}px; height: {}px; transform: translate({}px, {}px); background-color: rgba({}, 0.35); border-color: rgb({});", width, height, left, top, col, col)}>
                                     <h3 class="font-bold text-3xl text-white textshadow">{v.guild.prefix.clone()}</h3>
-                                    <div class="flex pb-1">
+                                    <div class="flex pb-1" class:hidden={move || !show_res.get()}>
                                         // this is here so that tailwinds cli realizes that this class is used
                                         // class="hidden"
                                         <div class="icon-emerald" class:hidden={move || !res.get().0}></div>
@@ -164,12 +187,89 @@ pub fn App() -> impl IntoView {
                                         <div class="icon-ores" class:hidden={move || !res.get().3}></div>
                                         <div class="icon-wood" class:hidden={move || !res.get().4}></div>
                                     </div>
-                                    <h4 class="px-2 rounded-2xl text-sm text-center whitespace-nowrap" style={move || color}>{timestr}</h4>
+                                    <h4 class="px-2 rounded-2xl text-sm text-center whitespace-nowrap" class:hidden={move || !show_timers.get()} style={move || color}>{timestr}</h4>
                             </div>
                         }
                     }
                 />
             </div>
         </ShitMap>
+
+        <div on:click={move |_| set_show_sidebar.set(!show_sidebar.get())} class="fixed top-0 left-0 p-2 cursor-pointer z-50 bg-neutral-900 rounded-e-full mt-2 p-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 text-white">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+        </div>
+        // class="-translate-x-full"
+        <div class="flex flex-col bg-neutral-900 w-full max-w-full h-screen z-50 absolute top-0 md:max-w-sm transition-transform text-white" class:-translate-x-full={move || !show_sidebar.get()}>
+            <div>
+                <div class="flex justify-between p-2 items-center">
+                    <h1 class="text-4xl">Wynnmap</h1>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 cursor-pointer" on:click={move |_| set_show_sidebar.set(!show_sidebar.get())}>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </div>
+                <hr class="border-neutral-600" />
+            </div>
+
+            <div class="flex-1 flex flex-col p-2 text-lg">
+                <label for="terrs" class="flex items-center">
+                    <input id="terrs" type="checkbox" bind:checked={show_terrs} class="mr-2" />
+                    "Territories"
+                </label>
+                <label for="conns" class="flex items-center">
+                    <input id="conns" type="checkbox" bind:checked={show_conns} class="mr-2" />
+                    "Connections"
+                </label>
+                <label for="res" class="flex items-center">
+                    <input id="res" type="checkbox" bind:checked={show_res} class="mr-2" />
+                    "Resource icons"
+                </label>
+                <label for="timers" class="flex items-center">
+                    <input id="timers" type="checkbox" bind:checked={show_timers} class="mr-2" />
+                    "Timers"
+                </label>
+            </div>
+
+            <div class="flex flex-col min-h-0">
+                <hr class="border-neutral-600" />
+                <div class="flex justify-between items-center text-xl p-2 py-1" on:click={move |_| show_guild_leaderboard.set(!show_guild_leaderboard.get())}>
+                    <h2>"Guild leaderboard"</h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 cursor-pointer" >
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" class:hidden={move || show_guild_leaderboard.get()} />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" class:hidden={move || !show_guild_leaderboard.get()} />
+                    </svg>
+                </div>
+                <hr class="border-neutral-600" class:hidden={move || !show_guild_leaderboard.get()} />
+                <div class="overflow-scroll shrink min-h-0">
+                <table class="table-auto w-full" class:hidden={move || !show_guild_leaderboard.get()}>
+                    <tbody>
+                        <For
+                            each=move || guild_leaderboard().into_iter()
+                            key=|(k, v)| (k.clone(), v.clone())
+                            children=move |(k, v)| {
+                                let col = k.get_color();
+                                let col = format!("{}, {}, {}", col.0, col.1, col.2);
+                                let name = k.name.clone();
+                                let link = move || format!("https://wynncraft.com/stats/guild/{}", name);
+                                view! {
+                                    <tr class="even:bg-neutral-800" style={format!("background-color: rgba({}, 0.3)", col)}>
+                                        <td><a href={link()} target="_blank" class="block pl-2 font-mono">"["{k.prefix}"]"</a></td>
+                                        <td><a href={link()} target="_blank" class="block">{k.name}</a></td>
+                                        <td><a href={link()} target="_blank" class="block text-right pr-2">{v}</a></td>
+                                    </tr>
+                                }
+                            }
+                        />
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <div>
+                <hr class="border-neutral-600" />
+                <h2 class="text-neutral-500 p-1 px-2"><a class="underline" href="https://github.com/Zatzou/wynnmap" target="_blank">"Wynnmap"</a>" "{env!("CARGO_PKG_VERSION")}</h2>
+            </div>
+        </div>
     }
 }
