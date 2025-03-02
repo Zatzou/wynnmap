@@ -41,7 +41,3 @@ pub fn create_route_paths(terrs: Memo<HashMap<String, Territory>>, extradata: Ha
     }
     pathing
 }
-
-fn line_draw(start: (f64, f64), end: (f64, f64)) -> String {
-    format!("M{} {} L{} {} ", start.0, start.1, end.0, end.1)
-}
