@@ -61,10 +61,10 @@ pub fn App() -> impl IntoView {
             </div>
 
             // conns
-            <svg style="position: absolute;"><path
+            <svg style="position:absolute; overflow:visible;"><path
                 d={move || conn_path()}
-                style="fill:none;stroke:black;stroke-width:3;"
-            /></svg>
+                style="fill:none;stroke:black;stroke-width:3;"/>
+            </svg>
 
             // territories
             <div>
