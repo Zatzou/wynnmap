@@ -1,4 +1,3 @@
-use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use shitmap::ShitMap;
 use std::{collections::HashMap, time::Duration};

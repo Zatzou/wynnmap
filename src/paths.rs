@@ -1,6 +1,4 @@
 use crate::types::{ExTerrInfo, Territory};
-use leptos::leptos_dom::logging::console_log;
-use leptos::prelude::{Get, Memo};
 use std::collections::{HashMap, HashSet};
 
 pub fn create_route_paths(
