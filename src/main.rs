@@ -1,12 +1,12 @@
-use std::{collections::HashMap, time::Duration};
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use shitmap::ShitMap;
+use std::{collections::HashMap, time::Duration};
 
 mod datasource;
+mod paths;
 mod shitmap;
 mod types;
-mod paths;
 
 fn main() {
     #[cfg(debug_assertions)]
@@ -28,7 +28,6 @@ pub fn App() -> impl IntoView {
         e()
     });
 
-
     // auto update the map every 30 seconds
     set_interval(
         move || {
@@ -40,7 +39,6 @@ pub fn App() -> impl IntoView {
     let tiles = move || tiles.get().map(|t| t.take()).unwrap_or(Vec::new());
     let extradata = move || extradata.get().map(|t| t.take()).unwrap_or(HashMap::new());
     let terrs = Memo::new(move |_| terrs.get().map(|t| t.take()).unwrap_or(HashMap::new()));
-
 
     let conn_path = move || paths::create_route_paths(terrs.get(), extradata());
 

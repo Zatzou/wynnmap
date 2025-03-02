@@ -70,10 +70,7 @@ impl Territory {
         }
     }
     pub fn get_midpoint(&self) -> (f64, f64) {
-        (
-            self.location.midpoint_x(),
-            self.location.midpoint_y()
-        )
+        (self.location.midpoint_x(), self.location.midpoint_y())
     }
 }
 
@@ -116,12 +113,12 @@ impl Location {
 
     /// calculate midpoint on x (horizontal scale)
     pub fn midpoint_x(&self) -> f64 {
-        (self.left_side() + self.right_side())/2.0
+        (self.left_side() + self.right_side()) / 2.0
     }
 
     /// calculate midpoint on y (vertical scale)
     pub fn midpoint_y(&self) -> f64 {
-        (self.top_side() + self.bottom_side())/2.0
+        (self.top_side() + self.bottom_side()) / 2.0
     }
 }
 
