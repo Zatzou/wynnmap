@@ -114,12 +114,12 @@ impl Location {
         f64::from(self.start_z.max(self.end_z))
     }
 
-    // calculate midpoint on x (horizontal scale)
+    /// calculate midpoint on x (horizontal scale)
     pub fn midpoint_x(&self) -> f64 {
         (self.left_side() + self.right_side())/2.0
     }
 
-    // calculate midpoint on y (vertical scale)
+    /// calculate midpoint on y (vertical scale)
     pub fn midpoint_y(&self) -> f64 {
         (self.top_side() + self.bottom_side())/2.0
     }
