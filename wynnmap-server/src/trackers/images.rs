@@ -1,11 +1,11 @@
 use std::{collections::HashMap, io::Cursor, sync::Arc};
 
+use crate::{ImageState, config::Config};
 use axum::body::Bytes;
 use image::ImageReader;
 use tracing::{error, info};
 use webp::Encoder;
-
-use crate::{ImageState, config::Config, types::WynntilsMapTile};
+use wynnmap_types::WynntilsMapTile;
 
 pub(crate) async fn create_image_tracker(config: Arc<Config>) -> ImageState {
     let state = ImageState {

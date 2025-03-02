@@ -2,9 +2,9 @@ use std::{collections::HashMap, sync::Arc};
 
 use axum::body::Bytes;
 use tokio::sync::RwLock;
-use wynnmap_server::types::{Guild, Territory};
+use wynnmap_types::{ExTerrInfo, Territory, WynntilsMapTile};
 
-use crate::{config::Config, types::WynntilsMapTile};
+use crate::config::Config;
 
 #[derive(Clone)]
 pub(crate) struct ImageState {
@@ -20,10 +20,11 @@ pub(crate) struct TerritoryState {
     pub client: reqwest::Client,
 
     pub inner: Arc<RwLock<TerritoryStateInner>>,
+    pub colors: Arc<RwLock<HashMap<Arc<str>, Arc<str>>>>,
+    pub extra: Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>>,
 }
 
 pub(crate) struct TerritoryStateInner {
     pub territories: HashMap<Arc<str>, Territory>,
-    pub colors: HashMap<Arc<str>, Arc<str>>,
     pub expires: chrono::DateTime<chrono::Utc>,
 }

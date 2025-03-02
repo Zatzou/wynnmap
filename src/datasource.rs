@@ -1,36 +1,38 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
-use serde::Deserialize;
+use wynnmap_types::{ExTerrInfo, Territory, WynntilsMapTile};
 
-use crate::types::{ExTerrInfo, Territory, WynntilsMapTile};
+#[cfg(debug_assertions)]
+const API_URL: &str = "http://localhost:8081";
+#[cfg(not(debug_assertions))]
+const API_URL: &str = "https://api.wynnmap.zatzou.com";
 
 pub async fn load_map_tiles() -> Option<Vec<WynntilsMapTile>> {
-    let r = reqwest::get("https://raw.githubusercontent.com/Wynntils/Static-Storage/refs/heads/main/Reference/maps.json").await.unwrap();
+    let r = reqwest::get(format!("{}{}", API_URL, "/v1/images/maps.json"))
+        .await
+        .unwrap();
 
     let tiles: Vec<WynntilsMapTile> = r.json().await.unwrap();
 
     Some(tiles)
 }
 
-pub async fn get_wynntils_terrs() -> Result<HashMap<String, Territory>, reqwest::Error> {
-    let resp: TerrApi = reqwest::get("https://athena.wynntils.com/cache/get/territoryList")
-        .await?
-        .json()
-        .await?;
+pub async fn get_wynntils_terrs() -> Result<HashMap<Arc<str>, Territory>, reqwest::Error> {
+    let resp: HashMap<Arc<str>, Territory> =
+        reqwest::get(format!("{}{}", API_URL, "/v1/territories/list"))
+            .await?
+            .json()
+            .await?;
 
-    Ok(resp.territories)
+    Ok(resp)
 }
 
-#[derive(Debug, Deserialize, Clone)]
-struct TerrApi {
-    territories: HashMap<String, Territory>,
-}
-
-pub async fn get_extra_terr_info() -> Result<HashMap<String, ExTerrInfo>, reqwest::Error> {
-    let resp: HashMap<String, ExTerrInfo> = reqwest::get("https://raw.githubusercontent.com/jakematt123/Wynncraft-Territory-Info/refs/heads/main/territories.json")
-        .await?
-        .json()
-        .await?;
+pub async fn get_extra_terr_info() -> Result<HashMap<Arc<str>, ExTerrInfo>, reqwest::Error> {
+    let resp: HashMap<Arc<str>, ExTerrInfo> =
+        reqwest::get(format!("{}{}", API_URL, "/v1/territories/extra"))
+            .await?
+            .json()
+            .await?;
 
     Ok(resp)
 }

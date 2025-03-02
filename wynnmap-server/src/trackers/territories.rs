@@ -1,9 +1,12 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use serde::Deserialize;
-use tokio::{sync::RwLock, time::Instant};
+use tokio::{
+    sync::RwLock,
+    time::{Instant, sleep},
+};
 use tracing::{error, info};
-use wynnmap_server::types::Territory;
+use wynnmap_types::{ExTerrInfo, TerrRes, Territory};
 
 use crate::{
     config::Config,
@@ -26,13 +29,16 @@ pub(crate) async fn create_terr_tracker(config: Arc<Config>) -> TerritoryState {
 
         inner: Arc::new(RwLock::new(TerritoryStateInner {
             territories: HashMap::new(),
-            colors: HashMap::new(),
             expires: chrono::Utc::now(),
         })),
+
+        colors: Arc::new(RwLock::new(HashMap::new())),
+        extra: Arc::new(RwLock::new(Default::default())),
     };
 
     tokio::spawn(territory_tracker(state.clone()));
     tokio::spawn(wynntils_color_grabber(state.clone()));
+    tokio::spawn(extra_data_loader(state.clone()));
 
     state
 }
@@ -76,14 +82,18 @@ async fn territory_tracker(state: TerritoryState) {
             // parse the json
             let mut data: HashMap<Arc<str>, Territory> = req.json().await?;
 
-            let mut lock = state.inner.write().await;
+            let collock = state.colors.read().await;
 
             // update the guild colors on the data
             for (_, terr) in &mut data {
-                if let Some(col) = lock.colors.get(&terr.guild.prefix) {
+                if let Some(col) = collock.get(&terr.guild.prefix) {
                     terr.guild.color = Some(col.clone());
                 }
             }
+
+            drop(collock);
+
+            let mut lock = state.inner.write().await;
 
             // update the territories
             lock.territories = data;
@@ -130,10 +140,10 @@ async fn wynntils_color_grabber(state: TerritoryState) {
         }
 
         // update the actual values
-        let mut lock = state.inner.write().await;
+        let mut lock = state.colors.write().await;
 
         for (prefix, color) in colors {
-            lock.colors.insert(prefix, color);
+            lock.insert(prefix, color);
         }
 
         drop(lock);
@@ -153,4 +163,72 @@ struct WynntilsTerr {
     prefix: Arc<str>,
     #[serde(rename = "guildColor")]
     color: Arc<str>,
+}
+
+async fn extra_data_loader(state: TerritoryState) {
+    loop {
+        let r = extra_data_loader_inner(&state).await;
+
+        if let Err(e) = r {
+            error!("Extra data loader failed: {}", e);
+        }
+
+        sleep(Duration::from_secs(60)).await;
+    }
+
+    async fn extra_data_loader_inner(state: &TerritoryState) -> Result<(), reqwest::Error> {
+        let data: HashMap<Arc<str>, ExTerrInfoOrig> = state
+            .client
+            .get("https://raw.githubusercontent.com/jakematt123/Wynncraft-Territory-Info/refs/heads/main/territories.json")
+            .send()
+            .await?
+            .json()
+            .await?;
+
+        let data = HashMap::from_iter(data.into_iter().map(|(k, v)| (k, v.into())));
+
+        let mut lock = state.extra.write().await;
+
+        *lock = data;
+
+        Ok(())
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ExTerrInfoOrig {
+    pub resources: TerrResOrig,
+
+    #[serde(rename = "Trading Routes")]
+    pub conns: Option<Vec<Arc<str>>>,
+}
+
+impl From<ExTerrInfoOrig> for ExTerrInfo {
+    fn from(orig: ExTerrInfoOrig) -> Self {
+        ExTerrInfo {
+            resources: orig.resources.into(),
+            conns: orig.conns.unwrap_or_default(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TerrResOrig {
+    pub emeralds: Arc<str>,
+    pub ore: Arc<str>,
+    pub crops: Arc<str>,
+    pub fish: Arc<str>,
+    pub wood: Arc<str>,
+}
+
+impl From<TerrResOrig> for TerrRes {
+    fn from(orig: TerrResOrig) -> Self {
+        TerrRes {
+            emeralds: orig.emeralds.parse().unwrap_or(0),
+            ore: orig.ore.parse().unwrap_or(0),
+            crops: orig.crops.parse().unwrap_or(0),
+            fish: orig.fish.parse().unwrap_or(0),
+            wood: orig.wood.parse().unwrap_or(0),
+        }
+    }
 }

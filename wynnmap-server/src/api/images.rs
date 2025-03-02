@@ -37,7 +37,7 @@ async fn get_image(Path(name): Path<String>, State(state): State<ImageState>) ->
                 StatusCode::OK,
                 [
                     (header::CONTENT_TYPE, mime),
-                    (header::ETAG, name),
+                    (header::ETAG, &format!("\"{}\"", name)),
                     (header::CACHE_CONTROL, "public, max-age=31536000"),
                 ],
                 data.clone(),

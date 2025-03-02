@@ -65,7 +65,7 @@ pub fn App() -> impl IntoView {
                         let height = v.location.height();
                         let left = v.location.left_side();
                         let top = v.location.top_side();
-                        let col = v.get_color();
+                        let col = v.guild.get_color();
                         let col = format!("{}, {}, {}", col.0, col.1, col.2);
 
                         let now = chrono::Utc::now();
@@ -130,7 +130,7 @@ pub fn App() -> impl IntoView {
 
                         view! {
                             <div class="shitmap-item guildterr" style={format!("width: {}px; height: {}px; transform: translate({}px, {}px); background-color: rgba({}, 0.35); border-color: rgb({});", width, height, left, top, col, col)}>
-                                    <h3 class="font-bold text-3xl text-white textshadow">{v.guild_prefix.clone()}</h3>
+                                    <h3 class="font-bold text-3xl text-white textshadow">{v.guild.prefix.clone()}</h3>
                                     <div class="flex pb-1">
                                         // this is here so that tailwinds cli realizes that this class is used
                                         // class="hidden"
