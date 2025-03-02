@@ -1,0 +1,10 @@
+[server]
+bind = "0.0.0.0"
+port = 8081
+base_url = "http://localhost:8081"
+
+[client]
+ua_contact = "mailto:admin@example.org"
+
+[images]
+use_webp = false

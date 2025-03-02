@@ -38,7 +38,7 @@ pub fn App() -> impl IntoView {
         move || {
             set_tupd.notify();
         },
-        Duration::from_secs(30),
+        Duration::from_secs(10),
     );
 
     let tiles = move || tiles.get().map(|t| t.take()).unwrap_or(Vec::new());
@@ -50,7 +50,7 @@ pub fn App() -> impl IntoView {
     let guild_leaderboard = move || {
         let mut leadb = HashMap::new();
 
-        for (k, v) in terrs.get() {
+        for (_, v) in terrs.get() {
             let guild = v.guild.clone();
             let terr = leadb.entry(guild).or_insert(0);
             *terr += 1;

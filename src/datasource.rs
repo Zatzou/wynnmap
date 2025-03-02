@@ -5,7 +5,7 @@ use wynnmap_types::{ExTerrInfo, Territory, WynntilsMapTile};
 #[cfg(debug_assertions)]
 const API_URL: &str = "http://localhost:8081";
 #[cfg(not(debug_assertions))]
-const API_URL: &str = "https://api.wynnmap.zatzou.com";
+const API_URL: &str = "https://wynnmap-api.zatzou.com";
 
 pub async fn load_map_tiles() -> Option<Vec<WynntilsMapTile>> {
     let r = reqwest::get(format!("{}{}", API_URL, "/v1/images/maps.json"))
