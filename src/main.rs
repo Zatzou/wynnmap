@@ -69,18 +69,25 @@ pub fn App() -> impl IntoView {
             <div>
             {move || tiles().iter().map(|tile| {
                 let url = tile.url.as_ref().to_string();
+                let width = tile.width();
+                let height = tile.height();
+                let left = tile.left_side();
+                let top = tile.top_side();
+
                 view! {
                     <img
                         src={url}
                         class="shitmap-tile"
-                        style={format!("width: {}px; height: {}px; transform: translate({}px, {}px);", tile.width() + 1.0, tile.height() + 1.0, tile.left_side(), tile.top_side())}
+                        style:width={move || format!("{}px", width + 1.0)}
+                        style:height={move || format!("{}px", height + 1.0)}
+                        style:transform={move || format!("translate3D({}px, {}px, 0)", left, top)}
                     />
                 }
             }).collect_view()}
             </div>
 
             // conns
-            <svg style="position: absolute;overflow: visible;" class:hidden={move || !show_conns.get()}>
+            <svg style="position: absolute;overflow: visible;contain: layout;" class:hidden={move || !show_conns.get()}>
                 <path
                     id="connpath"
                     d={move || conn_path()}
@@ -114,6 +121,7 @@ pub fn App() -> impl IntoView {
                         let top = v.location.top_side();
                         let col = v.guild.get_color();
                         let col = format!("{}, {}, {}", col.0, col.1, col.2);
+                        let col2 = col.clone();
 
                         let now = chrono::Utc::now();
                         let time = now.signed_duration_since(v.acquired).num_seconds();
@@ -176,7 +184,13 @@ pub fn App() -> impl IntoView {
                         });
 
                         view! {
-                            <div class="shitmap-item guildterr" style={format!("width: {}px; height: {}px; transform: translate({}px, {}px); background-color: rgba({}, 0.35); border-color: rgb({});", width, height, left, top, col, col)}>
+                            <div class="shitmap-item guildterr"
+                                style:width={move || format!("{}px", width)}
+                                style:height={move || format!("{}px", height)}
+                                style:transform={move || format!("translate3D({}px, {}px, 0)", left, top)}
+                                style:background-color={move || format!("rgba({}, 0.35)", col)}
+                                style:border-color={move || format!("rgb({})", col2)}
+                            >
                                     <h3 class="font-bold text-3xl text-white textshadow">{v.guild.prefix.clone()}</h3>
                                     <div class="flex pb-1" class:hidden={move || !show_res.get()}>
                                         // this is here so that tailwinds cli realizes that this class is used
