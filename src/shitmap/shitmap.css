@@ -23,6 +23,7 @@
 .shitmap-tile {
     position: absolute;
     max-width: unset;
+    contain: strict;
 }
 
 .shitmap-item {

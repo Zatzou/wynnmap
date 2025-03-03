@@ -80,7 +80,7 @@ pub fn App() -> impl IntoView {
             </div>
 
             // conns
-            <svg style="position: absolute;overflow: visible;" class:hidden={move || !show_conns.get()}>
+            <svg style="position: absolute;overflow: visible;contain: layout;" class:hidden={move || !show_conns.get()}>
                 <path
                     id="connpath"
                     d={move || conn_path()}
