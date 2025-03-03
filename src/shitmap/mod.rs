@@ -200,10 +200,10 @@ pub fn ShitMap(children: Children) -> impl IntoView {
         <div class="shitmap-container" style="height: 100vh;" on:mousemove={ondrag} on:mousedown={dragstart} on:mouseup={dragend} on:mouseleave={dragend} on:wheel={zoomchange} on:touchstart={touchstart} on:touchmove={ontouchdrag}>
             // the zoomer container used for zooming
             // this is used to apply the zoom animations
-            <div class="shitmap-zoomer" class:shitmap-zoomer-transitions={move || !touchzoom.get()} style={move || format!("transform: translate3D({}px, {}px, 0) scale({});will-change: transform;", zcomptrans.get().0, zcomptrans.get().1, zoom.get())}>
+            <div class="shitmap-zoomer" class:shitmap-zoomer-transitions={move || !touchzoom.get()} style="will-change: transform, transition;" style:transform={move || format!("translate3D({}px, {}px, 0) scale({})", zcomptrans.get().0, zcomptrans.get().1, zoom.get())}>
                 // the inner container used for moving the map
                 // this container contains the map contents and is moved when the map is dragged
-                <div class="shitmap-inner" class:shitmap-zoomedin={move || zoom.get() > 1.0} style={move || format!("transform: translate3D({}px, {}px, 0);will-change: transform;", position.get().0, position.get().1)}>
+                <div class="shitmap-inner" class:shitmap-zoomedin={move || zoom.get() > 1.0} style="will-change: transform;" style:transform={move || format!("translate3D({}px, {}px, 0)", position.get().0, position.get().1)}>
                     {children()}
                 </div>
             </div>
