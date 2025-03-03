@@ -28,10 +28,6 @@ html::before {
     z-index: -1;
 }
 
-.leaflet-image-layer {
-    image-rendering: crisp-edges;
-}
-
 .guildterr {
     display: flex;
     flex-direction: column;
