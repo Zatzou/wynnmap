@@ -5,6 +5,16 @@
     src: url("./Roboto-VariableFont_wdth,wght.ttf") format("truetype-variations");
 }
 
+/* some variable options */
+* {
+    /* checkbox regular colour */
+    --checkbox: #5f5f5f;
+    /* checkbox hover colour */
+    --checkbox-hover: #afafaf;
+    /* checkbox tick colour */
+    --checkbox-tick: #ffffff;
+}
+
 html {
     font-family: "Roboto", sans-serif;
     overflow: hidden;
@@ -80,7 +90,6 @@ html::before {
 .checkbox-contain {
     display: block;
     position: relative;
-    padding-left: 1.2em;
     margin-bottom: 0.5em;
     cursor: pointer;
     -webkit-user-select: none;
@@ -100,15 +109,16 @@ html::before {
 
 /* Create a custom checkbox */
 .checkmark {
-    top: 0.2em;
+    position: absolute;
+    top: 0.25em;
     height: 1em;
     width: 1em;
-    background-color: #00ffaa;
+    background-color: var(--checkbox);
 }
 
 /* On mouse-over */
 .checkbox-contain:hover input ~ .checkmark {
-    background-color: #ff00ff;
+    background-color: var(--checkbox-hover);
 }
 
 /* When the checkbox is checked (DISABLED) */
@@ -134,9 +144,15 @@ html::before {
     top: 0.08em;
     width: 0.4em;
     height: 0.75em;
-    border: solid white;
+    border: solid var(--checkbox-tick);
     border-width: 0 3px 3px 0;
     -webkit-transform: rotate(45deg);
     -ms-transform: rotate(45deg);
     transform: rotate(45deg);
+}
+
+/* shift text along from checkbox */
+.checkbox-contain .texts {
+    position: relative;
+    left: 1.25em;
 }
