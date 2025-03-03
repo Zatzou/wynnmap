@@ -73,7 +73,7 @@ pub fn App() -> impl IntoView {
                     <img
                         src={url}
                         class="shitmap-tile"
-                        style={format!("width: {}px; height: {}px; transform: translate({}px, {}px);", tile.width() + 1.0, tile.height() + 1.0, tile.left_side(), tile.top_side())}
+                        style={format!("width: {}px; height: {}px; transform: translate3D({}px, {}px, 0);", tile.width() + 1.0, tile.height() + 1.0, tile.left_side(), tile.top_side())}
                     />
                 }
             }).collect_view()}
@@ -176,7 +176,7 @@ pub fn App() -> impl IntoView {
                         });
 
                         view! {
-                            <div class="shitmap-item guildterr" style={format!("width: {}px; height: {}px; transform: translate({}px, {}px); background-color: rgba({}, 0.35); border-color: rgb({});", width, height, left, top, col, col)}>
+                            <div class="shitmap-item guildterr" style={format!("width: {}px; height: {}px; transform: translate3D({}px, {}px, 0); background-color: rgba({}, 0.35); border-color: rgb({});", width, height, left, top, col, col)}>
                                     <h3 class="font-bold text-3xl text-white textshadow">{v.guild.prefix.clone()}</h3>
                                     <div class="flex pb-1" class:hidden={move || !show_res.get()}>
                                         // this is here so that tailwinds cli realizes that this class is used
