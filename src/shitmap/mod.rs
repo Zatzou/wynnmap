@@ -4,6 +4,9 @@ use std::sync::{Arc, Mutex};
 use leptos::prelude::*;
 use web_sys::{MouseEvent, TouchEvent, TouchList, WheelEvent};
 
+const ZOOM_MIN: f64 = 0.0625;
+const ZOOM_MAX: f64 = 64.0;
+
 #[component]
 pub fn ShitMap(children: Children) -> impl IntoView {
     // is the map being dragged currently
@@ -67,9 +70,9 @@ pub fn ShitMap(children: Children) -> impl IntoView {
         // calculate the new zoom level
         let zoom = zoom.get();
         let newzoom = if e.delta_y() > 0.0 {
-            zoom / 2.0
+            (zoom / 2.0).max(ZOOM_MIN)
         } else {
-            zoom * 2.0
+            (zoom * 2.0).min(ZOOM_MAX)
         };
 
         set_zoom.set(newzoom);
@@ -170,7 +173,7 @@ pub fn ShitMap(children: Children) -> impl IntoView {
 
                 // calculate the new zoom level
                 let zoom = zoom.get();
-                let newzoom = (zoom + (delta / 300.0 * zoom)).max(0.1);
+                let newzoom = (zoom + (delta / 300.0 * zoom)).max(ZOOM_MIN).min(ZOOM_MAX);
 
                 set_zoom.set(newzoom);
 
