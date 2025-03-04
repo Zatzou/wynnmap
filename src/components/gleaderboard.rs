@@ -19,6 +19,9 @@ pub fn Gleaderboard(
 
         let mut leaderboard: Vec<_> = guilds.into_iter().collect();
 
+        // alphabetically sort the guilds
+        leaderboard.sort_by(|a, b| a.0.name.cmp(&b.0.name));
+        // sort by the number of territories while keeping the alphabetical order for any ties
         leaderboard.sort_by(|a, b| b.1.cmp(&a.1));
 
         leaderboard
