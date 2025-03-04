@@ -1,4 +1,4 @@
-use components::checkbox::Checkbox;
+use components::{checkbox::Checkbox, gleaderboard::Gleaderboard};
 use leptos::prelude::*;
 use shitmap::ShitMap;
 use std::{collections::HashMap, time::Duration};
@@ -246,27 +246,7 @@ pub fn App() -> impl IntoView {
                 </div>
                 <hr class="border-neutral-600" class:hidden={move || !show_guild_leaderboard.get()} />
                 <div class="overflow-scroll shrink min-h-0">
-                <table class="table-auto w-full" class:hidden={move || !show_guild_leaderboard.get()}>
-                    <tbody>
-                        <For
-                            each=move || guild_leaderboard().into_iter()
-                            key=|(k, v)| (k.clone(), v.clone())
-                            children=move |(k, v)| {
-                                let col = k.get_color();
-                                let col = format!("{}, {}, {}", col.0, col.1, col.2);
-                                let name = k.name.clone();
-                                let link = move || format!("https://wynncraft.com/stats/guild/{}", name);
-                                view! {
-                                    <tr class="even:bg-neutral-800" style={format!("background-color: rgba({}, 0.3)", col)}>
-                                        <td><a href={link()} target="_blank" class="block pl-2 font-mono">"["{k.prefix}"]"</a></td>
-                                        <td><a href={link()} target="_blank" class="block">{k.name}</a></td>
-                                        <td><a href={link()} target="_blank" class="block text-right pr-2">{v}</a></td>
-                                    </tr>
-                                }
-                            }
-                        />
-                    </tbody>
-                </table>
+                    <Gleaderboard leaderboard={guild_leaderboard} class="w-full" class:hidden={move || !show_guild_leaderboard.get()} />
                 </div>
             </div>
 
