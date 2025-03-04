@@ -11,7 +11,7 @@ pub fn Gleaderboard(
     let guild_leaderboard = move || {
         let mut leadb = HashMap::new();
 
-        for (_, v) in terrs.get() {
+        for (_, v) in terrs.read().iter() {
             let guild = v.guild.clone();
             let terr = leadb.entry(guild).or_insert(0);
             *terr += 1;
