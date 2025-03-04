@@ -10,7 +10,7 @@ stage = "pre_build"
 command = "tailwindcss"
 command_arguments = [
     "-i",
-    "resources/style.css",
+    "./resources/style.css",
     "-o",
-    "resources/tailwind.css",
+    "./resources/tailwind.css",
 ]
