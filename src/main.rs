@@ -1,7 +1,9 @@
+use components::checkbox::Checkbox;
 use leptos::prelude::*;
 use shitmap::ShitMap;
 use std::{collections::HashMap, time::Duration};
 
+mod components;
 mod datasource;
 mod paths;
 mod shitmap;
@@ -227,27 +229,10 @@ pub fn App() -> impl IntoView {
             </div>
 
             <div class="flex-1 flex flex-col p-2 text-lg">
-                <label for="terrs" class="items-center checkbox-contain">
-                    <input id="terrs" type="checkbox" bind:checked={show_terrs} class="mr-2" />
-                    <span class="checkmark"></span>
-                    <p class="texts">"Territories"</p>
-                </label>
-                <label for="conns" class="items-center checkbox-contain">
-                    <input id="conns" type="checkbox" bind:checked={show_conns} class="mr-2" />
-                    <span class="checkmark"></span>
-                    <p class="texts">"Connections"</p>
-                </label>
-                <label for="res" class="items-center checkbox-contain">
-                    <input id="res" type="checkbox" bind:checked={show_res} class="mr-2" />
-                    <span class="checkmark"></span>
-                    <p class="texts">"Resource icons"</p>
-
-                </label>
-                <label for="timers" class="items-center checkbox-contain">
-                    <input id="timers" type="checkbox" bind:checked={show_timers} class="mr-2" />
-                    <span class="checkmark"></span>
-                    <p class="texts">"Timers"</p>
-                </label>
+                <Checkbox id="terrs" checked={show_terrs}>"Territories"</Checkbox>
+                <Checkbox id="conns" checked={show_conns}>"Connections"</Checkbox>
+                <Checkbox id="resico" checked={show_res}>"Resource icons"</Checkbox>
+                <Checkbox id="timers" checked={show_timers}>"Timers"</Checkbox>
             </div>
 
             <div class="flex flex-col min-h-0">
