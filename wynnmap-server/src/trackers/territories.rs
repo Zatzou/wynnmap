@@ -68,14 +68,16 @@ async fn territory_tracker(state: TerritoryState) {
             let expires = req
                 .headers()
                 .get("expires")
-                .map(|e| chrono::DateTime::parse_from_rfc2822(e.to_str().unwrap()).unwrap())
-                .unwrap()
+                .and_then(|e| e.to_str().ok())
+                .and_then(|e| chrono::DateTime::parse_from_rfc2822(e).ok())
+                .unwrap_or_default()
                 .to_utc();
             let date = req
                 .headers()
                 .get("date")
-                .map(|e| chrono::DateTime::parse_from_rfc2822(e.to_str().unwrap()).unwrap())
-                .unwrap()
+                .and_then(|e| e.to_str().ok())
+                .and_then(|e| chrono::DateTime::parse_from_rfc2822(e).ok())
+                .unwrap_or_default()
                 .naive_utc();
             let diff = expires.naive_utc().signed_duration_since(date);
 
