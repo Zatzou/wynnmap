@@ -227,21 +227,26 @@ pub fn App() -> impl IntoView {
             </div>
 
             <div class="flex-1 flex flex-col p-2 text-lg">
-                <label for="terrs" class="flex items-center">
+                <label for="terrs" class="items-center checkbox-contain">
                     <input id="terrs" type="checkbox" bind:checked={show_terrs} class="mr-2" />
-                    "Territories"
+                    <span class="checkmark"></span>
+                    <p class="texts">"Territories"</p>
                 </label>
-                <label for="conns" class="flex items-center">
+                <label for="conns" class="items-center checkbox-contain">
                     <input id="conns" type="checkbox" bind:checked={show_conns} class="mr-2" />
-                    "Connections"
+                    <span class="checkmark"></span>
+                    <p class="texts">"Connections"</p>
                 </label>
-                <label for="res" class="flex items-center">
+                <label for="res" class="items-center checkbox-contain">
                     <input id="res" type="checkbox" bind:checked={show_res} class="mr-2" />
-                    "Resource icons"
+                    <span class="checkmark"></span>
+                    <p class="texts">"Resource icons"</p>
+
                 </label>
-                <label for="timers" class="flex items-center">
+                <label for="timers" class="items-center checkbox-contain">
                     <input id="timers" type="checkbox" bind:checked={show_timers} class="mr-2" />
-                    "Timers"
+                    <span class="checkmark"></span>
+                    <p class="texts">"Timers"</p>
                 </label>
             </div>
 
