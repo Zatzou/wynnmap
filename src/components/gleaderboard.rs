@@ -9,19 +9,19 @@ pub fn Gleaderboard(
     class: &'static str,
 ) -> impl IntoView {
     let guild_leaderboard = move || {
-        let mut leadb = HashMap::new();
+        let mut guilds = HashMap::new();
 
         for (_, v) in terrs.read().iter() {
             let guild = v.guild.clone();
-            let terr = leadb.entry(guild).or_insert(0);
+            let terr = guilds.entry(guild).or_insert(0);
             *terr += 1;
         }
 
-        let mut leadb: Vec<_> = leadb.into_iter().collect();
+        let mut leaderboard: Vec<_> = guilds.into_iter().collect();
 
-        leadb.sort_by(|a, b| b.1.cmp(&a.1));
+        leaderboard.sort_by(|a, b| b.1.cmp(&a.1));
 
-        leadb
+        leaderboard
     };
 
     view! {
@@ -29,12 +29,13 @@ pub fn Gleaderboard(
             <tbody>
                 <For
                     each=move || guild_leaderboard().into_iter()
-                    key=|(k, v)| (k.clone(), v.clone())
+                    key=|(k, v)| (k.clone(), *v)
                     children=move |(k, v)| {
                         let col = k.get_color();
                         let col = format!("{}, {}, {}", col.0, col.1, col.2);
                         let name = k.name.clone();
                         let link = move || format!("https://wynncraft.com/stats/guild/{}", name);
+
                         view! {
                             <tr class="even:bg-neutral-800" style={format!("background-color: rgba({}, 0.3)", col)}>
                                 <td><a href={link()} target="_blank" class="block pl-2 font-mono">"["{k.prefix}"]"</a></td>
