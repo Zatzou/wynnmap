@@ -49,22 +49,6 @@ pub fn App() -> impl IntoView {
 
     let conn_path = move || paths::create_route_paths(terrs.get(), extradata());
 
-    let guild_leaderboard = move || {
-        let mut leadb = HashMap::new();
-
-        for (_, v) in terrs.get() {
-            let guild = v.guild.clone();
-            let terr = leadb.entry(guild).or_insert(0);
-            *terr += 1;
-        }
-
-        let mut leadb: Vec<_> = leadb.into_iter().collect();
-
-        leadb.sort_by(|a, b| b.1.cmp(&a.1));
-
-        leadb
-    };
-
     view! {
         <ShitMap>
             // map tiles
@@ -246,7 +230,7 @@ pub fn App() -> impl IntoView {
                 </div>
                 <hr class="border-neutral-600" class:hidden={move || !show_guild_leaderboard.get()} />
                 <div class="overflow-scroll shrink min-h-0">
-                    <Gleaderboard leaderboard={guild_leaderboard} class="w-full" class:hidden={move || !show_guild_leaderboard.get()} />
+                    <Gleaderboard terrs={terrs} class="w-full" class:hidden={move || !show_guild_leaderboard.get()} />
                 </div>
             </div>
 

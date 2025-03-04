@@ -1,16 +1,34 @@
+use std::{collections::HashMap, sync::Arc};
+
 use leptos::prelude::*;
-use wynnmap_types::Guild;
+use wynnmap_types::Territory;
 
 #[component]
 pub fn Gleaderboard(
-    leaderboard: impl Fn() -> Vec<(Guild, i32)> + Send + Sync + 'static,
+    #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
     class: &'static str,
 ) -> impl IntoView {
+    let guild_leaderboard = move || {
+        let mut leadb = HashMap::new();
+
+        for (_, v) in terrs.get() {
+            let guild = v.guild.clone();
+            let terr = leadb.entry(guild).or_insert(0);
+            *terr += 1;
+        }
+
+        let mut leadb: Vec<_> = leadb.into_iter().collect();
+
+        leadb.sort_by(|a, b| b.1.cmp(&a.1));
+
+        leadb
+    };
+
     view! {
         <table class={class} class:table-auto=true>
             <tbody>
                 <For
-                    each=move || leaderboard().into_iter()
+                    each=move || guild_leaderboard().into_iter()
                     key=|(k, v)| (k.clone(), v.clone())
                     children=move |(k, v)| {
                         let col = k.get_color();
