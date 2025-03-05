@@ -1,7 +1,7 @@
 use components::{checkbox::Checkbox, gleaderboard::Gleaderboard};
 use leptos::prelude::*;
 use std::{collections::HashMap, time::Duration};
-use wynnmap::WynnMap;
+use wynnmap::{WynnMap, maptile::MapTiles};
 
 mod components;
 mod datasource;
@@ -51,26 +51,7 @@ pub fn App() -> impl IntoView {
 
     view! {
         <WynnMap>
-            // map tiles
-            <div>
-            {move || tiles().iter().map(|tile| {
-                let url = tile.url.as_ref().to_string();
-                let width = tile.width();
-                let height = tile.height();
-                let left = tile.left_side();
-                let top = tile.top_side();
-
-                view! {
-                    <img
-                        src={url}
-                        class="wynnmap-tile"
-                        style:width={move || format!("{}px", width + 1.0)}
-                        style:height={move || format!("{}px", height + 1.0)}
-                        style:transform={move || format!("translate3D({}px, {}px, 0)", left, top)}
-                    />
-                }
-            }).collect_view()}
-            </div>
+            <MapTiles tiles={move || tiles()} />
 
             // conns
             <svg style="position: absolute;overflow: visible;contain: layout;" class:hidden={move || !show_conns.get()}>

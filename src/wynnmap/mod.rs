@@ -4,6 +4,8 @@ use std::sync::{Arc, Mutex};
 use leptos::prelude::*;
 use web_sys::{MouseEvent, TouchEvent, TouchList, WheelEvent};
 
+pub mod maptile;
+
 const ZOOM_MIN: f64 = 0.0625;
 const ZOOM_MAX: f64 = 64.0;
 
