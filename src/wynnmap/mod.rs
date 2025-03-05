@@ -217,7 +217,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
             // this is used to apply the zoom animations
             <div
                 class="wynnmap-zoomer"
-                class:wynnmap-zoomer-transitions=move || !touchzoom.get()
+                class:wynnmap-zoomer-transitions={move || !touchzoom.get()}
                 style="will-change: transform, transition;"
                 style:transform=move || {
                     format!(
@@ -232,7 +232,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 // this container contains the map contents and is moved when the map is dragged
                 <div
                     class="wynnmap-inner"
-                    class:wynnmap-zoomedin=move || zoom.get() > 1.0
+                    class:wynnmap-zoomedin={move || zoom.get() > 1.0}
                     style="will-change: transform;"
                     style:transform=move || {
                         format!("translate3D({}px, {}px, 0)", position.get().0, position.get().1)
