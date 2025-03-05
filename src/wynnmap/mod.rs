@@ -6,6 +6,7 @@ use web_sys::{MouseEvent, TouchEvent, TouchList, WheelEvent};
 
 pub mod conns;
 pub mod maptile;
+pub mod terrs;
 
 const ZOOM_MIN: f64 = 0.0625;
 const ZOOM_MAX: f64 = 64.0;
