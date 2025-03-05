@@ -1,7 +1,7 @@
 use components::{checkbox::Checkbox, gleaderboard::Gleaderboard};
 use leptos::prelude::*;
 use std::{collections::HashMap, time::Duration};
-use wynnmap::{WynnMap, maptile::MapTiles};
+use wynnmap::{WynnMap, maptile::DefaultMapTiles};
 
 mod components;
 mod datasource;
@@ -26,7 +26,6 @@ pub fn App() -> impl IntoView {
 
     let (tupd, set_tupd) = signal(());
 
-    let tiles = LocalResource::new(async move || datasource::load_map_tiles().await.unwrap());
     let extradata =
         LocalResource::new(async move || datasource::get_extra_terr_info().await.unwrap());
     let terrs = LocalResource::new(move || {
@@ -43,7 +42,6 @@ pub fn App() -> impl IntoView {
         Duration::from_secs(10),
     );
 
-    let tiles = move || tiles.get().map(|t| t.take()).unwrap_or(Vec::new());
     let extradata = move || extradata.get().map(|t| t.take()).unwrap_or(HashMap::new());
     let terrs = Memo::new(move |_| terrs.get().map(|t| t.take()).unwrap_or(HashMap::new()));
 
@@ -51,7 +49,7 @@ pub fn App() -> impl IntoView {
 
     view! {
         <WynnMap>
-            <MapTiles tiles={move || tiles()} />
+            <DefaultMapTiles />
 
             // conns
             <svg style="position: absolute;overflow: visible;contain: layout;" class:hidden={move || !show_conns.get()}>
