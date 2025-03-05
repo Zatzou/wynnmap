@@ -16,8 +16,9 @@ fn main() {
 
 #[component]
 pub fn App() -> impl IntoView {
-    let (show_sidebar, set_show_sidebar) = signal(false);
+    let show_sidebar = RwSignal::new(false);
     let show_terrs = RwSignal::new(true);
+    let show_conns = RwSignal::new(true);
     let show_res = RwSignal::new(true);
     let show_timers = RwSignal::new(true);
     let show_guild_leaderboard = RwSignal::new(true);
@@ -48,7 +49,7 @@ pub fn App() -> impl IntoView {
             <DefaultMapTiles />
 
             // conns
-            <Connections terrs={terrs} extradata={extradata} class:hidden={move || !toggles.get("show_conns")} />
+            <Connections terrs={terrs} extradata={extradata} class:hidden={move || !show_conns.get()} />
 
             // territories
             <TerrView terrs={terrs} extradata={extradata} class:hidden={move || !show_terrs.get()} />
