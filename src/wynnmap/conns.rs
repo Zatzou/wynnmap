@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeSet, HashMap},
     sync::Arc,
 };
 
@@ -42,33 +42,43 @@ pub fn create_route_paths(
     terrs: &HashMap<Arc<str>, Territory>,
     extradata: HashMap<Arc<str>, ExTerrInfo>,
 ) -> String {
-    let terr_mid_coords: HashMap<Arc<str>, (i32, i32)> = terrs
-        .iter()
-        .map(|(k, v)| (k.clone(), v.location.get_midpoint()))
-        .collect();
-
-    let mut terr_conns: HashSet<(Arc<str>, Arc<str>)> = HashSet::new();
+    let mut terr_conns: BTreeSet<((i32, i32), (i32, i32))> = BTreeSet::new();
     for (orig, v) in extradata {
         for conn in v.conns {
             if orig < conn {
-                terr_conns.insert((orig.clone(), conn));
+                terr_conns.insert((
+                    terrs
+                        .get(&orig)
+                        .map(|v| v.location.get_midpoint())
+                        .unwrap_or((0, 0)),
+                    terrs
+                        .get(&conn)
+                        .map(|v| v.location.get_midpoint())
+                        .unwrap_or((0, 0)),
+                ));
             } else {
-                terr_conns.insert((conn, orig.clone()));
+                terr_conns.insert((
+                    terrs
+                        .get(&conn)
+                        .map(|v| v.location.get_midpoint())
+                        .unwrap_or((0, 0)),
+                    terrs
+                        .get(&orig)
+                        .map(|v| v.location.get_midpoint())
+                        .unwrap_or((0, 0)),
+                ));
             }
         }
     }
 
     let mut pathing = String::new();
     for (start, end) in terr_conns {
-        let coords_start = terr_mid_coords.get(&start).unwrap_or(&(0, 0));
-        let coords_end = terr_mid_coords.get(&end).unwrap_or(&(0, 0));
-
         pathing.push_str(&format!(
             "M{} {} L{} {} ",
-            coords_start.0,
-            coords_start.1, // x and y of starting point
-            coords_end.0,
-            coords_end.1 // x and y of ending point
+            start.0,
+            start.1, // x and y of starting point
+            end.0,
+            end.1 // x and y of ending point
         ));
     }
 
