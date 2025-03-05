@@ -28,7 +28,7 @@ pub fn Gleaderboard(
     };
 
     view! {
-        <table class={class} class:table-auto=true>
+        <table class=class class:table-auto=true>
             <tbody>
                 <For
                     each=move || guild_leaderboard().into_iter()
@@ -40,10 +40,27 @@ pub fn Gleaderboard(
                         let link = move || format!("https://wynncraft.com/stats/guild/{}", name);
 
                         view! {
-                            <tr class="even:bg-neutral-800" style={format!("background-color: rgba({}, 0.3)", col)}>
-                                <td><a href={link()} target="_blank" class="block pl-2 font-mono">"["{k.prefix}"]"</a></td>
-                                <td><a href={link()} target="_blank" class="block">{k.name}</a></td>
-                                <td><a href={link()} target="_blank" class="block text-right pr-2">{v}</a></td>
+                            <tr
+                                class="even:bg-neutral-800"
+                                style=format!("background-color: rgba({}, 0.3)", col)
+                            >
+                                <td>
+                                    <a href=link() target="_blank" class="block pl-2 font-mono">
+                                        "["
+                                        {k.prefix}
+                                        "]"
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href=link() target="_blank" class="block">
+                                        {k.name}
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href=link() target="_blank" class="block text-right pr-2">
+                                        {v}
+                                    </a>
+                                </td>
                             </tr>
                         }
                     }
