@@ -1,12 +1,12 @@
 use components::{checkbox::Checkbox, gleaderboard::Gleaderboard};
 use leptos::prelude::*;
-use shitmap::ShitMap;
 use std::{collections::HashMap, time::Duration};
+use wynnmap::WynnMap;
 
 mod components;
 mod datasource;
 mod paths;
-mod shitmap;
+mod wynnmap;
 
 fn main() {
     #[cfg(debug_assertions)]
@@ -50,7 +50,7 @@ pub fn App() -> impl IntoView {
     let conn_path = move || paths::create_route_paths(terrs.get(), extradata());
 
     view! {
-        <ShitMap>
+        <WynnMap>
             // map tiles
             <div>
             {move || tiles().iter().map(|tile| {
@@ -63,7 +63,7 @@ pub fn App() -> impl IntoView {
                 view! {
                     <img
                         src={url}
-                        class="shitmap-tile"
+                        class="wynnmap-tile"
                         style:width={move || format!("{}px", width + 1.0)}
                         style:height={move || format!("{}px", height + 1.0)}
                         style:transform={move || format!("translate3D({}px, {}px, 0)", left, top)}
@@ -170,7 +170,7 @@ pub fn App() -> impl IntoView {
                         });
 
                         view! {
-                            <div class="shitmap-item guildterr"
+                            <div class="wynnmap-item guildterr"
                                 style:width={move || format!("{}px", width)}
                                 style:height={move || format!("{}px", height)}
                                 style:transform={move || format!("translate3D({}px, {}px, 0)", left, top)}
@@ -193,7 +193,7 @@ pub fn App() -> impl IntoView {
                     }
                 />
             </div>
-        </ShitMap>
+        </WynnMap>
 
         // sidebar open button
         <div on:click={move |_| set_show_sidebar.set(!show_sidebar.get())} class="fixed top-0 left-0 p-2 cursor-pointer z-50 bg-neutral-900 rounded-e-full mt-2 p-2">

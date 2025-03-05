@@ -78,7 +78,7 @@ html::before {
     background-image: url("./icons.png");
 }
 
-.shitmap-zoomedin [class^="icon-"] {
+.wynnmap-zoomedin [class^="icon-"] {
     image-rendering: pixelated;
 }
 
@@ -117,7 +117,7 @@ html::before {
 }
 
 /* On mouse-over */
-.checkbox-contain:hover input ~ .checkmark {
+.checkbox-contain:hover input~.checkmark {
     background-color: var(--checkbox-hover);
 }
 
@@ -134,7 +134,7 @@ html::before {
 }
 
 /* Show the checkmark when checked */
-.checkbox-contain input:checked ~ .checkmark:after {
+.checkbox-contain input:checked~.checkmark:after {
     display: block;
 }
 

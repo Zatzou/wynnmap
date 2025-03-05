@@ -1,32 +1,32 @@
-.shitmap-container {
+.wynnmap-container {
     overflow: hidden;
     backface-visibility: hidden;
 }
 
-.shitmap-inner {
+.wynnmap-inner {
     backface-visibility: hidden;
 }
 
-.shitmap-zoomer {
+.wynnmap-zoomer {
     transform-origin: 0 0;
     backface-visibility: hidden;
 }
 
-.shitmap-zoomer-transitions {
+.wynnmap-zoomer-transitions {
     transition: transform 0.25s;
 }
 
-.shitmap-zoomedin .shitmap-tile {
+.wynnmap-zoomedin .wynnmap-tile {
     image-rendering: pixelated;
 }
 
-.shitmap-tile {
+.wynnmap-tile {
     position: absolute;
     max-width: unset;
     contain: strict;
 }
 
-.shitmap-item {
+.wynnmap-item {
     position: absolute;
     pointer-events: none;
 }
