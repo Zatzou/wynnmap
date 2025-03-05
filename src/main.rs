@@ -1,11 +1,10 @@
 use components::{checkbox::Checkbox, gleaderboard::Gleaderboard};
 use leptos::prelude::*;
 use std::{collections::HashMap, time::Duration};
-use wynnmap::{WynnMap, maptile::DefaultMapTiles};
+use wynnmap::{WynnMap, conns::Connections, maptile::DefaultMapTiles};
 
 mod components;
 mod datasource;
-mod paths;
 mod wynnmap;
 
 fn main() {
@@ -45,34 +44,12 @@ pub fn App() -> impl IntoView {
     let extradata = move || extradata.get().map(|t| t.take()).unwrap_or(HashMap::new());
     let terrs = Memo::new(move |_| terrs.get().map(|t| t.take()).unwrap_or(HashMap::new()));
 
-    let conn_path = move || paths::create_route_paths(terrs.get(), extradata());
-
     view! {
         <WynnMap>
             <DefaultMapTiles />
 
             // conns
-            <svg style="position: absolute;overflow: visible;contain: layout;" class:hidden={move || !show_conns.get()}>
-                <path
-                    id="connpath"
-                    d={move || conn_path()}
-                    style="fill:none;"
-                    stroke-linecap="round"
-                />
-                <g inner_html=
-                {
-                    "
-                    <use
-                        href=\"#connpath\"
-                        style=\"stroke:black;stroke-width:4;\"
-                    />
-                    <use
-                        href=\"#connpath\"
-                        style=\"stroke:white;stroke-width:2;\"
-                    />
-                    "
-                }/>
-            </svg>
+            <Connections terrs={terrs} extradata={extradata} class:hidden={move || !show_conns.get()} />
 
             // territories
             <div class:hidden={move || !show_terrs.get()}>
