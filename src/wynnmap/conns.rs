@@ -42,7 +42,7 @@ pub fn create_route_paths(
     terrs: &HashMap<Arc<str>, Territory>,
     extradata: HashMap<Arc<str>, ExTerrInfo>,
 ) -> String {
-    let terr_mid_coords: HashMap<Arc<str>, (f64, f64)> = terrs
+    let terr_mid_coords: HashMap<Arc<str>, (i32, i32)> = terrs
         .iter()
         .map(|(k, v)| (k.clone(), v.location.get_midpoint()))
         .collect();
@@ -60,8 +60,8 @@ pub fn create_route_paths(
 
     let mut pathing = String::new();
     for (start, end) in terr_conns {
-        let coords_start = terr_mid_coords.get(&start).unwrap_or(&(0.0, 0.0));
-        let coords_end = terr_mid_coords.get(&end).unwrap_or(&(0.0, 0.0));
+        let coords_start = terr_mid_coords.get(&start).unwrap_or(&(0, 0));
+        let coords_end = terr_mid_coords.get(&end).unwrap_or(&(0, 0));
 
         pathing.push_str(&format!(
             "M{} {} L{} {} ",

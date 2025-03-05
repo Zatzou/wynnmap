@@ -1,4 +1,7 @@
-use std::sync::Arc;
+use std::{
+    cmp::{max, min},
+    sync::Arc,
+};
 
 use crc32fast::Hasher;
 use serde::{Deserialize, Serialize};
@@ -87,41 +90,41 @@ pub struct Location {
 }
 
 impl Location {
-    pub fn left_side(&self) -> f64 {
-        f64::from(self.start[0].min(self.end[0]))
+    pub fn left_side(&self) -> i32 {
+        min(self.start[0], self.end[0])
     }
 
-    pub fn right_side(&self) -> f64 {
-        f64::from(self.start[0].max(self.end[0]))
+    pub fn right_side(&self) -> i32 {
+        max(self.start[0], self.end[0])
     }
 
-    pub fn top_side(&self) -> f64 {
-        f64::from(self.start[1].min(self.end[1]))
+    pub fn top_side(&self) -> i32 {
+        min(self.start[1], self.end[1])
     }
 
-    pub fn bottom_side(&self) -> f64 {
-        f64::from(self.start[1].max(self.end[1]))
+    pub fn bottom_side(&self) -> i32 {
+        max(self.start[1], self.end[1])
     }
 
-    pub fn width(&self) -> f64 {
-        f64::from(self.start[0].abs_diff(self.end[0]))
+    pub const fn width(&self) -> u32 {
+        self.start[0].abs_diff(self.end[0])
     }
 
-    pub fn height(&self) -> f64 {
-        f64::from(self.start[1].abs_diff(self.end[1]))
+    pub const fn height(&self) -> u32 {
+        self.start[1].abs_diff(self.end[1])
     }
 
     /// calculate midpoint on x (horizontal scale)
-    pub fn midpoint_x(&self) -> f64 {
-        (self.left_side() + self.right_side()) / 2.0
+    pub fn midpoint_x(&self) -> i32 {
+        (self.left_side() + self.right_side()) / 2
     }
 
     /// calculate midpoint on y (vertical scale)
-    pub fn midpoint_y(&self) -> f64 {
-        (self.top_side() + self.bottom_side()) / 2.0
+    pub fn midpoint_y(&self) -> i32 {
+        (self.top_side() + self.bottom_side()) / 2
     }
 
-    pub fn get_midpoint(&self) -> (f64, f64) {
+    pub fn get_midpoint(&self) -> (i32, i32) {
         (self.midpoint_x(), self.midpoint_y())
     }
 }
@@ -143,27 +146,27 @@ pub struct TerrRes {
 }
 
 impl TerrRes {
-    pub fn has_emeralds(&self) -> bool {
+    pub const fn has_emeralds(&self) -> bool {
         self.emeralds > 9000
     }
 
-    pub fn has_ore(&self) -> bool {
+    pub const fn has_ore(&self) -> bool {
         self.ore != 0
     }
 
-    pub fn has_crops(&self) -> bool {
+    pub const fn has_crops(&self) -> bool {
         self.crops != 0
     }
 
-    pub fn has_fish(&self) -> bool {
+    pub const fn has_fish(&self) -> bool {
         self.fish != 0
     }
 
-    pub fn has_wood(&self) -> bool {
+    pub const fn has_wood(&self) -> bool {
         self.wood != 0
     }
 
-    pub fn has_res(&self) -> (bool, bool, bool, bool, bool) {
+    pub const fn has_res(&self) -> (bool, bool, bool, bool, bool) {
         (
             self.has_emeralds(),
             self.has_crops(),
