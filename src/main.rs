@@ -1,14 +1,15 @@
 use components::{checkbox::Checkbox, gleaderboard::Gleaderboard};
 use leptos::prelude::*;
+use settings::{provide_settings, use_toggle};
 use std::{collections::HashMap, time::Duration};
 use wynnmap::{WynnMap, conns::Connections, maptile::DefaultMapTiles, terrs::TerrView};
 
 mod components;
 mod datasource;
+mod settings;
 mod wynnmap;
 
 fn main() {
-    #[cfg(debug_assertions)]
     console_error_panic_hook::set_once();
 
     mount_to_body(|| view! { <App /> });
@@ -16,12 +17,14 @@ fn main() {
 
 #[component]
 pub fn App() -> impl IntoView {
+    provide_settings();
+
     let show_sidebar = RwSignal::new(false);
-    let show_terrs = RwSignal::new(true);
-    let show_conns = RwSignal::new(true);
-    let show_res = RwSignal::new(true);
-    let show_timers = RwSignal::new(true);
-    let show_guild_leaderboard = RwSignal::new(true);
+    let show_terrs = use_toggle("terrs", true);
+    let show_conns = use_toggle("conns", true);
+    let show_res = use_toggle("resico", true);
+    let show_timers = use_toggle("timers", true);
+    let show_guild_leaderboard = use_toggle("gleaderboard", true);
 
     let (tupd, set_tupd) = signal(());
 

@@ -11,6 +11,7 @@ members = ["wynnmap-server", "wynnmap-types"]
 chrono = { version = "0.4.40", features = ["serde"] }
 console_error_panic_hook = "0.1.7"
 crc32fast = "1.4.2"
+gloo-storage = "0.3.0"
 leptos = { version = "0.7.7", features = ["csr"] }
 reqwest = { version = "0.12.12", features = ["json"] }
 serde = { version = "1.0.218", features = ["derive", "rc"] }

@@ -3,6 +3,8 @@ use std::{collections::HashMap, sync::Arc, time::Duration};
 use leptos::prelude::*;
 use wynnmap_types::{ExTerrInfo, Territory};
 
+use crate::settings::use_toggle;
+
 #[component]
 pub fn TerrView(
     #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
@@ -57,21 +59,31 @@ pub fn Territory(
 
 #[component]
 fn ResIcons(#[prop(into)] res: Signal<(bool, bool, bool, bool, bool)>) -> impl IntoView {
-    view! {
-        <div class="flex pb-1" > // class:hidden={move || !show_res.get()}
-            // this is here so that tailwinds cli realizes that this class is used
-            // class="hidden"
-            <div class="icon-emerald" class:hidden={move || !res.get().0}></div>
-            <div class="icon-crops" class:hidden={move || !res.get().1}></div>
-            <div class="icon-fish" class:hidden={move || !res.get().2}></div>
-            <div class="icon-ores" class:hidden={move || !res.get().3}></div>
-            <div class="icon-wood" class:hidden={move || !res.get().4}></div>
-        </div>
+    let show_res = use_toggle("resico", true);
+
+    move || {
+        if show_res.get() {
+            Some(view! {
+                <div class="flex pb-1" > // class:hidden={move || !show_res.get()}
+                    // this is here so that tailwinds cli realizes that this class is used
+                    // class="hidden"
+                    <div class="icon-emerald" class:hidden={move || !res.get().0}></div>
+                    <div class="icon-crops" class:hidden={move || !res.get().1}></div>
+                    <div class="icon-fish" class:hidden={move || !res.get().2}></div>
+                    <div class="icon-ores" class:hidden={move || !res.get().3}></div>
+                    <div class="icon-wood" class:hidden={move || !res.get().4}></div>
+                </div>
+            })
+        } else {
+            None
+        }
     }
 }
 
 #[component]
 fn TerrTimer(terr: Signal<Territory>) -> impl IntoView {
+    let show_timers = use_toggle("timers", true);
+
     let now = chrono::Utc::now();
     let time = now
         .signed_duration_since(terr.read().acquired)
@@ -129,7 +141,6 @@ fn TerrTimer(terr: Signal<Territory>) -> impl IntoView {
     };
 
     view! {
-        // class:hidden={move || !show_timers.get()}
-        <h4 class="px-2 rounded-2xl text-sm text-center whitespace-nowrap" style={move || color}>{timestr}</h4>
+        <h4 class="px-2 rounded-2xl text-sm text-center whitespace-nowrap" style={move || color} class:hidden={move || !show_timers.get()}>{timestr}</h4>
     }
 }
