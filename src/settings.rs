@@ -55,7 +55,7 @@ pub fn use_toggle(name: &'static str, default: bool) -> RwSignal<bool> {
             .0;
 
         let option = settings
-            .read()
+            .read_untracked()
             .toggles
             .get(name)
             .copied()
