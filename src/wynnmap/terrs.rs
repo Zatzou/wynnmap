@@ -91,7 +91,7 @@ fn TerrTimer(terr: Signal<Territory>) -> impl IntoView {
 
     let (time, set_time) = signal(time);
 
-    set_interval(
+    let i = set_interval_with_handle(
         move || {
             let now = chrono::Utc::now();
 
@@ -102,7 +102,12 @@ fn TerrTimer(terr: Signal<Territory>) -> impl IntoView {
             set_time.set(time);
         },
         Duration::from_millis(1000),
-    );
+    )
+    .ok();
+
+    on_cleanup(move || {
+        i.map(|i| i.clear()).unwrap_or(());
+    });
 
     let timestr = move || {
         let time = time.get();
