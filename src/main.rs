@@ -52,10 +52,10 @@ pub fn App() -> impl IntoView {
             <DefaultMapTiles />
 
             // conns
-            <Connections terrs={terrs} extradata={extradata} class:hidden={move || !show_conns.get()} />
+            <Connections terrs={terrs} extradata={Signal::derive(move || extradata())} class:hidden={move || !show_conns.get()} />
 
             // territories
-            <TerrView terrs={terrs} extradata={extradata} class:hidden={move || !show_terrs.get()} />
+            <TerrView terrs={terrs} extradata={Signal::derive(move || extradata())} class:hidden={move || !show_terrs.get()} />
         </WynnMap>
 
         // sidebar open button

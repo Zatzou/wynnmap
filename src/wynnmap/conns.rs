@@ -9,9 +9,9 @@ use wynnmap_types::{ExTerrInfo, Territory};
 #[component]
 pub fn Connections(
     #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
-    extradata: impl Fn() -> HashMap<Arc<str>, ExTerrInfo> + Send + Sync + 'static,
+    extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
 ) -> impl IntoView {
-    let conn_path = move || create_route_paths(&*terrs.read(), extradata());
+    let conn_path = move || create_route_paths(&*terrs.read(), extradata.get());
 
     view! {
         <svg style="position: absolute;overflow: visible;contain: layout;" >

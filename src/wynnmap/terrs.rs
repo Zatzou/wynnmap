@@ -8,7 +8,7 @@ use crate::settings::use_toggle;
 #[component]
 pub fn TerrView(
     #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
-    extradata: impl Fn() -> HashMap<Arc<str>, ExTerrInfo> + Send + Sync + 'static + Clone,
+    extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
 ) -> impl IntoView {
     view! {
         <div>
@@ -17,7 +17,7 @@ pub fn TerrView(
                 key=|(k, v)| (k.clone(), v.guild.clone())
                 children=move |(k, v)| {
                     view! {
-                        <Territory name=k terr=v.into() extradata=extradata.clone() />
+                        <Territory name=k terr=v.into() extradata=extradata />
                     }
                 }
             />
@@ -29,14 +29,15 @@ pub fn TerrView(
 pub fn Territory(
     name: Arc<str>,
     terr: Signal<Territory>,
-    extradata: impl Fn() -> HashMap<Arc<str>, ExTerrInfo> + Send + Sync + 'static,
+    extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
 ) -> impl IntoView {
     let col = terr.read().guild.get_color();
     let col_rgb = format!("{}, {}, {}", col.0, col.1, col.2);
     let col_rgb2 = col_rgb.clone();
 
     let res = Memo::new(move |_| {
-        extradata()
+        extradata
+            .read()
             .get(&name)
             .map(|e| e.resources.has_res())
             .unwrap_or((false, false, false, false, false))

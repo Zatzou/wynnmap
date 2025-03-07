@@ -23,11 +23,11 @@ pub fn MapTile(tile: Signal<WynntilsMapTile>) -> impl IntoView {
 }
 
 #[component]
-pub fn MapTiles(tiles: impl Fn() -> Vec<WynntilsMapTile> + Send + Sync + 'static) -> impl IntoView {
+pub fn MapTiles(tiles: Signal<Vec<WynntilsMapTile>>) -> impl IntoView {
     view! {
         <div class="wynnmap-tiles">
             {move || {
-                tiles()
+                tiles.get()
                     .into_iter()
                     .map(|tile| view! { <MapTile tile=tile.into() /> })
                     .collect_view()
@@ -43,5 +43,5 @@ pub fn DefaultMapTiles() -> impl IntoView {
 
     let tiles = move || tiles.get().map(|t| t.take()).unwrap_or(Vec::new());
 
-    view! { <MapTiles tiles=tiles /> }
+    view! { <MapTiles tiles=Signal::derive(move || tiles()) /> }
 }
