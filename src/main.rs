@@ -44,18 +44,18 @@ pub fn App() -> impl IntoView {
         Duration::from_secs(10),
     );
 
-    let extradata = move || extradata.get().map(|t| t.take()).unwrap_or(HashMap::new());
-    let terrs = Memo::new(move |_| terrs.get().map(|t| t.take()).unwrap_or(HashMap::new()));
+    let extradata = move || extradata.get().map_or_else(HashMap::new, |t| t.take());
+    let terrs = Memo::new(move |_| terrs.get().map_or_else(HashMap::new, |t| t.take()));
 
     view! {
         <WynnMap>
             <DefaultMapTiles />
 
             // conns
-            <Connections terrs={terrs} extradata={Signal::derive(move || extradata())} class:hidden={move || !show_conns.get()} />
+            <Connections terrs={terrs} extradata={Signal::derive(extradata)} class:hidden={move || !show_conns.get()} />
 
             // territories
-            <TerrView terrs={terrs} extradata={Signal::derive(move || extradata())} class:hidden={move || !show_terrs.get()} />
+            <TerrView terrs={terrs} extradata={Signal::derive(extradata)} class:hidden={move || !show_terrs.get()} />
         </WynnMap>
 
         // sidebar open button

@@ -7,17 +7,9 @@ use gloo_storage::Storage;
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 struct Settings {
     toggles: HashMap<Arc<str>, bool>,
-}
-
-impl Default for Settings {
-    fn default() -> Self {
-        Self {
-            toggles: Default::default(),
-        }
-    }
 }
 
 #[derive(Clone)]
@@ -55,7 +47,7 @@ pub fn use_toggle(name: &'static str, default: bool) -> RwSignal<bool> {
 
     // check if the signal already exists
     if let Some(signal) = toggles.get(name) {
-        let signal = signal.clone();
+        let signal = *signal;
 
         // check that the signal hasn't been disposed and if it has been then generate a new one
         if !signal.is_disposed() {
@@ -81,7 +73,7 @@ pub fn use_toggle(name: &'static str, default: bool) -> RwSignal<bool> {
     let signal = RwSignal::new(option);
 
     // insert the signal into the toggles map
-    toggles.insert(name.into(), signal.clone());
+    toggles.insert(name.into(), signal);
     drop(toggles);
 
     // create an effect to update the settings when the signal changes

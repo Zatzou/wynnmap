@@ -39,8 +39,9 @@ pub fn Territory(
         extradata
             .read()
             .get(&name)
-            .map(|e| e.resources.has_res())
-            .unwrap_or((false, false, false, false, false))
+            .map_or((false, false, false, false, false), |e| {
+                e.resources.has_res()
+            })
     });
 
     view! {
@@ -107,7 +108,9 @@ fn TerrTimer(terr: Signal<Territory>) -> impl IntoView {
     .ok();
 
     on_cleanup(move || {
-        i.map(|i| i.clear()).unwrap_or(());
+        if let Some(i) = i {
+            i.clear();
+        }
     });
 
     let timestr = move || {

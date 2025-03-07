@@ -11,7 +11,7 @@ pub fn Connections(
     #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
     extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
 ) -> impl IntoView {
-    let conn_path = move || create_route_paths(&*terrs.read(), extradata.get());
+    let conn_path = move || create_route_paths(&terrs.read(), extradata.get());
 
     view! {
         <svg style="position: absolute;overflow: visible;contain: layout;" >
@@ -49,23 +49,19 @@ pub fn create_route_paths(
                 terr_conns.insert((
                     terrs
                         .get(&orig)
-                        .map(|v| v.location.get_midpoint())
-                        .unwrap_or((0, 0)),
+                        .map_or((0, 0), |v| v.location.get_midpoint()),
                     terrs
                         .get(&conn)
-                        .map(|v| v.location.get_midpoint())
-                        .unwrap_or((0, 0)),
+                        .map_or((0, 0), |v| v.location.get_midpoint()),
                 ));
             } else {
                 terr_conns.insert((
                     terrs
                         .get(&conn)
-                        .map(|v| v.location.get_midpoint())
-                        .unwrap_or((0, 0)),
+                        .map_or((0, 0), |v| v.location.get_midpoint()),
                     terrs
                         .get(&orig)
-                        .map(|v| v.location.get_midpoint())
-                        .unwrap_or((0, 0)),
+                        .map_or((0, 0), |v| v.location.get_midpoint()),
                 ));
             }
         }
