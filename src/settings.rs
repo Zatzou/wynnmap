@@ -23,6 +23,7 @@ impl Default for Settings {
 #[derive(Clone)]
 struct SettingsContext(RwSignal<Settings>);
 
+/// Function for loading the settings from local storage and providing them to the context. This function should be called once at the start of the application.
 pub fn provide_settings() {
     let settings: Settings = gloo_storage::LocalStorage::get("settings").unwrap_or_default();
 
@@ -39,37 +40,54 @@ fn update_settings(settings: Settings) {
     gloo_storage::LocalStorage::set("settings", settings).expect("failed to save settings");
 }
 
+/// The static variable for storing the toggle signals which are currently in use.
 static TOGGLES: LazyLock<Mutex<HashMap<Arc<str>, RwSignal<bool>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
+/// A function that retrieves a signal for a given toggle setting. If the signal or setting doesn't yet exist it will be created with the given default value.
+///
+/// # Arguments
+///
+/// * `name` - The name of the toggle setting.
+/// * `default` - The default value of the toggle setting.
 pub fn use_toggle(name: &'static str, default: bool) -> RwSignal<bool> {
     let mut toggles = TOGGLES.lock().unwrap();
 
+    // check if the signal already exists
     if let Some(signal) = toggles.get(name) {
         let signal = signal.clone();
-        drop(toggles);
-        return signal;
-    } else {
-        let settings = use_context::<SettingsContext>()
-            .expect("attempted to use toggle outside of settings context")
-            .0;
 
-        let option = settings
-            .read_untracked()
-            .toggles
-            .get(name)
-            .copied()
-            .unwrap_or(default);
-
-        let signal = RwSignal::new(option);
-
-        toggles.insert(name.into(), signal.clone());
-        drop(toggles);
-
-        Effect::new(move || {
-            settings.write().toggles.insert(name.into(), signal.get());
-        });
-
-        signal
+        // check that the signal hasn't been disposed and if it has been then generate a new one
+        if !signal.is_disposed() {
+            drop(toggles);
+            return signal;
+        }
     }
+
+    // get the settings context
+    let settings = use_context::<SettingsContext>()
+        .expect("attempted to use toggle outside of settings context")
+        .0;
+
+    // get the toggle value from the settings and fall back to the default if it doesn't exist
+    let option = settings
+        .read_untracked()
+        .toggles
+        .get(name)
+        .copied()
+        .unwrap_or(default);
+
+    // create a new signal with the value from the settings
+    let signal = RwSignal::new(option);
+
+    // insert the signal into the toggles map
+    toggles.insert(name.into(), signal.clone());
+    drop(toggles);
+
+    // create an effect to update the settings when the signal changes
+    Effect::new(move || {
+        settings.write().toggles.insert(name.into(), signal.get());
+    });
+
+    signal
 }
