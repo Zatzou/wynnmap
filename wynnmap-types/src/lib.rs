@@ -24,7 +24,7 @@ pub struct WynntilsMapTile {
 
 impl WynntilsMapTile {
     pub fn left_side(&self) -> i32 {
-        i32::from(self.x1.min(self.x2))
+        self.x1.min(self.x2)
     }
 
     pub fn right_side(&self) -> i32 {
