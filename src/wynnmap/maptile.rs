@@ -9,8 +9,8 @@ pub fn MapTile(tile: Signal<WynntilsMapTile>) -> impl IntoView {
         <img
             src=tile.get().url
             class="wynnmap-tile"
-            style:width=move || format!("{}px", tile.read().width() + 1.0)
-            style:height=move || format!("{}px", tile.read().height() + 1.0)
+            style:width=move || format!("{}px", tile.read().width() + 1)
+            style:height=move || format!("{}px", tile.read().height() + 1)
             style:transform=move || {
                 format!(
                     "translate3D({}px, {}px, 0)",
