@@ -39,12 +39,12 @@ impl WynntilsMapTile {
         self.z1.max(self.z2)
     }
 
-    pub fn width(&self) -> i32 {
-        self.x1.abs_diff(self.x2) as i32
+    pub fn width(&self) -> u32 {
+        self.x1.abs_diff(self.x2)
     }
 
-    pub fn height(&self) -> i32 {
-        self.z1.abs_diff(self.z2) as i32
+    pub fn height(&self) -> u32 {
+        self.z1.abs_diff(self.z2)
     }
 }
 
