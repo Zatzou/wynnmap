@@ -27,24 +27,24 @@ impl WynntilsMapTile {
         i32::from(self.x1.min(self.x2))
     }
 
-    pub fn right_side(&self) -> i64 {
-        i64::from(self.x1.max(self.x2))
+    pub fn right_side(&self) -> i32 {
+        self.x1.max(self.x2)
     }
 
-    pub fn top_side(&self) -> i64 {
-        i64::from(self.z1.min(self.z2))
+    pub fn top_side(&self) -> i32 {
+        self.z1.min(self.z2)
     }
 
-    pub fn bottom_side(&self) -> i64 {
-        i64::from(self.z1.max(self.z2))
+    pub fn bottom_side(&self) -> i32 {
+        self.z1.max(self.z2)
     }
 
-    pub fn width(&self) -> i64 {
-        i64::from(self.x1.abs_diff(self.x2))
+    pub fn width(&self) -> i32 {
+        self.x1.abs_diff(self.x2) as i32
     }
 
-    pub fn height(&self) -> i64 {
-        i64::from(self.z1.abs_diff(self.z2))
+    pub fn height(&self) -> i32 {
+        self.z1.abs_diff(self.z2) as i32
     }
 }
 
