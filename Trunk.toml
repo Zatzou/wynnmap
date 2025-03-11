@@ -14,3 +14,10 @@ command_arguments = [
     "-o",
     "./resources/tailwind.css",
 ]
+
+[[proxy]]
+backend = "https://wynnmap.zatzou.com/api/"
+
+[[proxy]]
+backend = "wss://wynnmap.zatzou.com/api/v1/territories/ws"
+ws = true
