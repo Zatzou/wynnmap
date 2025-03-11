@@ -7,6 +7,7 @@ use tokio::net::TcpListener;
 use tower::ServiceBuilder;
 use tower_http::compression::CompressionLayer;
 use tower_http::cors::{self, CorsLayer};
+use tower_http::services::ServeDir;
 use tracing::info;
 use trackers::{images::create_image_tracker, territories::create_terr_tracker};
 
@@ -31,13 +32,16 @@ async fn main() {
 
     let app = Router::new()
         .nest(
-            "/v1",
-            Router::new()
-                .nest("/images", api::images::router(img_state))
-                .nest("/territories", api::territories::router(terr_state))
-                .fallback(api_404),
+            "/api",
+            Router::new().nest(
+                "/v1",
+                Router::new()
+                    .nest("/images", api::images::router(img_state))
+                    .nest("/territories", api::territories::router(terr_state))
+                    .fallback(api_404),
+            ),
         )
-        .fallback(handle_404)
+        .fallback_service(ServeDir::new(config.server.fe_dir.as_ref()))
         .layer(
             ServiceBuilder::new()
                 .layer(cors)
@@ -51,10 +55,6 @@ async fn main() {
 
     info!("Listning on {}:{}", config.server.bind, config.server.port);
     axum::serve(listener, app).await.unwrap();
-}
-
-async fn handle_404() -> impl IntoResponse {
-    (StatusCode::NOT_FOUND, "404: Not Found")
 }
 
 async fn api_404() -> impl IntoResponse {

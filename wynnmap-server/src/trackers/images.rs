@@ -87,7 +87,7 @@ async fn image_tracker(state: ImageState) {
                     item.orig_name = fname.map(Into::into);
 
                     item.url = Arc::from(format!(
-                        "{}/v1/images/{}.{}",
+                        "{}/api/v1/images/{}.{}",
                         state.config.server.base_url, item.md5, format
                     ));
                 }

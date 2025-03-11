@@ -14,6 +14,7 @@ pub(crate) struct ServerConfig {
     pub bind: Arc<str>,
     pub port: u16,
     pub base_url: Arc<str>,
+    pub fe_dir: Arc<str>,
 }
 
 #[derive(Clone, Deserialize)]
