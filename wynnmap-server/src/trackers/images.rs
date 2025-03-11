@@ -9,7 +9,7 @@ use wynnmap_types::WynntilsMapTile;
 
 pub(crate) async fn create_image_tracker(config: Arc<Config>) -> ImageState {
     let state = ImageState {
-        config: config.clone(),
+        config,
         maps: Default::default(),
         map_cache: Default::default(),
     };
@@ -59,8 +59,7 @@ async fn image_tracker(state: ImageState) {
                 let etag = maps_res
                     .headers()
                     .get("etag")
-                    .map(|h| h.to_str().unwrap_or(""))
-                    .unwrap_or("");
+                    .map_or("", |h| h.to_str().unwrap_or(""));
                 etag_cache.insert(Arc::from("maps.json"), Arc::from(etag));
 
                 // load the json
@@ -68,7 +67,7 @@ async fn image_tracker(state: ImageState) {
 
                 // load each map tile into the cache
                 for item in &data {
-                    load_image(&state, item, client.clone(), &mut etag_cache).await?;
+                    load_image(state, item, client.clone(), &mut etag_cache).await?;
                 }
 
                 // replace the urls in the data with the local url
@@ -93,11 +92,14 @@ async fn image_tracker(state: ImageState) {
                 }
 
                 // replace the cache with the new data
-                *state.maps.write().await = data.clone();
+                state.maps.write().await.clone_from(&data);
 
                 // drop old images from the cache
-                let mut map_cache = state.map_cache.write().await;
-                map_cache.retain(|k, _| data.iter().find(|d| d.md5 == *k).is_some());
+                state
+                    .map_cache
+                    .write()
+                    .await
+                    .retain(|k, _| data.iter().any(|d| d.md5 == *k));
 
                 info!("Loaded maps.json");
             } else if status == reqwest::StatusCode::NOT_MODIFIED {
@@ -139,7 +141,7 @@ async fn image_tracker(state: ImageState) {
                 let encoder = Encoder::from_image(&img).unwrap();
                 let out = encoder.encode_lossless();
 
-                Bytes::from_iter(out.iter().cloned())
+                Bytes::from_iter(out.iter().copied())
             } else {
                 data
             };

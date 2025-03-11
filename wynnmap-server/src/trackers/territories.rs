@@ -33,7 +33,7 @@ pub(crate) async fn create_terr_tracker(config: Arc<Config>) -> TerritoryState {
         })),
 
         colors: Arc::new(RwLock::new(HashMap::new())),
-        extra: Arc::new(RwLock::new(Default::default())),
+        extra: Arc::new(RwLock::new(HashMap::new())),
     };
 
     tokio::spawn(territory_tracker(state.clone()));
@@ -87,7 +87,7 @@ async fn territory_tracker(state: TerritoryState) {
             let collock = state.colors.read().await;
 
             // update the guild colors on the data
-            for (_, terr) in &mut data {
+            for terr in data.values_mut() {
                 if let Some(col) = collock.get(&terr.guild.prefix) {
                     terr.guild.color = Some(col.clone());
                 }

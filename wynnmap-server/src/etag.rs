@@ -33,5 +33,5 @@ pub(crate) async fn etag_middleware(req: Request, next: Next) -> Response<Body> 
         }
     }
 
-    return Response::from_parts(parts, body);
+    Response::from_parts(parts, body)
 }
