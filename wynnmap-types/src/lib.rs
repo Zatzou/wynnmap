@@ -20,6 +20,9 @@ pub struct WynntilsMapTile {
 
     /// The md5 hash of the map tile image.
     pub md5: Arc<str>,
+
+    /// The original name of the map tile image.
+    pub orig_name: Option<Arc<str>>,
 }
 
 impl WynntilsMapTile {

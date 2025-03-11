@@ -82,12 +82,13 @@ async fn image_tracker(state: ImageState) {
                         .url
                         .split('/')
                         .last()
-                        .and_then(|s| s.strip_suffix(".png"))
-                        .unwrap_or(&item.md5);
+                        .and_then(|s| s.strip_suffix(".png"));
+
+                    item.orig_name = fname.map(Into::into);
 
                     item.url = Arc::from(format!(
                         "{}/v1/images/{}.{}",
-                        state.config.server.base_url, fname, format
+                        state.config.server.base_url, item.md5, format
                     ));
                 }
 
