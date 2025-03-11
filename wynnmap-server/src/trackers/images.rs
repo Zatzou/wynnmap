@@ -78,9 +78,17 @@ async fn image_tracker(state: ImageState) {
                     "png"
                 };
                 for item in &mut data {
+                    // figure out the filename and fall back to the md5
+                    let fname = item
+                        .url
+                        .split('/')
+                        .last()
+                        .and_then(|s| s.strip_suffix(".png"))
+                        .unwrap_or(&item.md5);
+
                     item.url = Arc::from(format!(
                         "{}/v1/images/{}.{}",
-                        state.config.server.base_url, item.md5, format
+                        state.config.server.base_url, fname, format
                     ));
                 }
 
