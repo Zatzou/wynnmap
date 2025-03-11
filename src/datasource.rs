@@ -28,7 +28,7 @@ pub async fn load_map_tiles() -> Option<Vec<WynntilsMapTile>> {
     Some(tiles)
 }
 
-pub async fn _get_wynntils_terrs() -> Result<HashMap<Arc<str>, Territory>, reqwest::Error> {
+pub async fn get_wynntils_terrs() -> Result<HashMap<Arc<str>, Territory>, reqwest::Error> {
     let resp: HashMap<Arc<str>, Territory> =
         reqwest::get(format!("{}{}", get_url("http"), "/api/v1/territories/list"))
             .await?
@@ -76,7 +76,7 @@ pub fn ws_terr_changes(
                 TerrSockMessage::Territory(hash_map) => {
                     terrs.write().extend(hash_map);
                 }
-                TerrSockMessage::Capture { name, old: _, new } => {
+                TerrSockMessage::Capture { name, old: Territory, new } => {
                     terrs.write().insert(name, new);
                 }
             }
