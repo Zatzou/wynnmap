@@ -1,5 +1,7 @@
 use axum::http::Method;
-use axum::{Router, middleware};
+use axum::response::IntoResponse;
+use axum::{Json, Router, middleware};
+use reqwest::StatusCode;
 use state::ImageState;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
@@ -32,8 +34,10 @@ async fn main() {
             "/v1",
             Router::new()
                 .nest("/images", api::images::router(img_state))
-                .nest("/territories", api::territories::router(terr_state)),
+                .nest("/territories", api::territories::router(terr_state))
+                .fallback(api_404),
         )
+        .fallback(handle_404)
         .layer(
             ServiceBuilder::new()
                 .layer(cors)
@@ -47,4 +51,12 @@ async fn main() {
 
     info!("Listning on {}:{}", config.server.bind, config.server.port);
     axum::serve(listener, app).await.unwrap();
+}
+
+async fn handle_404() -> impl IntoResponse {
+    (StatusCode::NOT_FOUND, "404: Not Found")
+}
+
+async fn api_404() -> impl IntoResponse {
+    (StatusCode::NOT_FOUND, Json("Not Found"))
 }
