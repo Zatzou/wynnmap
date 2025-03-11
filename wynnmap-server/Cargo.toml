@@ -14,7 +14,7 @@ serde = { version = "1.0.218", features = ["derive", "rc"] }
 tokio = { version = "1.43.0", features = ["rt-multi-thread", "fs"] }
 toml = "0.8.20"
 tower = { version = "0.5.2", features = ["tokio", "tracing"] }
-tower-http = { version = "0.6.2", features = ["cors"] }
+tower-http = { version = "0.6.2", features = ["cors", "compression-full"] }
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
 uuid = { version = "1.15.1", features = ["serde"] }

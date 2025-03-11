@@ -3,6 +3,7 @@ use axum::{Router, middleware};
 use state::ImageState;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
+use tower_http::compression::CompressionLayer;
 use tower_http::cors::{self, CorsLayer};
 use tracing::info;
 use trackers::{images::create_image_tracker, territories::create_terr_tracker};
@@ -36,7 +37,8 @@ async fn main() {
         .layer(
             ServiceBuilder::new()
                 .layer(cors)
-                .layer(middleware::from_fn(etag::etag_middleware)),
+                .layer(middleware::from_fn(etag::etag_middleware))
+                .layer(CompressionLayer::new()),
         );
 
     let listener = TcpListener::bind(&format!("{}:{}", config.server.bind, config.server.port))
