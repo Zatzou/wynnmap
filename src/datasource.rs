@@ -1,6 +1,9 @@
 use std::{collections::HashMap, sync::Arc};
 
-use wynnmap_types::{ExTerrInfo, Territory, WynntilsMapTile};
+use codee::string::JsonSerdeWasmCodec;
+use leptos::prelude::*;
+use leptos_use::{UseWebSocketReturn, core::ConnectionReadyState, use_websocket};
+use wynnmap_types::{ExTerrInfo, Territory, WynntilsMapTile, ws::TerrSockMessage};
 
 /// Get the api url to be used for fetching data. This by default uses the current window location
 /// to determine the host and whether or not encryption is used.
@@ -46,4 +49,39 @@ pub async fn get_extra_terr_info() -> Result<HashMap<Arc<str>, ExTerrInfo>, reqw
     .await?;
 
     Ok(resp)
+}
+
+pub fn ws_terr_changes(
+    terrs: RwSignal<HashMap<Arc<str>, Territory>>,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let UseWebSocketReturn {
+        ready_state,
+        message,
+        open,
+        ..
+    } = use_websocket::<TerrSockMessage, TerrSockMessage, JsonSerdeWasmCodec>(&format!(
+        "{}/api/v1/territories/ws",
+        get_url("ws")
+    ));
+
+    Effect::new(move || {
+        if let ConnectionReadyState::Closed = ready_state.get() {
+            open();
+        }
+    });
+
+    Effect::new(move || {
+        if let Some(msg) = message.get() {
+            match msg {
+                TerrSockMessage::Territory(hash_map) => {
+                    terrs.write().extend(hash_map);
+                }
+                TerrSockMessage::Capture { name, old, new } => {
+                    terrs.write().insert(name, new);
+                }
+            }
+        }
+    });
+
+    Ok(())
 }

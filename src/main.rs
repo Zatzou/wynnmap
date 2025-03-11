@@ -1,4 +1,5 @@
 use components::{checkbox::Checkbox, gleaderboard::Gleaderboard};
+use datasource::ws_terr_changes;
 use leptos::prelude::*;
 use settings::{provide_settings, use_toggle};
 use std::{collections::HashMap, time::Duration};
@@ -26,26 +27,14 @@ pub fn App() -> impl IntoView {
     let show_timers = use_toggle("timers", true);
     let show_guild_leaderboard = use_toggle("gleaderboard", true);
 
-    let (tupd, set_tupd) = signal(());
-
     let extradata =
         LocalResource::new(async move || datasource::get_extra_terr_info().await.unwrap());
-    let terrs = LocalResource::new(move || {
-        tupd.track();
-        let e = async || datasource::get_wynntils_terrs().await.unwrap();
-        e()
-    });
-
-    // auto update the map every 30 seconds
-    set_interval(
-        move || {
-            set_tupd.notify();
-        },
-        Duration::from_secs(10),
-    );
 
     let extradata = move || extradata.get().map_or_else(HashMap::new, |t| t.take());
-    let terrs = Memo::new(move |_| terrs.get().map_or_else(HashMap::new, |t| t.take()));
+
+    let terrs = RwSignal::new(HashMap::new());
+
+    ws_terr_changes(terrs).unwrap();
 
     view! {
         <WynnMap>
