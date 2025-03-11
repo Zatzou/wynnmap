@@ -2,7 +2,7 @@ use components::{checkbox::Checkbox, gleaderboard::Gleaderboard};
 use datasource::ws_terr_changes;
 use leptos::prelude::*;
 use settings::{provide_settings, use_toggle};
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap};
 use wynnmap::{WynnMap, conns::Connections, maptile::DefaultMapTiles, terrs::TerrView};
 
 mod components;

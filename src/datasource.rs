@@ -28,7 +28,7 @@ pub async fn load_map_tiles() -> Option<Vec<WynntilsMapTile>> {
     Some(tiles)
 }
 
-pub async fn get_wynntils_terrs() -> Result<HashMap<Arc<str>, Territory>, reqwest::Error> {
+pub async fn _get_wynntils_terrs() -> Result<HashMap<Arc<str>, Territory>, reqwest::Error> {
     let resp: HashMap<Arc<str>, Territory> =
         reqwest::get(format!("{}{}", get_url("http"), "/api/v1/territories/list"))
             .await?
