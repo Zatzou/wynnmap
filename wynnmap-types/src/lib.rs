@@ -7,6 +7,8 @@ use crc32fast::Hasher;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub mod ws;
+
 /// A wynntils map tile as sourced from the wynntils/static-storage repository.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct WynntilsMapTile {
@@ -51,14 +53,14 @@ impl WynntilsMapTile {
     }
 }
 
-#[derive(Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Territory {
     pub guild: Guild,
     pub acquired: chrono::DateTime<chrono::Utc>,
     pub location: Location,
 }
 
-#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash)]
 pub struct Guild {
     pub uuid: Uuid,
     pub name: Arc<str>,
@@ -86,7 +88,7 @@ impl Guild {
     }
 }
 
-#[derive(Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Location {
     pub start: [i32; 2],
     pub end: [i32; 2],

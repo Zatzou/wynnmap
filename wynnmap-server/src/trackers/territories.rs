@@ -1,12 +1,12 @@
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{collections::HashMap, mem, sync::Arc, time::Duration};
 
 use serde::Deserialize;
 use tokio::{
-    sync::RwLock,
+    sync::{RwLock, broadcast},
     time::{Instant, sleep},
 };
 use tracing::{error, info};
-use wynnmap_types::{ExTerrInfo, TerrRes, Territory};
+use wynnmap_types::{ExTerrInfo, TerrRes, Territory, ws::TerrSockMessage};
 
 use crate::{
     config::Config,
@@ -24,6 +24,8 @@ pub(crate) async fn create_terr_tracker(config: Arc<Config>) -> TerritoryState {
         .build()
         .unwrap();
 
+    let (bc_send, bc_recv) = broadcast::channel(500);
+
     let state = TerritoryState {
         client,
 
@@ -34,18 +36,20 @@ pub(crate) async fn create_terr_tracker(config: Arc<Config>) -> TerritoryState {
 
         colors: Arc::new(RwLock::new(HashMap::new())),
         extra: Arc::new(RwLock::new(HashMap::new())),
+
+        bc_recv: Arc::new(bc_recv),
     };
 
-    tokio::spawn(territory_tracker(state.clone()));
+    tokio::spawn(territory_tracker(state.clone(), bc_send));
     tokio::spawn(wynntils_color_grabber(state.clone()));
     tokio::spawn(extra_data_loader(state.clone()));
 
     state
 }
 
-async fn territory_tracker(state: TerritoryState) {
+async fn territory_tracker(state: TerritoryState, bc_send: broadcast::Sender<TerrSockMessage>) {
     loop {
-        let res = territory_tracker_inner(&state).await;
+        let res = territory_tracker_inner(&state, bc_send.clone()).await;
 
         if let Err(e) = res {
             error!("Territory tracker failed: {}", e);
@@ -54,7 +58,10 @@ async fn territory_tracker(state: TerritoryState) {
         tokio::time::sleep(std::time::Duration::from_secs(10)).await;
     }
 
-    async fn territory_tracker_inner(state: &TerritoryState) -> Result<(), reqwest::Error> {
+    async fn territory_tracker_inner(
+        state: &TerritoryState,
+        bc_send: broadcast::Sender<TerrSockMessage>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         loop {
             info!("Loading territories");
             let req = state
@@ -97,14 +104,39 @@ async fn territory_tracker(state: TerritoryState) {
 
             let mut lock = state.inner.write().await;
 
-            // update the territories
-            lock.territories = data;
+            // update the territories and get the old data
+            let mut old = data.clone();
+            mem::swap(&mut lock.territories, &mut old);
 
             // update the expires so caching works
             lock.expires = expires + Duration::from_secs(1);
 
             // release the lock
             drop(lock);
+
+            // compare the new and old data and send the changes
+            for (k, new) in data.iter() {
+                if let Some(old) = old.get(k) {
+                    if old != new {
+                        if old.guild.name != new.guild.name {
+                            bc_send.send(TerrSockMessage::Capture {
+                                name: k.clone(),
+                                old: old.clone(),
+                                new: new.clone(),
+                            })?;
+                        } else {
+                            bc_send.send(TerrSockMessage::Territory(HashMap::from_iter(vec![
+                                (k.clone(), new.clone()),
+                            ])))?;
+                        }
+                    }
+                } else {
+                    bc_send.send(TerrSockMessage::Territory(HashMap::from_iter(vec![(
+                        k.clone(),
+                        new.clone(),
+                    )])))?;
+                }
+            }
 
             // wait until new data is available
             tokio::time::sleep_until(
