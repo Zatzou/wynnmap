@@ -13,7 +13,7 @@ use wynnmap_types::{ExTerrInfo, Territory, WynntilsMapTile, ws::TerrSockMessage}
 pub fn get_url(protocol: &str) -> String {
     let window = leptos::leptos_dom::helpers::window().location();
     let host = window.host().unwrap();
-    let proto = window.protocol().map_or(false, |p| p == "https:");
+    let proto = window.protocol().is_ok_and(|p| p == "https:");
 
     format!("{protocol}{}://{host}", if proto { "s" } else { "" })
 }
