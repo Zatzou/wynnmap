@@ -48,6 +48,48 @@ html::before {
     contain: layout;
 }
 
+.guildterr .attacktmr {
+    position: absolute;
+    width: calc(100% + 6px);
+    height: calc(100% + 6px);
+    z-index: -1;
+
+    border: 4px dashed transparent;
+
+}
+
+@keyframes attackdelay {
+    0% {
+        border-color: oklch(0.577 0.245 27.325);
+    }
+
+    25% {
+        border-color: oklch(0.646 0.222 41.116);
+    }
+
+    50% {
+        border-color: oklch(0.769 0.188 70.08);
+    }
+
+    75% {
+        border-color: oklch(0.852 0.199 91.936);
+    }
+
+    100% {
+        border-color: oklch(0.841 0.238 128.85);
+    }
+}
+
+@keyframes flash {
+    0% {
+        border-color: oklch(0.577 0.245 27.325);
+    }
+
+    100% {
+        border-color: transparent;
+    }
+}
+
 .textshadow {
     text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.5);
 }

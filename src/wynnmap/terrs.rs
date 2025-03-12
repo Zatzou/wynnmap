@@ -52,6 +52,7 @@ pub fn Territory(
             style:background-color={move || format!("rgba({}, 0.35)", col_rgb)}
             style:border-color={move || format!("rgb({})", col_rgb2)}
         >
+            <AttackBorder terr=terr />
             <h3 class="font-bold text-3xl text-white textshadow">{terr.read().guild.prefix.clone()}</h3>
             <ResIcons res=res />
             <TerrTimer terr=terr />
@@ -151,5 +152,58 @@ fn TerrTimer(terr: Signal<Territory>) -> impl IntoView {
 
     view! {
         <h4 class="px-2 rounded-2xl text-sm text-center whitespace-nowrap" style={move || color} class:hidden={move || !show_timers.get()}>{timestr}</h4>
+    }
+}
+
+/// The component rendering the attack timer border for territories which are on attack cooldown.
+#[component]
+fn AttackBorder(terr: Signal<Territory>) -> impl IntoView {
+    let now = chrono::Utc::now();
+    let time = now
+        .signed_duration_since(terr.read().acquired)
+        .num_milliseconds();
+
+    let (time, set_time) = signal(time);
+
+    move || {
+        if time.get() < 599_000 {
+            let h = set_timeout_with_handle(
+                move || {
+                    set_time.set(599_000);
+                },
+                Duration::from_millis((599_000 - time.get()).max(1000) as u64),
+            )
+            .ok();
+
+            on_cleanup(move || {
+                if let Some(i) = h {
+                    i.clear();
+                }
+            });
+
+            Some(view! {
+                <div class="attacktmr" style:animation={move || format!("600s linear {}ms attackdelay", -time.get())} />
+            }.into_any())
+        } else if time.get() < 600_000 {
+            let h = set_timeout_with_handle(
+                move || {
+                    set_time.set(600_000);
+                },
+                Duration::from_millis(1000),
+            )
+            .ok();
+
+            on_cleanup(move || {
+                if let Some(i) = h {
+                    i.clear();
+                }
+            });
+
+            Some(view! {
+                <div class="attacktmr" style:animation={move || String::from("0.2s linear 5 flash")} />
+            }.into_any())
+        } else {
+            None
+        }
     }
 }
