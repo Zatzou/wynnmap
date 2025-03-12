@@ -1,5 +1,6 @@
 use axum::{
     Json,
+    body::Bytes,
     extract::{
         State, WebSocketUpgrade,
         ws::{Message, WebSocket},
@@ -55,7 +56,7 @@ async fn ws_handler(
 }
 
 async fn handle_socket(mut socket: WebSocket, state: TerritoryState) {
-    let mut bc_recv = state.bc_recv.resubscribe();
+    let bc_recv = state.bc_recv.resubscribe();
 
     socket
         .send(Message::Text(
@@ -68,34 +69,50 @@ async fn handle_socket(mut socket: WebSocket, state: TerritoryState) {
         .await
         .unwrap();
 
-    loop {
-        select! {
-            s = socket.recv() => {
-                if let Some(Ok(msg)) = s {
-                    match msg {
-                        Message::Ping(data) => {
-                            socket.send(Message::Pong(data)).await.unwrap();
+    if let Err(e) = handle_socket_inner(socket, bc_recv).await {
+        tracing::error!("Error handling socket: {:?}", e);
+    }
+
+    async fn handle_socket_inner(
+        mut socket: WebSocket,
+        mut bc_recv: tokio::sync::broadcast::Receiver<TerrSockMessage>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        loop {
+            select! {
+                // respond to received pings and close messages
+                s = socket.recv() => {
+                    if let Some(Ok(msg)) = s {
+                        match msg {
+                            Message::Ping(data) => {
+                                socket.send(Message::Pong(data)).await?;
+                            }
+                            Message::Close(frame) => {
+                                socket.send(Message::Close(frame)).await?;
+                                break;
+                            }
+                            _ => {}
                         }
-                        Message::Close(frame) => {
-                            socket.send(Message::Close(frame)).await.unwrap();
-                            break;
-                        }
-                        _ => {}
+                    } else {
+                        break;
                     }
-                } else {
-                    break;
                 }
-            }
-            m = bc_recv.recv() => {
-                if let Ok(msg) = m {
-                    socket
-                        .send(Message::Text(
-                            serde_json::to_string(&msg).unwrap().into(),
-                        ))
-                        .await
-                        .unwrap();
+                // send messages from the broadcast channel
+                m = bc_recv.recv() => {
+                    if let Ok(msg) = m {
+                        socket
+                            .send(Message::Text(
+                                serde_json::to_string(&msg)?.into(),
+                            ))
+                            .await?;
+                    }
+                }
+                // send pings every 30 seconds
+                _ = tokio::time::sleep(std::time::Duration::from_secs(30)) => {
+                    socket.send(Message::Ping(Bytes::new())).await?;
                 }
             }
         }
+
+        Ok(())
     }
 }
