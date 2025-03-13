@@ -223,7 +223,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 style="will-change: transform, transition;"
                 style:transform=move || {
                     format!(
-                        "translate3D({}px, {}px, 0) scale({})",
+                        "translate({}px, {}px) scale({})",
                         zcomptrans.get().0,
                         zcomptrans.get().1,
                         zoom.get(),
@@ -237,7 +237,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                     class:wynnmap-zoomedin={move || zoom.get() > 1.0}
                     style="will-change: transform;"
                     style:transform=move || {
-                        format!("translate3D({}px, {}px, 0)", position.get().0, position.get().1)
+                        format!("translate({}px, {}px)", position.get().0, position.get().1)
                     }
                 >
                     {children()}
