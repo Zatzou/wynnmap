@@ -1,7 +1,7 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use codee::string::JsonSerdeWasmCodec;
-use leptos::prelude::*;
+use leptos::{leptos_dom::logging::console_log, prelude::*};
 use leptos_use::{UseWebSocketReturn, core::ConnectionReadyState, use_websocket};
 use wynnmap_types::{ExTerrInfo, Territory, WynntilsMapTile, ws::TerrSockMessage};
 
@@ -66,7 +66,17 @@ pub fn ws_terr_changes(
 
     Effect::new(move || {
         if let ConnectionReadyState::Closed = ready_state.get() {
-            open();
+            let opfn = open.clone();
+
+            // attempt to reconnect every 10 seconds if the connection is closed
+            set_timeout(
+                move || {
+                    if let ConnectionReadyState::Closed = ready_state.get() {
+                        opfn()
+                    }
+                },
+                Duration::from_secs(10),
+            );
         }
     });
 
