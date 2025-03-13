@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use codee::string::JsonSerdeWasmCodec;
-use leptos::{leptos_dom::logging::console_log, prelude::*};
+use leptos::prelude::*;
 use leptos_use::{UseWebSocketReturn, core::ConnectionReadyState, use_websocket};
 use wynnmap_types::{ExTerrInfo, Territory, WynntilsMapTile, ws::TerrSockMessage};
 
