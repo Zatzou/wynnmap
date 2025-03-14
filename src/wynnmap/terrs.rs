@@ -35,14 +35,9 @@ pub fn Territory(
     let col_rgb = format!("{}, {}, {}", col.0, col.1, col.2);
     let col_rgb2 = col_rgb.clone();
 
-    let res = Memo::new(move |_| {
-        extradata
-            .read()
-            .get(&name)
-            .map_or((false, false, false, false, false), |e| {
-                e.resources.has_res()
-            })
-    });
+    // toggles for showing territory parts
+    let show_res = use_toggle("resico", true);
+    let show_timers = use_toggle("timers", true);
 
     view! {
         <div class="wynnmap-item guildterr"
@@ -54,39 +49,44 @@ pub fn Territory(
         >
             <AttackBorder terr=terr />
             <h3 class="font-bold text-3xl text-white textshadow">{terr.read().guild.prefix.clone()}</h3>
-            <ResIcons res=res />
-            <TerrTimer terr=terr />
+            // resource icons
+            <Show when={move || show_res.get()}>
+                <ResIcons name={name.clone()} extradata=extradata />
+            </Show>
+            // timer
+            <Show when={move || show_timers.get()}>
+                <TerrTimer terr=terr />
+            </Show>
         </div>
     }
 }
 
 #[component]
-fn ResIcons(#[prop(into)] res: Signal<(bool, bool, bool, bool, bool)>) -> impl IntoView {
-    let show_res = use_toggle("resico", true);
-
-    move || {
-        if show_res.get() {
-            Some(view! {
-                <div class="flex pb-1" > // class:hidden={move || !show_res.get()}
-                    // this is here so that tailwinds cli realizes that this class is used
-                    // class="hidden"
-                    <div class="icon-emerald" class:hidden={move || !res.get().0}></div>
-                    <div class="icon-crops" class:hidden={move || !res.get().1}></div>
-                    <div class="icon-fish" class:hidden={move || !res.get().2}></div>
-                    <div class="icon-ores" class:hidden={move || !res.get().3}></div>
-                    <div class="icon-wood" class:hidden={move || !res.get().4}></div>
-                </div>
+fn ResIcons(name: Arc<str>, extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>) -> impl IntoView {
+    let res = Memo::new(move |_| {
+        extradata
+            .read()
+            .get(&name)
+            .map_or((false, false, false, false, false), |e| {
+                e.resources.has_res()
             })
-        } else {
-            None
-        }
+    });
+
+    view! {
+        <div class="flex pb-1" >
+            // this is here so that tailwinds cli realizes that this class is used
+            // class="hidden"
+            <div class="icon-emerald" class:hidden={move || !res.get().0}></div>
+            <div class="icon-crops" class:hidden={move || !res.get().1}></div>
+            <div class="icon-fish" class:hidden={move || !res.get().2}></div>
+            <div class="icon-ores" class:hidden={move || !res.get().3}></div>
+            <div class="icon-wood" class:hidden={move || !res.get().4}></div>
+        </div>
     }
 }
 
 #[component]
 fn TerrTimer(terr: Signal<Territory>) -> impl IntoView {
-    let show_timers = use_toggle("timers", true);
-
     let now = chrono::Utc::now();
     let time = now
         .signed_duration_since(terr.read().acquired)
@@ -151,7 +151,7 @@ fn TerrTimer(terr: Signal<Territory>) -> impl IntoView {
     };
 
     view! {
-        <h4 class="px-2 rounded-2xl text-sm text-center whitespace-nowrap" style={move || color} class:hidden={move || !show_timers.get()}>{timestr}</h4>
+        <h4 class="px-2 rounded-2xl text-sm text-center whitespace-nowrap" style={move || color}>{timestr}</h4>
     }
 }
 
