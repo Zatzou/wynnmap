@@ -13,7 +13,7 @@ pub fn MapTile(tile: Signal<WynntilsMapTile>) -> impl IntoView {
             style:height=move || format!("{}px", tile.read().height() + 1)
             style:transform=move || {
                 format!(
-                    "translate({}px, {}px)",
+                    "translate3D({}px, {}px, 0)",
                     tile.read().left_side(),
                     tile.read().top_side(),
                 )

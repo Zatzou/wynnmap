@@ -43,7 +43,7 @@ pub fn Territory(
         <div class="wynnmap-item guildterr"
             style:width={move || format!("{}px", terr.read().location.width())}
             style:height={move || format!("{}px", terr.read().location.height())}
-            style:transform={move || format!("translate({}px, {}px)", terr.read().location.left_side(), terr.read().location.top_side())}
+            style:transform={move || format!("translate3D({}px, {}px, 0)", terr.read().location.left_side(), terr.read().location.top_side())}
             style:background-color={move || format!("rgba({}, 0.35)", col_rgb)}
             style:border-color={move || format!("rgb({})", col_rgb2)}
         >

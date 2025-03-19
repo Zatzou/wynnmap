@@ -23,8 +23,9 @@ pub fn WynnMap(children: Children) -> impl IntoView {
     let (zoom, set_zoom) = signal(0.5);
     // transform used to compensate for zooming so that the zoom appears as if it's zooming into the mouse position
     let (zcomptrans, set_zcomptrans) = signal((0.0, 0.0));
-    // are we using touch to zoom? this is used to disable the transition so zooming is not laggy on touch devices
-    let (touchzoom, set_touchzoom) = signal(false);
+
+    // are we currently transitioning? transitions can occur from zooming
+    let (transitioning, set_transitioning) = signal(false);
 
     // mouse position stored for zoom compensation
     let mousepos = Arc::new(Mutex::new((0, 0)));
@@ -64,8 +65,8 @@ pub fn WynnMap(children: Children) -> impl IntoView {
     let zoomchange = move |e: WheelEvent| {
         e.prevent_default();
 
-        // we are zooming with the mouse so enable the transition
-        set_touchzoom.set(false);
+        // enable the transition when zooming with the mousewheel
+        set_transitioning.set(true);
 
         // get the mouse position
         let mpos = mousepos2.lock().unwrap();
@@ -151,9 +152,6 @@ pub fn WynnMap(children: Children) -> impl IntoView {
             }
             // zoom
             2 => {
-                // we are zooming with touch so disable the transition as the transition would make the zooming look laggy
-                set_touchzoom.set(true);
-
                 // get the touch positions
                 let touch1 = tl.get(0).unwrap();
                 let touch2 = tl.get(1).unwrap();
@@ -202,6 +200,14 @@ pub fn WynnMap(children: Children) -> impl IntoView {
         *tpos = updatetouchpos(&tl);
     };
 
+    // detect if the browser is firefox
+    // this is used to enable the `will-change` property as firefox is the only browser that doesnt shit the bed with it on
+    let is_firefox = !leptos::leptos_dom::helpers::window()
+        .navigator()
+        .user_agent()
+        .unwrap_or_default()
+        .contains("like Gecko");
+
     view! {
         // outermost container used for containing the map
         <div
@@ -215,33 +221,28 @@ pub fn WynnMap(children: Children) -> impl IntoView {
             on:touchstart=touchstart
             on:touchmove=ontouchdrag
         >
-            // the zoomer container used for zooming
-            // this is used to apply the zoom animations
+            // the inner container used for moving the map
+            // this container contains the map contents and is moved when the map is dragged
             <div
-                class="wynnmap-zoomer"
-                class:wynnmap-zoomer-transitions={move || !touchzoom.get()}
-                style="will-change: transform, transition;"
+                class="wynnmap-inner"
+                class:wynnmap-zoomedin={move || zoom.get() > 1.0}
+                class:wynnmap-transitions={move || transitioning.get()}
+                // disable the transition after it has run
+                on:transitionend=move |_| {set_transitioning.set(false);}
+
+                style:will-change=move || {if is_firefox {"transform, transition"} else {""}}
                 style:transform=move || {
                     format!(
-                        "translate({}px, {}px) scale({})",
+                        "translate3D({}px, {}px, 0) scale({}) translate3D({}px, {}px, 0)",
                         zcomptrans.get().0,
                         zcomptrans.get().1,
                         zoom.get(),
+                        position.get().0,
+                        position.get().1,
                     )
                 }
             >
-                // the inner container used for moving the map
-                // this container contains the map contents and is moved when the map is dragged
-                <div
-                    class="wynnmap-inner"
-                    class:wynnmap-zoomedin={move || zoom.get() > 1.0}
-                    style="will-change: transform;"
-                    style:transform=move || {
-                        format!("translate({}px, {}px)", position.get().0, position.get().1)
-                    }
-                >
-                    {children()}
-                </div>
+                {children()}
             </div>
         </div>
     }

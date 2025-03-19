@@ -4,16 +4,12 @@
 }
 
 .wynnmap-inner {
-    backface-visibility: hidden;
-}
-
-.wynnmap-zoomer {
     transform-origin: 0 0;
     backface-visibility: hidden;
 }
 
-.wynnmap-zoomer-transitions {
-    transition: transform 0.25s;
+.wynnmap-transitions {
+    transition: transform 0.2s;
 }
 
 .wynnmap-zoomedin .wynnmap-tile {
