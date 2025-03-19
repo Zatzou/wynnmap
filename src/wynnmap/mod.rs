@@ -74,11 +74,8 @@ pub fn WynnMap(children: Children) -> impl IntoView {
 
         // calculate the new zoom level
         let zoom = zoom.get();
-        let newzoom = if e.delta_y() > 0.0 {
-            (zoom / 2.0).max(ZOOM_MIN)
-        } else {
-            (zoom * 2.0).min(ZOOM_MAX)
-        };
+
+        let newzoom = (zoom - (e.delta_y() / 300.0) * zoom).clamp(ZOOM_MIN, ZOOM_MAX);
 
         set_zoom.set(newzoom);
 
