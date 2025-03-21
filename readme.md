@@ -12,3 +12,7 @@ There are two components as of right now, the backend server and the frontend. T
 5) On terminal #1, run the command `trunk serve`. This serves the frontend.
 6) On terminal #2, run `cd wynnmap-server` then `cargo run`. This serves the backend.
 7) The map should now be accessible at `localhost:8080`.
+
+# Building using release optimizations
+1) Run `trunk build --release` to generate an optimized frontend.
+2) Run `cargo build --release` in `wynnmap-server` in order to generate a release binary,
