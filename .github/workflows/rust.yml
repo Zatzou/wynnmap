@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Install trunk
+        run: wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.21.9/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+
+      - name: Install tailwind
+        run: npm install tailwindcss @tailwindcss/cli
+
+      - name: Build frontend
+        run: ./trunk build
+
+      - name: Build server
+        run: cd ./wynnmap-server/ && cargo build && cd ..
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        name: wynnmap
+        path: |
+          dist/
+          target/debug/wynnmap-server
+          wynnmap-server/config-example.toml
