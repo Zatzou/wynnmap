@@ -25,10 +25,10 @@ jobs:
       - name: Install tailwind
         run: npm install tailwindcss @tailwindcss/cli
 
+      - uses: Swatinem/rust-cache@v2
+
       - name: Build frontend
         run: ./trunk build
-
-      - uses: Swatinem/rust-cache@v2
 
       - name: Build server
         run: cd ./wynnmap-server/ && cargo build && cd ..
