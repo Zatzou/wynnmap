@@ -4,7 +4,7 @@ A fast Wynncraft map. Currently available at [wynnmap.zatzou.com](https://wynnma
 
 ## Running locally
 
-There are two components as of right now, the backend server and the frontend. To get started, you will need to install [Rust](https://rustup.rs/) and [Trunk](https://trunkrs.dev/). Adittionally, you will need to have the tailwindcss cli installed to build the frontend.
+There are two components as of right now, the backend server and the frontend. To get started, you will need to install [Rust](https://rustup.rs/) and [Trunk](https://trunkrs.dev/). Npm is also required to use the tailwindcss cli. The tailwind cli can be installed using `npm install tailwindcss @tailwindcss/cli`.
 
 You can build and serve the frontend for development using `trunk serve` in the root of the project. The frontend will be available at `http://localhost:8080`. Note that by default the frontend will use the production backend server. If you wish to do backend development you will need to change the proxied urls in `Trunk.toml`.
 

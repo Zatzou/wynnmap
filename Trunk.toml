@@ -7,8 +7,9 @@ addresses = ["0.0.0.0"]
 
 [[hooks]]
 stage = "pre_build"
-command = "tailwindcss"
+command = "npx"
 command_arguments = [
+    "@tailwindcss/cli",
     "-i",
     "./resources/style.css",
     "-o",
