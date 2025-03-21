@@ -39,3 +39,38 @@ jobs:
             dist/
             target/debug/wynnmap-server
             wynnmap-server/config-example.toml
+
+  clippy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: clippy,rustfmt
+          override: true
+
+      - uses: Swatinem/rust-cache@v1
+
+      - run: cargo install clippy-sarif sarif-fmt
+
+      - name: clippy frontend
+        run: cargo clippy --all-targets --all-features --message-format=json |
+          clippy-sarif | tee results-frontend.sarif | sarif-fmt
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: results-frontend.sarif
+
+      - name: clippy backend
+        run: cd wynnmap-server && cargo clippy --all-targets --all-features --message-format=json |
+          clippy-sarif | tee results-backend.sarif | sarif-fmt
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: results-backend.sarif
