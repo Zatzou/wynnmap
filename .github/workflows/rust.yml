@@ -33,8 +33,9 @@ jobs:
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
-        name: wynnmap
-        path: |
-          dist/
-          target/debug/wynnmap-server
-          wynnmap-server/config-example.toml
+        with:
+          name: wynnmap
+          path: |
+            dist/
+            target/debug/wynnmap-server
+            wynnmap-server/config-example.toml
