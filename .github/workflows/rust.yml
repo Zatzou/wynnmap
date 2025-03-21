@@ -62,7 +62,7 @@ jobs:
           clippy-sarif | tee results-frontend.sarif | sarif-fmt
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v1
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results-frontend.sarif
 
@@ -71,6 +71,6 @@ jobs:
           clippy-sarif | tee results-backend.sarif | sarif-fmt
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v1
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results-backend.sarif
