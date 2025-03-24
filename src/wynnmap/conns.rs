@@ -70,7 +70,7 @@ pub fn create_route_paths(
     let mut pathing = String::new();
     for (start, end) in terr_conns {
         pathing.push_str(&format!(
-            "M{} {} L{} {} ",
+            "M{} {}L{} {}",
             start.0,
             start.1, // x and y of starting point
             end.0,
