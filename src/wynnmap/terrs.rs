@@ -48,7 +48,9 @@ pub fn Territory(
             style:border-color={move || format!("rgb({})", col_rgb2)}
         >
             <AttackBorder terr=terr />
-            <h3 class="font-bold text-3xl text-white textshadow">{terr.read().guild.prefix.clone()}</h3>
+            <svg style:height="1.875rem" style:overflow="visible">
+                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="30" font-weight="bold" fill="white" paint-order="stroke" stroke="black" stroke-width="3">{terr.read().guild.prefix.clone()}</text>
+            </svg>
             // resource icons
             <Show when={move || show_res.get()}>
                 <ResIcons name={name.clone()} extradata=extradata />
