@@ -160,6 +160,9 @@ pub fn WynnMap(children: Children) -> impl IntoView {
             }
             // zoom
             2 => {
+                // disable will-change to prevent flickering
+                set_moving.set(false);
+
                 // get the touch positions
                 let touch1 = tl.get(0).unwrap();
                 let touch2 = tl.get(1).unwrap();
