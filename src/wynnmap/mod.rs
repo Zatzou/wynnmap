@@ -15,6 +15,8 @@ const ZOOM_MAX: f64 = 64.0;
 pub fn WynnMap(children: Children) -> impl IntoView {
     // is the map being dragged currently
     let (dragging, set_dragging) = signal(false);
+    // is the map being moved currently
+    let (moving, set_moving) = signal(false);
 
     // position of the map
     let (position, set_pos) = signal((2000.0, 2200.0));
@@ -53,12 +55,14 @@ pub fn WynnMap(children: Children) -> impl IntoView {
     let dragstart = move |e: MouseEvent| {
         e.prevent_default();
         set_dragging.set(true);
+        set_moving.set(true);
     };
 
     // detect when a mouse drag ends
     let dragend = move |e: MouseEvent| {
         e.prevent_default();
         set_dragging.set(false);
+        set_moving.set(false);
     };
 
     // detect zooming using a mouse wheel
@@ -113,7 +117,14 @@ pub fn WynnMap(children: Children) -> impl IntoView {
     let touchstart = move |e: TouchEvent| {
         e.prevent_default();
 
-        *tpos.lock().unwrap() = updatetouchpos(&e.touches());
+        let mut tpos = tpos.lock().unwrap();
+        *tpos = updatetouchpos(&e.touches());
+
+        if tpos.len() > 0 {
+            set_moving.set(true);
+        } else {
+            set_moving.set(false);
+        }
     };
 
     // handle the touch events for dragging and zooming
@@ -197,14 +208,6 @@ pub fn WynnMap(children: Children) -> impl IntoView {
         *tpos = updatetouchpos(&tl);
     };
 
-    // detect if the browser is firefox
-    // this is used to enable the `will-change` property as firefox is the only browser that doesnt shit the bed with it on
-    let is_firefox = !leptos::leptos_dom::helpers::window()
-        .navigator()
-        .user_agent()
-        .unwrap_or_default()
-        .contains("like Gecko");
-
     view! {
         // outermost container used for containing the map
         <div
@@ -227,7 +230,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 // disable the transition after it has run
                 on:transitionend=move |_| {set_transitioning.set(false);}
 
-                style:will-change=move || {if is_firefox {"transform, transition"} else {""}}
+                style:will-change=move || {if moving.get() {"transform"} else {""}}
                 style:transform=move || {
                     format!(
                         "translate3D({}px, {}px, 0) scale({}) translate3D({}px, {}px, 0)",
