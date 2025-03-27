@@ -233,9 +233,9 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 style:will-change=move || {if moving.get() {"transform"} else {""}}
                 style:transform=move || {
                     format!(
-                        "translate3D({}px, {}px, 0) scale3D({z},{z},{z})",
-                        position.get().0 * zoom.get() + zcomptrans.get().0,
-                        position.get().1 * zoom.get() + zcomptrans.get().1,
+                        "matrix3d({z},0,0,0,0,{z},0,0,0,0,{z},0,{x},{y},0,1)",
+                        x = position.get().0 * zoom.get() + zcomptrans.get().0,
+                        y = position.get().1 * zoom.get() + zcomptrans.get().1,
                         z = zoom.get(),
                     )
                 }
