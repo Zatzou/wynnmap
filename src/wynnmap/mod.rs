@@ -8,9 +8,6 @@ pub mod conns;
 pub mod maptile;
 pub mod terrs;
 
-const ZOOM_MIN: f64 = 0.0625;
-const ZOOM_MAX: f64 = 64.0;
-
 #[component]
 pub fn WynnMap(children: Children) -> impl IntoView {
     // is the map being dragged currently
@@ -79,46 +76,28 @@ pub fn WynnMap(children: Children) -> impl IntoView {
         // calculate the new zoom level
         let zoom = zoom.get();
 
-        let newzoom = (zoom - (e.delta_y() / 300.0) * zoom).clamp(ZOOM_MIN, ZOOM_MAX);
+        let newzoom = calculate_new_zoom(zoom, -e.delta_y() / 300.0);
 
         set_zoom.set(newzoom);
 
-        // calculate the zoom compensation transform
-        // https://stackoverflow.com/a/27611642
-        let ctrans = zcomptrans.get();
-        let i = ((mpos.0 - ctrans.0) / zoom, (mpos.1 - ctrans.1) / zoom);
-        let n = (i.0 * newzoom, i.1 * newzoom);
-        let c = (mpos.0 - n.0, mpos.1 - n.1);
-        set_zcomptrans.set(c);
+        set_zcomptrans.set(calculate_zoom_compensation(
+            mpos,
+            zoom,
+            newzoom,
+            zcomptrans.get(),
+        ));
     };
 
     // touch positions stored for touch events
     let tpos = Arc::new(Mutex::new(Vec::new()));
     let tpos2 = tpos.clone();
 
-    // function for updating touch positions
-    let updatetouchpos = |tl: &TouchList| -> Vec<(i32, i32)> {
-        let mut positions = Vec::new();
-
-        // iterate over the touches and store the positions
-        let mut x = 0;
-        while x < tl.length() {
-            let touch = tl.get(x).unwrap();
-
-            positions.push((touch.client_x(), touch.client_y()));
-
-            x += 1;
-        }
-
-        positions
-    };
-
     // detect when a touch starts and update the active touches
     let touchstart = move |e: TouchEvent| {
         e.prevent_default();
 
         let mut tpos = tpos.lock().unwrap();
-        *tpos = updatetouchpos(&e.touches());
+        *tpos = get_touch_positions(&e.touches());
 
         if tpos.len() > 0 {
             set_moving.set(true);
@@ -137,7 +116,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
 
         // if the touch positions are different from the stored touch positions update the stored touch positions
         if tl.length() as usize != tpos.len() {
-            *tpos = updatetouchpos(&tl);
+            *tpos = get_touch_positions(&tl);
             return;
         }
 
@@ -186,7 +165,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
 
                 // calculate the new zoom level
                 let zoom = zoom.get();
-                let newzoom = (zoom + (delta / 300.0 * zoom)).clamp(ZOOM_MIN, ZOOM_MAX);
+                let newzoom = calculate_new_zoom(zoom, delta / 300.0);
 
                 set_zoom.set(newzoom);
 
@@ -197,18 +176,19 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                     f64::from(npos.0.1 + npos.1.1) / 2.0,
                 );
 
-                let ctrans = zcomptrans.get();
-                let i = ((mpos.0 - ctrans.0) / zoom, (mpos.1 - ctrans.1) / zoom);
-                let n = (i.0 * newzoom, i.1 * newzoom);
-                let c = (mpos.0 - n.0, mpos.1 - n.1);
-                set_zcomptrans.set(c);
+                set_zcomptrans.set(calculate_zoom_compensation(
+                    mpos,
+                    zoom,
+                    newzoom,
+                    zcomptrans.get(),
+                ));
             }
             _ => {}
         }
 
         // update the touch positions after the event
         // this ensures that we can calculate deltas correctly
-        *tpos = updatetouchpos(&tl);
+        *tpos = get_touch_positions(&tl);
     };
 
     view! {
@@ -247,4 +227,50 @@ pub fn WynnMap(children: Children) -> impl IntoView {
             </div>
         </div>
     }
+}
+
+/// Convinience function for getting the touch positions out of a DOM TouchList
+fn get_touch_positions(tl: &TouchList) -> Vec<(i32, i32)> {
+    let mut positions = Vec::new();
+
+    // iterate over the touches and store the positions
+    let mut x = 0;
+    while x < tl.length() {
+        let touch = tl.get(x).unwrap();
+
+        positions.push((touch.client_x(), touch.client_y()));
+
+        x += 1;
+    }
+
+    positions
+}
+
+/// The minimum zoom level
+const ZOOM_MIN: f64 = 0.0625;
+/// The maximum zoom level
+const ZOOM_MAX: f64 = 64.0;
+
+/// Calculate the new zoom level based on the current zoom level and the delta and clamp it to the min and max zoom levels
+fn calculate_new_zoom(current_zoom: f64, delta: f64) -> f64 {
+    (current_zoom + delta * current_zoom).clamp(ZOOM_MIN, ZOOM_MAX)
+}
+
+/// Calculate the transform that has to be applied such that the zoom appears to be centered around the mouse position
+///
+/// This is based on the stackoverflow answer here: https://stackoverflow.com/a/27611642
+fn calculate_zoom_compensation(
+    position: (f64, f64),
+    current_zoom: f64,
+    new_zoom: f64,
+    current_comp: (f64, f64),
+) -> (f64, f64) {
+    let i = (
+        (position.0 - current_comp.0) / current_zoom,
+        (position.1 - current_comp.1) / current_zoom,
+    );
+
+    let n = (i.0 * new_zoom, i.1 * new_zoom);
+
+    (position.0 - n.0, position.1 - n.1)
 }
