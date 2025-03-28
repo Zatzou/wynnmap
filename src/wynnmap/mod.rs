@@ -20,8 +20,6 @@ pub fn WynnMap(children: Children) -> impl IntoView {
 
     // the current zoom level
     let (zoom, set_zoom) = signal(0.5);
-    // transform used to compensate for zooming so that the zoom appears as if it's zooming into the mouse position
-    let (zcomptrans, set_zcomptrans) = signal((0.0, 0.0));
 
     // are we currently transitioning? transitions can occur from zooming
     let (transitioning, set_transitioning) = signal(false);
@@ -80,11 +78,11 @@ pub fn WynnMap(children: Children) -> impl IntoView {
 
         set_zoom.set(newzoom);
 
-        set_zcomptrans.set(calculate_zoom_compensation(
-            mpos,
-            zoom,
-            newzoom,
-            zcomptrans.get(),
+        let zcomp = calculate_zoom_compensation(mpos, zoom, newzoom);
+
+        set_pos.set((
+            position.get().0 + zcomp.0 / newzoom,
+            position.get().1 + zcomp.1 / newzoom,
         ));
     };
 
@@ -176,11 +174,11 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                     f64::from(npos.0.1 + npos.1.1) / 2.0,
                 );
 
-                set_zcomptrans.set(calculate_zoom_compensation(
-                    mpos,
-                    zoom,
-                    newzoom,
-                    zcomptrans.get(),
+                let zcomp = calculate_zoom_compensation(mpos, zoom, newzoom);
+
+                set_pos.set((
+                    position.get().0 + zcomp.0 / newzoom,
+                    position.get().1 + zcomp.1 / newzoom,
                 ));
             }
             _ => {}
@@ -217,8 +215,8 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 style:transform=move || {
                     format!(
                         "matrix3d({z},0,0,0,0,{z},0,0,0,0,{z},0,{x},{y},0,1)",
-                        x = position.get().0 * zoom.get() + zcomptrans.get().0,
-                        y = position.get().1 * zoom.get() + zcomptrans.get().1,
+                        x = position.get().0 * zoom.get(),
+                        y = position.get().1 * zoom.get(),
                         z = zoom.get(),
                     )
                 }
@@ -263,12 +261,8 @@ fn calculate_zoom_compensation(
     position: (f64, f64),
     current_zoom: f64,
     new_zoom: f64,
-    current_comp: (f64, f64),
 ) -> (f64, f64) {
-    let i = (
-        (position.0 - current_comp.0) / current_zoom,
-        (position.1 - current_comp.1) / current_zoom,
-    );
+    let i = (position.0 / current_zoom, position.1 / current_zoom);
 
     let n = (i.0 * new_zoom, i.1 * new_zoom);
 
