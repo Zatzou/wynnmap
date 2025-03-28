@@ -1,8 +1,8 @@
 use core::panic;
 use std::sync::{Arc, Mutex};
 
-use leptos::prelude::*;
-use web_sys::{MouseEvent, TouchEvent, TouchList, WheelEvent};
+use leptos::{ev, prelude::*};
+use web_sys::{KeyboardEvent, MouseEvent, TouchEvent, TouchList, WheelEvent};
 
 pub mod conns;
 pub mod maptile;
@@ -16,7 +16,8 @@ pub fn WynnMap(children: Children) -> impl IntoView {
     let (moving, set_moving) = signal(false);
 
     // position of the map
-    let (position, set_pos) = signal((2000.0, 2200.0));
+    // let (position, set_pos) = signal((2000.0, 2200.0));
+    let position = RwSignal::new((2000.0, 2200.0));
 
     // the current zoom level
     let (zoom, set_zoom) = signal(0.5);
@@ -36,7 +37,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
         if dragging.get() {
             let pos = position.get();
 
-            set_pos.set((
+            position.set((
                 pos.0 + f64::from(e.movement_x()) / zoom.get(),
                 pos.1 + f64::from(e.movement_y()) / zoom.get(),
             ));
@@ -78,12 +79,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
 
         set_zoom.set(newzoom);
 
-        let zcomp = calculate_zoom_compensation(mpos, zoom, newzoom);
-
-        set_pos.set((
-            position.get().0 + zcomp.0 / newzoom,
-            position.get().1 + zcomp.1 / newzoom,
-        ));
+        apply_zoom_compensation(mpos, zoom, newzoom, position);
     };
 
     // touch positions stored for touch events
@@ -130,7 +126,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 let npos = (touch.client_x(), touch.client_y());
 
                 // update the position
-                set_pos.set((
+                position.set((
                     pos.0 + f64::from(npos.0 - tpos[0].0) / zoom.get(),
                     pos.1 + f64::from(npos.1 - tpos[0].1) / zoom.get(),
                 ));
@@ -167,19 +163,12 @@ pub fn WynnMap(children: Children) -> impl IntoView {
 
                 set_zoom.set(newzoom);
 
-                // calculate the zoom compensation transform
-                // https://stackoverflow.com/a/27611642
                 let mpos = (
                     f64::from(npos.0.0 + npos.1.0) / 2.0,
                     f64::from(npos.0.1 + npos.1.1) / 2.0,
                 );
 
-                let zcomp = calculate_zoom_compensation(mpos, zoom, newzoom);
-
-                set_pos.set((
-                    position.get().0 + zcomp.0 / newzoom,
-                    position.get().1 + zcomp.1 / newzoom,
-                ));
+                apply_zoom_compensation(mpos, zoom, newzoom, position);
             }
             _ => {}
         }
@@ -188,6 +177,95 @@ pub fn WynnMap(children: Children) -> impl IntoView {
         // this ensures that we can calculate deltas correctly
         *tpos = get_touch_positions(&tl);
     };
+
+    let onkeydown = move |e: KeyboardEvent| {
+        match e.key().as_str() {
+            // 0 key - reset zoom
+            "0" => {
+                // perform zoom compensation
+                // get middle point of the screen
+                let mpos = get_viewport_middle();
+                // calculate the zoom compensation
+                let zcomp = calculate_zoom_compensation(mpos, zoom.get(), 1.0);
+                // apply the zoom compensation
+                position.set((position.get().0 + zcomp.0, position.get().1 + zcomp.1));
+
+                // reset the zoom
+                set_zoom.set(1.0);
+
+                // do transition
+                set_transitioning.set(true);
+            }
+            // plus key - zoom in
+            "+" => {
+                let oldzoom = zoom.get();
+
+                // calculate the new zoom level
+                let newzoom = calculate_new_zoom(oldzoom, 0.3);
+                set_zoom.set(newzoom);
+
+                // get middle point of the screen
+                let mpos = get_viewport_middle();
+                // apply the zoom compensation
+                apply_zoom_compensation(mpos, oldzoom, newzoom, position);
+
+                // do transition
+                set_transitioning.set(true);
+            }
+            // minus key - zoom out
+            "-" => {
+                let oldzoom = zoom.get();
+
+                // calculate the new zoom level
+                let newzoom = calculate_new_zoom(oldzoom, -0.3);
+                set_zoom.set(newzoom);
+
+                // get middle point of the screen
+                let mpos = get_viewport_middle();
+                // apply the zoom compensation
+                apply_zoom_compensation(mpos, oldzoom, newzoom, position);
+
+                // do transition
+                set_transitioning.set(true);
+            }
+            // ArrowUp - move up
+            "ArrowUp" => {
+                position.update(|p| {
+                    *p = (p.0, p.1 + 100.0 / zoom.get());
+                });
+
+                set_transitioning.set(true);
+            }
+            // ArrowDown - move down
+            "ArrowDown" => {
+                position.update(|p| {
+                    *p = (p.0, p.1 - 100.0 / zoom.get());
+                });
+
+                set_transitioning.set(true);
+            }
+            // ArrowLeft - move left
+            "ArrowLeft" => {
+                position.update(|p| {
+                    *p = (p.0 + 100.0 / zoom.get(), p.1);
+                });
+
+                set_transitioning.set(true);
+            }
+            // ArrowRight - move right
+            "ArrowRight" => {
+                position.update(|p| {
+                    *p = (p.0 - 100.0 / zoom.get(), p.1);
+                });
+
+                set_transitioning.set(true);
+            }
+            // do nothing on unknown keys
+            _ => {}
+        }
+    };
+
+    window_event_listener(ev::keydown, onkeydown);
 
     view! {
         // outermost container used for containing the map
@@ -267,4 +345,28 @@ fn calculate_zoom_compensation(
     let n = (i.0 * new_zoom, i.1 * new_zoom);
 
     (position.0 - n.0, position.1 - n.1)
+}
+
+/// Helper function to apply the zoom compensation to the current position
+fn apply_zoom_compensation(
+    center: (f64, f64),
+    old_zoom: f64,
+    new_zoom: f64,
+    pos: RwSignal<(f64, f64)>,
+) {
+    let zcomp = calculate_zoom_compensation(center, old_zoom, new_zoom);
+
+    pos.update(|p| {
+        *p = (p.0 + zcomp.0 / new_zoom, p.1 + zcomp.1 / new_zoom);
+    });
+}
+
+/// Helper function for getting the middle point of the viewport
+fn get_viewport_middle() -> (f64, f64) {
+    let window = web_sys::window().unwrap();
+
+    let width = window.inner_width().unwrap().as_f64().unwrap();
+    let height = window.inner_height().unwrap().as_f64().unwrap();
+
+    (width / 2.0, height / 2.0)
 }
