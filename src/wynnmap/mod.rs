@@ -16,8 +16,9 @@ pub fn WynnMap(children: Children) -> impl IntoView {
     let (moving, set_moving) = signal(false);
 
     // position of the map
-    // let (position, set_pos) = signal((2000.0, 2200.0));
-    let position = RwSignal::new((2000.0, 2200.0));
+    let screen_middle = get_viewport_middle();
+    // use the midpoint to position the map so that it is centered
+    let position = RwSignal::new((100.0 + screen_middle.0, 1200.0 + screen_middle.1));
 
     // the current zoom level
     let (zoom, set_zoom) = signal(0.5);
@@ -38,8 +39,8 @@ pub fn WynnMap(children: Children) -> impl IntoView {
             let pos = position.get();
 
             position.set((
-                pos.0 + f64::from(e.movement_x()) / zoom.get(),
-                pos.1 + f64::from(e.movement_y()) / zoom.get(),
+                pos.0 + f64::from(e.movement_x()),
+                pos.1 + f64::from(e.movement_y()),
             ));
         }
 
@@ -127,8 +128,8 @@ pub fn WynnMap(children: Children) -> impl IntoView {
 
                 // update the position
                 position.set((
-                    pos.0 + f64::from(npos.0 - tpos[0].0) / zoom.get(),
-                    pos.1 + f64::from(npos.1 - tpos[0].1) / zoom.get(),
+                    pos.0 + f64::from(npos.0 - tpos[0].0),
+                    pos.1 + f64::from(npos.1 - tpos[0].1),
                 ));
             }
             // zoom
@@ -293,8 +294,8 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 style:transform=move || {
                     format!(
                         "matrix3d({z},0,0,0,0,{z},0,0,0,0,{z},0,{x},{y},0,1)",
-                        x = position.get().0 * zoom.get(),
-                        y = position.get().1 * zoom.get(),
+                        x = position.get().0,
+                        y = position.get().1,
                         z = zoom.get(),
                     )
                 }
@@ -357,7 +358,10 @@ fn apply_zoom_compensation(
     let zcomp = calculate_zoom_compensation(center, old_zoom, new_zoom);
 
     pos.update(|p| {
-        *p = (p.0 + zcomp.0 / new_zoom, p.1 + zcomp.1 / new_zoom);
+        *p = (
+            (p.0 * new_zoom + zcomp.0 * old_zoom) / old_zoom,
+            (p.1 * new_zoom + zcomp.1 * old_zoom) / old_zoom,
+        );
     });
 }
 
