@@ -305,7 +305,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
     }
 }
 
-/// Convinience function for getting the touch positions out of a DOM TouchList
+/// Convinience function for getting the touch positions out of a DOM [`TouchList`]
 fn get_touch_positions(tl: &TouchList) -> Vec<(i32, i32)> {
     let mut positions = Vec::new();
 
@@ -329,12 +329,12 @@ const ZOOM_MAX: f64 = 64.0;
 
 /// Calculate the new zoom level based on the current zoom level and the delta and clamp it to the min and max zoom levels
 fn calculate_new_zoom(current_zoom: f64, delta: f64) -> f64 {
-    (current_zoom + delta * current_zoom).clamp(ZOOM_MIN, ZOOM_MAX)
+    (delta.mul_add(current_zoom, current_zoom)).clamp(ZOOM_MIN, ZOOM_MAX)
 }
 
 /// Calculate the transform that has to be applied such that the zoom appears to be centered around the mouse position
 ///
-/// This is based on the stackoverflow answer here: https://stackoverflow.com/a/27611642
+/// This is based on the stackoverflow answer here: <https://stackoverflow.com/a/27611642>
 fn calculate_zoom_compensation(
     position: (f64, f64),
     current_zoom: f64,

@@ -65,13 +65,13 @@ pub fn ws_terr_changes(
     ));
 
     Effect::new(move || {
-        if let ConnectionReadyState::Closed = ready_state.get() {
+        if ready_state.get() == ConnectionReadyState::Closed {
             let opfn = open.clone();
 
             // attempt to reconnect every 10 seconds if the connection is closed
             set_timeout(
                 move || {
-                    if let ConnectionReadyState::Closed = ready_state.get() {
+                    if ready_state.get() == ConnectionReadyState::Closed {
                         opfn()
                     }
                 },
