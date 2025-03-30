@@ -2,3 +2,7 @@
 /dist
 /resources/tailwind.css
 config.toml
+
+# ignore npm stuff
+/node_modules
+/package-lock.json
