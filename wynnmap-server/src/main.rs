@@ -14,6 +14,7 @@ use trackers::{images::create_image_tracker, territories::create_terr_tracker};
 mod api;
 mod config;
 mod etag;
+mod file_cache;
 mod state;
 mod trackers;
 
@@ -41,7 +42,11 @@ async fn main() {
                     .fallback(api_404),
             ),
         )
-        .fallback_service(ServeDir::new(config.server.fe_dir.as_ref()))
+        .fallback_service(
+            ServiceBuilder::new()
+                .layer(middleware::from_fn(file_cache::file_cache_control))
+                .service(ServeDir::new(config.server.fe_dir.as_ref())),
+        )
         .layer(
             ServiceBuilder::new()
                 .layer(cors)
