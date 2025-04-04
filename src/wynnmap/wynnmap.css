@@ -16,6 +16,10 @@
     image-rendering: pixelated;
 }
 
+.wynnmap-zoomedout .wynnmap-hide-zoomedout {
+    display: none;
+}
+
 .wynnmap-tile {
     position: absolute;
     max-width: unset;

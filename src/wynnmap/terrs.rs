@@ -109,7 +109,7 @@ fn ResIcons(name: Arc<str>, extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>) ->
     });
 
     view! {
-        <div class="flex pb-1" >
+        <div class="flex pb-1 wynnmap-hide-zoomedout" >
             // this is here so that tailwinds cli realizes that this class is used
             // class="hidden"
             <div class="icon-emerald" class:hidden={move || !res.get().0}></div>
