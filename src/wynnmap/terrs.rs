@@ -1,6 +1,11 @@
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 
 use leptos::prelude::*;
+use web_sys::{MouseEvent, PointerEvent};
 use wynnmap_types::{ExTerrInfo, Territory};
 
 use crate::settings::use_toggle;
@@ -9,6 +14,8 @@ use crate::settings::use_toggle;
 pub fn TerrView(
     #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
     extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
+    #[prop(optional)] hovered: RwSignal<Option<Arc<str>>>,
+    #[prop(optional)] selected: RwSignal<Option<Arc<str>>>,
 ) -> impl IntoView {
     view! {
         <div>
@@ -17,7 +24,7 @@ pub fn TerrView(
                 key=|(k, v)| (k.clone(), v.guild.clone())
                 children=move |(k, v)| {
                     view! {
-                        <Territory name=k terr=v.into() extradata=extradata />
+                        <Territory name=k terr=v.into() extradata=extradata hovered=hovered selected=selected />
                     }
                 }
             />
@@ -30,6 +37,8 @@ pub fn Territory(
     name: Arc<str>,
     terr: Signal<Territory>,
     extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
+    #[prop(optional)] hovered: RwSignal<Option<Arc<str>>>,
+    #[prop(optional)] selected: RwSignal<Option<Arc<str>>>,
 ) -> impl IntoView {
     let col = terr.read().guild.get_color();
     let col_rgb = format!("{}, {}, {}", col.0, col.1, col.2);
@@ -39,6 +48,12 @@ pub fn Territory(
     let show_res = use_toggle("resico", true);
     let show_timers = use_toggle("timers", true);
 
+    let name2 = name.clone();
+    let name3 = name.clone();
+
+    let lastpos = Arc::new(Mutex::new((0, 0)));
+    let lastpos2 = lastpos.clone();
+
     view! {
         <div class="wynnmap-item guildterr"
             style:width={move || format!("{}px", terr.read().location.width())}
@@ -46,6 +61,25 @@ pub fn Territory(
             style:transform={move || format!("translate3D({}px, {}px, 0)", terr.read().location.left_side(), terr.read().location.top_side())}
             style:background-color={move || format!("rgba({}, 0.35)", col_rgb)}
             style:border-color={move || format!("rgb({})", col_rgb2)}
+
+            on:mouseenter=move |_| {
+                hovered.set(Some(name2.clone()));
+            }
+            on:mouseleave=move |_| {
+                hovered.set(None);
+            }
+
+            on:pointerdown=move |e: PointerEvent| {
+                let mut lastpos = lastpos.lock().unwrap();
+                *lastpos = (e.client_x(), e.client_y());
+            }
+            on:pointerup=move |e: PointerEvent| {
+                let lastpos = lastpos2.lock().unwrap();
+                let (x, y) = *lastpos;
+                if e.client_x().abs_diff(x) < 5 && e.client_y().abs_diff(y) < 5 {
+                    selected.set(Some(name3.clone()));
+                }
+            }
         >
             <AttackBorder terr=terr />
             <svg style:height="1.875rem" style:overflow="visible">
