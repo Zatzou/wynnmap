@@ -45,9 +45,11 @@ pub fn WarMap() -> impl IntoView {
             // checkboxes
             <div class="flex-1 flex flex-col p-2 text-lg">
                 <Checkbox id="terrs" checked={show_terrs}>"Territories"</Checkbox>
+                <div class="ml-6" class:hidden={move || !show_terrs.get()}>
+                    <Checkbox id="resico" checked={show_res}>"Resource icons"</Checkbox>
+                    <Checkbox id="timers" checked={show_timers}>"Timers"</Checkbox>
+                </div>
                 <Checkbox id="conns" checked={show_conns}>"Connections"</Checkbox>
-                <Checkbox id="resico" checked={show_res}>"Resource icons"</Checkbox>
-                <Checkbox id="timers" checked={show_timers}>"Timers"</Checkbox>
             </div>
 
             // guild leaderboard
