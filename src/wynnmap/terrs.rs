@@ -5,7 +5,7 @@ use std::{
 };
 
 use leptos::prelude::*;
-use web_sys::{MouseEvent, PointerEvent};
+use web_sys::PointerEvent;
 use wynnmap_types::{ExTerrInfo, Territory};
 
 use crate::settings::use_toggle;
