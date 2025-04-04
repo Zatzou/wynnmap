@@ -5,27 +5,29 @@ pub(crate) async fn file_cache_control(req: Request, next: Next) -> Response<Bod
     let res = next.run(req).await;
     let (mut parts, body) = res.into_parts();
 
-    if let None = parts.headers.get(header::CACHE_CONTROL) {
-        if let Some(ct) = parts
-            .headers
-            .get(header::CONTENT_TYPE)
-            .and_then(|h| h.to_str().ok())
-        {
-            match ct {
-                "text/html" | "image/png" => {
-                    parts.headers.insert(
-                        header::CACHE_CONTROL,
-                        header::HeaderValue::from_static("public, max-age=3600"),
-                    );
-                }
-                "text/css" | "text/javascript" | "application/wasm" | "font/ttf" => {
-                    parts.headers.insert(
-                        header::CACHE_CONTROL,
-                        header::HeaderValue::from_static("public, max-age=604800"),
-                    );
-                }
+    if parts.status.is_success() {
+        if let None = parts.headers.get(header::CACHE_CONTROL) {
+            if let Some(ct) = parts
+                .headers
+                .get(header::CONTENT_TYPE)
+                .and_then(|h| h.to_str().ok())
+            {
+                match ct {
+                    "text/html" | "image/png" => {
+                        parts.headers.insert(
+                            header::CACHE_CONTROL,
+                            header::HeaderValue::from_static("public, max-age=3600"),
+                        );
+                    }
+                    "text/css" | "text/javascript" | "application/wasm" | "font/ttf" => {
+                        parts.headers.insert(
+                            header::CACHE_CONTROL,
+                            header::HeaderValue::from_static("public, max-age=604800"),
+                        );
+                    }
 
-                _ => {}
+                    _ => {}
+                }
             }
         }
     }
