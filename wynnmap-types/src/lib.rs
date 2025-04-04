@@ -7,6 +7,7 @@ use crc32fast::Hasher;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub mod util;
 pub mod ws;
 
 /// A wynntils map tile as sourced from the wynntils/static-storage repository.

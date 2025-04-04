@@ -9,14 +9,14 @@ pub fn Sidebar(#[prop(optional)] children: Option<Children>) -> impl IntoView {
 
     view! {
         // sidebar open button
-        <div on:click={move |_| show_sidebar.set(!show_sidebar.get())} class="fixed top-0 left-0 p-2 cursor-pointer z-50 bg-neutral-900 rounded-e-full mt-2 p-2">
+        <div on:click={move |_| show_sidebar.set(!show_sidebar.get())} class="fixed top-0 left-0 p-2 cursor-pointer bg-neutral-900 rounded-e-full mt-2 p-2">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 text-white">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
             </svg>
         </div>
 
         // class="-translate-x-full"
-        <div class="flex flex-col bg-neutral-900 w-full max-w-full h-screen z-50 absolute top-0 md:max-w-sm transition-transform text-white" class:-translate-x-full={move || !show_sidebar.get()}>
+        <div class="flex flex-col bg-neutral-900 w-full max-w-full h-screen z-50 fixed top-0 md:max-w-sm transition-transform text-white" class:-translate-x-full={move || !show_sidebar.get()}>
             // top text
             <div>
                 <div class="flex justify-between p-2 items-center">
