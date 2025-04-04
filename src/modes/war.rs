@@ -73,146 +73,144 @@ pub fn WarMap() -> impl IntoView {
             </div>
         </Sidebar>
 
-        <HoverView hovered={hovered} terrs={terrs} extradata={Signal::derive(extradata)} />
+        {move || if let Some(hovered) = hovered.get() {
+            Some(view! {
+                <div class="fixed top-4 right-4 bg-neutral-900 text-white p-2 rounded-md z-50 w-sm terrinfo-hoverbox">
+                    <TerrStats name={hovered} terrs={terrs} extradata={Signal::derive(extradata)} />
+                </div>
+            })
+        } else {None}}
     }
 }
 
 #[component]
-fn HoverView(
-    #[prop(into)] hovered: Signal<Option<Arc<str>>>,
+fn TerrStats(
+    #[prop(into)] name: Signal<Arc<str>>,
     #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
     extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
 ) -> impl IntoView {
-    move || {
-        if let Some(hovered) = hovered.get() {
-            let h2 = hovered.clone();
-            let exdata = Memo::new(move |_| extradata.get().get(&h2).unwrap().clone());
-            let h2 = hovered.clone();
-            let t = Memo::new(move |_| terrs.get().get(&h2).unwrap().clone());
+    let exdata = Memo::new(move |_| extradata.get().get(&name.get()).unwrap().clone());
+    let t = Memo::new(move |_| terrs.get().get(&name.get()).unwrap().clone());
 
+    let now = chrono::Utc::now();
+    let time = now
+        .signed_duration_since(t.read_untracked().acquired)
+        .num_seconds();
+
+    let (time, set_time) = signal(time);
+
+    let i = set_interval_with_handle(
+        move || {
             let now = chrono::Utc::now();
+
             let time = now.signed_duration_since(t.read().acquired).num_seconds();
 
-            let (time, set_time) = signal(time);
+            set_time.set(time);
+        },
+        Duration::from_millis(1000),
+    )
+    .ok();
 
-            let i = set_interval_with_handle(
-                move || {
-                    let now = chrono::Utc::now();
-
-                    let time = now.signed_duration_since(t.read().acquired).num_seconds();
-
-                    set_time.set(time);
-                },
-                Duration::from_millis(1000),
-            )
-            .ok();
-
-            on_cleanup(move || {
-                if let Some(i) = i {
-                    i.clear();
-                }
-            });
-
-            let timestr = move || {
-                let time = time.get();
-
-                let days = time / 86400;
-                let hours = (time % 86400) / 3600;
-                let minutes = (time % 3600) / 60;
-                let seconds = time % 60;
-
-                if days > 0 {
-                    format!("{}d {}h {}m {}s", days, hours, minutes, seconds)
-                } else if hours > 0 {
-                    format!("{}h {}m {}s", hours, minutes, seconds)
-                } else if minutes > 0 {
-                    format!("{}m {}s", minutes, seconds)
-                } else {
-                    format!("{}s", seconds)
-                }
-            };
-
-            let treas_col = move || {
-                let time = time.get();
-
-                // times based on treasury
-                if time < 3600 {
-                    "oklch(0.723 0.219 149.579)"
-                } else if time < (3600 * 24) {
-                    "oklch(0.768 0.233 130.85)"
-                } else if time < (3600 * 24 * 5) {
-                    "oklch(0.795 0.184 86.047)"
-                } else if time < (3600 * 24 * 12) {
-                    "oklch(0.705 0.213 47.604)"
-                } else {
-                    "oklch(0.637 0.237 25.331)"
-                }
-            };
-
-            let treas_text = move || {
-                let time = time.get();
-
-                // times based on treasury
-                if time < 3600 {
-                    "Very Low"
-                } else if time < (3600 * 24) {
-                    "Low"
-                } else if time < (3600 * 24 * 5) {
-                    "Medium"
-                } else if time < (3600 * 24 * 12) {
-                    "High"
-                } else {
-                    "Very High"
-                }
-            };
-
-            Some(view! {
-                <div class="fixed top-4 right-4 bg-neutral-900 text-white p-2 rounded-md z-50 w-sm terrinfo-hoverbox">
-                    <h1 class="text-xl">{hovered}</h1>
-
-                    <div class="p-2">
-                        <Show when={move || exdata.get().resources.emeralds > 0}>
-                            <div class="flex gap-1 items-center">
-                                <div class="icon-emerald"></div>
-                                <p>"+"{exdata.get().resources.emeralds}" emeralds per hour"</p>
-                            </div>
-                        </Show>
-                        <Show when={move || exdata.get().resources.ore > 0}>
-                            <div class="flex gap-1 items-center">
-                                <div class="icon-ores"></div>
-                                <p>"+"{exdata.get().resources.ore}" ore per hour"</p>
-                            </div>
-                        </Show>
-                        <Show when={move || exdata.get().resources.wood > 0}>
-                            <div class="flex gap-1 items-center">
-                                <div class="icon-wood"></div>
-                                <p>"+"{exdata.get().resources.wood}" wood per hour"</p>
-                            </div>
-                        </Show>
-                        <Show when={move || exdata.get().resources.fish > 0}>
-                            <div class="flex gap-1 items-center">
-                                <div class="icon-fish"></div>
-                                <p>"+"{exdata.get().resources.fish}" fish per hour"</p>
-                            </div>
-                        </Show>
-                        <Show when={move || exdata.get().resources.crops > 0}>
-                            <div class="flex gap-1 items-center">
-                                <div class="icon-crops"></div>
-                                <p>"+"{exdata.get().resources.crops}" crops per hour"</p>
-                            </div>
-                        </Show>
-                    </div>
-
-                    <h1 class="text-xl">{t.get().guild.name}" ["{t.get().guild.prefix}"]"</h1>
-
-                    <div class="p-2">
-                        <h2>"Time held: "{move || timestr()}</h2>
-                        <h2>"Treasury: "<span style:color=move || treas_col()>{move || treas_text()}</span></h2>
-                    </div>
-                </div>
-            })
-        } else {
-            None
+    on_cleanup(move || {
+        if let Some(i) = i {
+            i.clear();
         }
+    });
+
+    let timestr = move || {
+        let time = time.get();
+
+        let days = time / 86400;
+        let hours = (time % 86400) / 3600;
+        let minutes = (time % 3600) / 60;
+        let seconds = time % 60;
+
+        if days > 0 {
+            format!("{}d {}h {}m {}s", days, hours, minutes, seconds)
+        } else if hours > 0 {
+            format!("{}h {}m {}s", hours, minutes, seconds)
+        } else if minutes > 0 {
+            format!("{}m {}s", minutes, seconds)
+        } else {
+            format!("{}s", seconds)
+        }
+    };
+
+    let treas_col = move || {
+        let time = time.get();
+
+        // times based on treasury
+        if time < 3600 {
+            "oklch(0.723 0.219 149.579)"
+        } else if time < (3600 * 24) {
+            "oklch(0.768 0.233 130.85)"
+        } else if time < (3600 * 24 * 5) {
+            "oklch(0.795 0.184 86.047)"
+        } else if time < (3600 * 24 * 12) {
+            "oklch(0.705 0.213 47.604)"
+        } else {
+            "oklch(0.637 0.237 25.331)"
+        }
+    };
+
+    let treas_text = move || {
+        let time = time.get();
+
+        // times based on treasury
+        if time < 3600 {
+            "Very Low"
+        } else if time < (3600 * 24) {
+            "Low"
+        } else if time < (3600 * 24 * 5) {
+            "Medium"
+        } else if time < (3600 * 24 * 12) {
+            "High"
+        } else {
+            "Very High"
+        }
+    };
+
+    view! {
+        <h1 class="text-2xl">{name}</h1>
+
+        <div class="p-2">
+            <Show when={move || exdata.get().resources.emeralds > 0}>
+                <div class="flex gap-1 items-center">
+                    <div class="icon-emerald"></div>
+                    <p>"+"{exdata.get().resources.emeralds}" emeralds per hour"</p>
+                </div>
+            </Show>
+            <Show when={move || exdata.get().resources.ore > 0}>
+                <div class="flex gap-1 items-center">
+                    <div class="icon-ores"></div>
+                    <p>"+"{exdata.get().resources.ore}" ore per hour"</p>
+                </div>
+            </Show>
+            <Show when={move || exdata.get().resources.wood > 0}>
+                <div class="flex gap-1 items-center">
+                    <div class="icon-wood"></div>
+                    <p>"+"{exdata.get().resources.wood}" wood per hour"</p>
+                </div>
+            </Show>
+            <Show when={move || exdata.get().resources.fish > 0}>
+                <div class="flex gap-1 items-center">
+                    <div class="icon-fish"></div>
+                    <p>"+"{exdata.get().resources.fish}" fish per hour"</p>
+                </div>
+            </Show>
+            <Show when={move || exdata.get().resources.crops > 0}>
+                <div class="flex gap-1 items-center">
+                    <div class="icon-crops"></div>
+                    <p>"+"{exdata.get().resources.crops}" crops per hour"</p>
+                </div>
+            </Show>
+        </div>
+
+        <h1 class="text-xl">{move || t.get().guild.name}" ["{move || t.get().guild.prefix}"]"</h1>
+
+        <div class="p-2">
+            <h2>"Time held: "{move || timestr()}</h2>
+            <h2>"Treasury: "<span style:color=move || treas_col()>{move || treas_text()}</span></h2>
+        </div>
     }
 }
