@@ -93,7 +93,7 @@ pub fn WarMap() -> impl IntoView {
             let sel2 = sel.clone();
 
             Some(view! {
-                <div class="fixed top-0 right-0 bg-neutral-900 text-white w-full max-w-full md:max-w-sm md:top-4 md:right-4 md:rounded">
+                <div class="fixed top-0 right-0 bg-neutral-900 text-white w-full max-w-full md:max-w-sm md:top-4 md:right-4 md:rounded max-h-screen overflow-x-hidden overflow-y-auto">
                     // close button
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 cursor-pointer absolute top-2 right-2" on:click={move |_| selected.set(None)}>
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -384,11 +384,11 @@ fn TerrCalc(
                         <Incrementor value={defense} max=11 />
                     </div>
                     <div class="flex justify-between">
-                        <h2>"Aura: "{move || AURA_TIMES[aura.get() as usize]}"s"</h2>
+                        <h2>"Aura: "{move || AURA_TIMES[aura.get() as usize]}</h2>
                         <Incrementor value={aura} max=3 />
                     </div>
                     <div class="flex justify-between">
-                        <h2>"Volley: "{move || VOLLEY_TIMES[volley.get() as usize]}"s"</h2>
+                        <h2>"Volley: "{move || VOLLEY_TIMES[volley.get() as usize]}</h2>
                         <Incrementor value={volley} max=3 />
                     </div>
                     <div class="flex justify-between">
@@ -487,5 +487,5 @@ const DEFENSES: [f64; 12] = [
     0.1, 0.4, 0.55, 0.625, 0.7, 0.75, 0.79, 0.82, 0.84, 0.86, 0.88, 0.9,
 ];
 
-const AURA_TIMES: [f64; 4] = [0.0, 24.0, 18.0, 12.0];
-const VOLLEY_TIMES: [f64; 4] = [0.0, 20.0, 15.0, 10.0];
+const AURA_TIMES: [&'static str; 4] = ["N/A", "24s", "18s", "12s"];
+const VOLLEY_TIMES: [&'static str; 4] = ["N/A", "20s", "15s", "10s"];
