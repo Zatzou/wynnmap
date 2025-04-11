@@ -487,5 +487,5 @@ const DEFENSES: [f64; 12] = [
     0.1, 0.4, 0.55, 0.625, 0.7, 0.75, 0.79, 0.82, 0.84, 0.86, 0.88, 0.9,
 ];
 
-const AURA_TIMES: [&'static str; 4] = ["N/A", "24s", "18s", "12s"];
-const VOLLEY_TIMES: [&'static str; 4] = ["N/A", "20s", "15s", "10s"];
+const AURA_TIMES: [&str; 4] = ["N/A", "24s", "18s", "12s"];
+const VOLLEY_TIMES: [&str; 4] = ["N/A", "20s", "15s", "10s"];

@@ -18,14 +18,12 @@ pub fn get_url(protocol: &str) -> String {
     format!("{protocol}{}://{host}", if proto { "s" } else { "" })
 }
 
-pub async fn load_map_tiles() -> Option<Vec<WynntilsMapTile>> {
-    let r = reqwest::get(format!("{}{}", get_url("http"), "/api/v1/images/maps.json"))
-        .await
-        .unwrap();
+pub async fn load_map_tiles() -> Result<Vec<WynntilsMapTile>, reqwest::Error> {
+    let r = reqwest::get(format!("{}{}", get_url("http"), "/api/v1/images/maps.json")).await?;
 
-    let tiles: Vec<WynntilsMapTile> = r.json().await.unwrap();
+    let tiles: Vec<WynntilsMapTile> = r.json().await?;
 
-    Some(tiles)
+    Ok(tiles)
 }
 
 pub async fn get_wynntils_terrs() -> Result<HashMap<Arc<str>, Territory>, reqwest::Error> {

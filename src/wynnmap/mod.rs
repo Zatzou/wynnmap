@@ -94,7 +94,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
         let mut tpos = tpos.lock().unwrap();
         *tpos = get_touch_positions(&e.touches());
 
-        if tpos.len() > 0 {
+        if !tpos.is_empty() {
             set_moving.set(true);
         } else {
             set_moving.set(false);
