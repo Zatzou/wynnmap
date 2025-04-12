@@ -82,7 +82,7 @@ pub fn Territory(
             }
         >
             <AttackBorder terr=terr />
-            <svg style:height="1.875rem" style:width="0" style:overflow="visible">
+            <svg style:height="1.875rem" class="w-full overflow-visible">
                 <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="30" font-weight="bold" fill="white" paint-order="stroke" stroke="black" stroke-width="3">{terr.read().guild.prefix.clone()}</text>
             </svg>
             // resource icons
