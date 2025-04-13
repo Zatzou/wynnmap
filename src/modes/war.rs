@@ -91,7 +91,7 @@ pub fn WarMap() -> impl IntoView {
         </Sidebar>
 
         // selected terr info
-        {move || if let Some(sel) = selected.get() {
+        {move || selected.get().map(|sel| {
             let sel2 = sel.clone();
 
             Some(view! {
@@ -106,7 +106,7 @@ pub fn WarMap() -> impl IntoView {
                     <TerrCalc name={sel2} terrs={terrs} extradata={Signal::derive(extradata)} />
                 </div>
             })
-        } else {None}}
+        })}
     }
 }
 
@@ -261,13 +261,13 @@ fn TerrCalc(
         terrs
             .read()
             .get(&name.get())
-            .map_or(Arc::default(), |t| t.guild.prefix.clone())
+            .map_or_else(Arc::default, |t| t.guild.prefix.clone())
     });
     let conn_names = Memo::new(move |_| {
         extradata
             .read()
             .get(&name.get())
-            .map_or(Vec::new(), |e| e.conns.clone())
+            .map_or_else(Vec::new, |e| e.conns.clone())
     });
     let ext_names =
         Memo::new(move |_| wynnmap_types::util::find_externals(name.get(), extradata.get()));
@@ -311,9 +311,10 @@ fn TerrCalc(
     // calculate a stat based on the current values
     let calc_stat = move |val: f64| {
         if hq.get() {
-            val * (1.5 + (0.25 * externs.get() as f64)) * (1.0 + (0.3 * conns.get() as f64))
+            val * (0.25f64.mul_add(f64::from(externs.get()), 1.5))
+                * (0.3f64.mul_add(f64::from(conns.get()), 1.0))
         } else {
-            val * (1.0 + (0.3 * conns.get() as f64))
+            val * (0.3f64.mul_add(f64::from(conns.get()), 1.0))
         }
     };
 
@@ -432,7 +433,7 @@ fn fmt_num(n: f64) -> String {
     let s = format!("{:.2}", n);
     let mut out = String::new();
 
-    let (start, end) = s.split_once(".").unwrap();
+    let (start, end) = s.split_once('.').unwrap();
 
     for (i, c) in start.chars().rev().enumerate() {
         if i > 0 && i % 3 == 0 {

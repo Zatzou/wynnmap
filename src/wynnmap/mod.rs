@@ -94,10 +94,10 @@ pub fn WynnMap(children: Children) -> impl IntoView {
         let mut tpos = tpos.lock().unwrap();
         *tpos = get_touch_positions(&e.touches());
 
-        if !tpos.is_empty() {
-            set_moving.set(true);
-        } else {
+        if tpos.is_empty() {
             set_moving.set(false);
+        } else {
+            set_moving.set(true);
         }
     };
 
@@ -360,8 +360,8 @@ fn apply_zoom_compensation(
 
     pos.update(|p| {
         *p = (
-            (p.0 * new_zoom + zcomp.0 * old_zoom) / old_zoom,
-            (p.1 * new_zoom + zcomp.1 * old_zoom) / old_zoom,
+            p.0.mul_add(new_zoom, zcomp.0 * old_zoom) / old_zoom,
+            p.1.mul_add(new_zoom, zcomp.1 * old_zoom) / old_zoom,
         );
     });
 }

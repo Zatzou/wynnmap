@@ -70,7 +70,7 @@ pub fn ws_terr_changes(
             set_timeout(
                 move || {
                     if ready_state.get() == ConnectionReadyState::Closed {
-                        opfn()
+                        opfn();
                     }
                 },
                 Duration::from_secs(10),

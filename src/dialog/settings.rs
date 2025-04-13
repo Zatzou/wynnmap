@@ -13,8 +13,8 @@ enum SettingsView {
 impl Display for SettingsView {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            SettingsView::General => f.write_str("General"),
-            SettingsView::GuildMap => f.write_str("Guild map"),
+            Self::General => f.write_str("General"),
+            Self::GuildMap => f.write_str("Guild map"),
         }
     }
 }
