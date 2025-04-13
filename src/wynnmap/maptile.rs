@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use wynnmap_types::WynntilsMapTile;
 
-use crate::datasource;
+use crate::{datasource, settings::use_toggle};
 
 #[component]
 pub fn MapTile(tile: Signal<WynntilsMapTile>) -> impl IntoView {
@@ -24,11 +24,20 @@ pub fn MapTile(tile: Signal<WynntilsMapTile>) -> impl IntoView {
 
 #[component]
 pub fn MapTiles(tiles: Signal<Vec<WynntilsMapTile>>) -> impl IntoView {
+    let show_non_main = use_toggle("show_non_main_maps", false);
+
     view! {
         <div class="wynnmap-tiles">
             {move || {
                 tiles.get()
                     .into_iter()
+                    .filter(|tile| {
+                        if tile.orig_name.clone().is_none_or(|n| n.contains("main") || n.contains("realm-of-light")) {
+                            true
+                        } else {
+                            show_non_main.get()
+                        }
+                    })
                     .map(|tile| view! { <MapTile tile=tile.into() /> })
                     .collect_view()
             }}

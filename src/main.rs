@@ -1,10 +1,12 @@
 use components::sidebar::ShowSidebar;
+use dialog::{DialogRenderer, provide_dialogs};
 use leptos::prelude::*;
 use modes::war::WarMap;
 use settings::provide_settings;
 
 mod components;
 mod datasource;
+mod dialog;
 mod modes;
 mod settings;
 mod wynnmap;
@@ -18,10 +20,13 @@ fn main() {
 #[component]
 pub fn App() -> impl IntoView {
     provide_settings();
+    provide_dialogs();
 
     provide_context(ShowSidebar(RwSignal::new(false)));
 
     view! {
         <WarMap/>
+
+        <DialogRenderer />
     }
 }

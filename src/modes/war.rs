@@ -62,11 +62,13 @@ pub fn WarMap() -> impl IntoView {
 
         <Sidebar>
             // checkboxes
-            <div class="flex-1 flex flex-col p-2 text-lg">
-                <Checkbox id="terrs" checked={show_terrs}>"Territories"</Checkbox>
-                <div class="ml-6" class:hidden={move || !show_terrs.get()}>
-                    <Checkbox id="resico" checked={show_res}>"Resource icons"</Checkbox>
-                    <Checkbox id="timers" checked={show_timers}>"Timers"</Checkbox>
+            <div class="flex-1 flex flex-col gap-2 p-2 text-lg">
+                <div>
+                    <Checkbox id="terrs" checked={show_terrs}>"Territories"</Checkbox>
+                    <div class="flex flex-col gap-1 ml-6" class:hidden={move || !show_terrs.get()}>
+                        <Checkbox id="resico" checked={show_res}>"Resource icons"</Checkbox>
+                        <Checkbox id="timers" checked={show_timers}>"Timers"</Checkbox>
+                    </div>
                 </div>
                 <Checkbox id="conns" checked={show_conns}>"Connections"</Checkbox>
             </div>
@@ -93,7 +95,7 @@ pub fn WarMap() -> impl IntoView {
             let sel2 = sel.clone();
 
             Some(view! {
-                <div class="fixed top-0 right-0 bg-neutral-900 text-white w-full max-w-full md:max-w-sm md:top-4 md:right-4 md:rounded max-h-screen overflow-x-hidden overflow-y-auto">
+                <div class="fixed top-0 right-0 bg-neutral-900 text-white w-full max-w-full md:max-w-sm md:top-4 md:right-4 md:rounded max-h-dvh overflow-x-hidden overflow-y-auto">
                     // close button
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 cursor-pointer absolute top-2 right-2" on:click={move |_| selected.set(None)}>
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />

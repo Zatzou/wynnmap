@@ -45,6 +45,7 @@ pub fn Territory(
     let col_rgb2 = col_rgb.clone();
 
     // toggles for showing territory parts
+    let show_gtag = use_toggle("terrs_show_guildtag", true);
     let show_res = use_toggle("resico", true);
     let show_timers = use_toggle("timers", true);
 
@@ -82,9 +83,12 @@ pub fn Territory(
             }
         >
             <AttackBorder terr=terr />
-            <svg style:height="1.875rem" class="w-full overflow-visible">
-                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="30" font-weight="bold" fill="white" paint-order="stroke" stroke="black" stroke-width="3">{terr.read().guild.prefix.clone()}</text>
-            </svg>
+            // guild tag
+            <Show when={move || show_gtag.get()}>
+                <svg style:height="1.875rem" class="w-full overflow-visible">
+                    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="30" font-weight="bold" fill="white" paint-order="stroke" stroke="black" stroke-width="3">{terr.read().guild.prefix.clone()}</text>
+                </svg>
+            </Show>
             // resource icons
             <Show when={move || show_res.get()}>
                 <ResIcons name={name.clone()} extradata=extradata />
