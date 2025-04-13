@@ -123,19 +123,19 @@ fn ResIcons(name: Arc<str>, extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>) ->
 
             // crops
             <ResIcon icon="crops" show={Signal::derive(move || res().1)} />
-            <ResIcon icon="crops" show={Signal::derive(move || res2().0)} style:margin-left="-15px" style:margin-top="3px" />
+            <ResIcon icon="crops" show={Signal::derive(move || res2().0)} />
 
             // fish
             <ResIcon icon="fish" show={Signal::derive(move || res().2)} />
-            <ResIcon icon="fish" show={Signal::derive(move || res2().1)} style:margin-left="-15px" style:margin-top="3px" />
+            <ResIcon icon="fish" show={Signal::derive(move || res2().1)} />
 
             // ores
             <ResIcon icon="ores" show={Signal::derive(move || res().3)} />
-            <ResIcon icon="ores" show={Signal::derive(move || res2().2)} style:margin-left="-15px" style:margin-top="3px" />
+            <ResIcon icon="ores" show={Signal::derive(move || res2().2)} />
 
             // wood
             <ResIcon icon="wood" show={Signal::derive(move || res().4)} />
-            <ResIcon icon="wood" show={Signal::derive(move || res2().3)} style:margin-left="-15px" style:margin-top="3px" />
+            <ResIcon icon="wood" show={Signal::derive(move || res2().3)} />
         </div>
     }
 }
