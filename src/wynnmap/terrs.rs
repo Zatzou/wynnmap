@@ -103,25 +103,49 @@ pub fn Territory(
 
 #[component]
 fn ResIcons(name: Arc<str>, extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>) -> impl IntoView {
-    let res = Memo::new(move |_| {
-        extradata
-            .read()
-            .get(&name)
-            .map_or((false, false, false, false, false), |e| {
-                e.resources.has_res()
-            })
+    let r = Memo::new(move |_| {
+        extradata.read().get(&name).map_or(
+            (
+                (false, false, false, false, false),
+                (false, false, false, false),
+            ),
+            |e| (e.resources.has_res(), e.resources.has_double_res()),
+        )
     });
 
+    let res = move || r.read().0;
+    let res2 = move || r.read().1;
+
     view! {
-        <div class="flex pb-1 wynnmap-hide-zoomedout" >
-            // this is here so that tailwinds cli realizes that this class is used
-            // class="hidden"
-            <div class="icon-emerald" class:hidden={move || !res.get().0}></div>
-            <div class="icon-crops" class:hidden={move || !res.get().1}></div>
-            <div class="icon-fish" class:hidden={move || !res.get().2}></div>
-            <div class="icon-ores" class:hidden={move || !res.get().3}></div>
-            <div class="icon-wood" class:hidden={move || !res.get().4}></div>
+        <div class="flex pb-1 wynnmap-hide-zoomedout h-[24px]" >
+            // emeralds
+            <ResIcon icon="emerald" show={Signal::derive(move || res().0)} />
+
+            // crops
+            <ResIcon icon="crops" show={Signal::derive(move || res().1)} />
+            <ResIcon icon="crops" show={Signal::derive(move || res2().0)} style:margin-left="-15px" style:margin-top="3px" />
+
+            // fish
+            <ResIcon icon="fish" show={Signal::derive(move || res().2)} />
+            <ResIcon icon="fish" show={Signal::derive(move || res2().1)} style:margin-left="-15px" style:margin-top="3px" />
+
+            // ores
+            <ResIcon icon="ores" show={Signal::derive(move || res().3)} />
+            <ResIcon icon="ores" show={Signal::derive(move || res2().2)} style:margin-left="-15px" style:margin-top="3px" />
+
+            // wood
+            <ResIcon icon="wood" show={Signal::derive(move || res().4)} />
+            <ResIcon icon="wood" show={Signal::derive(move || res2().3)} style:margin-left="-15px" style:margin-top="3px" />
         </div>
+    }
+}
+
+#[component]
+fn ResIcon(#[prop(into)] icon: Signal<String>, #[prop(into)] show: Signal<bool>) -> impl IntoView {
+    view! {
+        <Show when={move || show.get()}>
+            <div class={move || format!("icon-{}", icon.get())} />
+        </Show>
     }
 }
 

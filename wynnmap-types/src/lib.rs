@@ -172,6 +172,22 @@ impl TerrRes {
         self.wood != 0
     }
 
+    pub const fn has_double_ore(&self) -> bool {
+        self.ore >= 7200
+    }
+
+    pub const fn has_double_crops(&self) -> bool {
+        self.crops >= 7200
+    }
+
+    pub const fn has_double_fish(&self) -> bool {
+        self.fish >= 7200
+    }
+
+    pub const fn has_double_wood(&self) -> bool {
+        self.wood >= 7200
+    }
+
     pub const fn has_res(&self) -> (bool, bool, bool, bool, bool) {
         (
             self.has_emeralds(),
@@ -179,6 +195,15 @@ impl TerrRes {
             self.has_fish(),
             self.has_ore(),
             self.has_wood(),
+        )
+    }
+
+    pub const fn has_double_res(&self) -> (bool, bool, bool, bool) {
+        (
+            self.has_double_crops(),
+            self.has_double_fish(),
+            self.has_double_ore(),
+            self.has_double_wood(),
         )
     }
 }
