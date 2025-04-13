@@ -54,7 +54,7 @@ pub fn WarMap() -> impl IntoView {
             }
 
             Some(view! {
-                <div class="fixed top-4 right-4 bg-neutral-900 text-white rounded-md w-sm terrinfo-hoverbox">
+                <div class="fixed top-4 right-4 bg-neutral-900 text-white rounded-md w-sm terrinfo-hoverbox pointer-events-none">
                     <TerrStats name={hovered} terrs={terrs} extradata={Signal::derive(extradata)} />
                 </div>
             })
