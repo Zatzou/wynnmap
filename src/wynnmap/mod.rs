@@ -302,7 +302,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 // disable the transition after it has run
                 on:transitionend=move |_| {set_transitioning.set(false);}
 
-                style:will-change=move || {if is_gecko || moving.get() {console_log("moving"); "transform"} else {""}}
+                style:will-change=move || {if is_gecko || moving.get() {"transform"} else {""}}
                 style:transform=move || {
                     format!(
                         "matrix3d({z},0,0,0,0,{z},0,0,0,0,1,0,{x},{y},0,1)",
