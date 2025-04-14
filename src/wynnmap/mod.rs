@@ -302,6 +302,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 // disable the transition after it has run
                 on:transitionend=move |_| {set_transitioning.set(false);}
 
+                // will-change:transform if using gecko (according to user agent) or you're currently holding down (moving.get())
                 style:will-change=move || {if is_gecko || moving.get() {"transform"} else {""}}
                 style:transform=move || {
                     format!(
