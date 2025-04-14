@@ -17,7 +17,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
     let is_gecko = user_agent.contains("Gecko/") && !user_agent.contains("like Gecko");
     // print to console if detecting is gecko
     if is_gecko {
-        console_log("You seem to be using Gecko. Some optimizations have been applied to try and fix a certain bug.")
+        console_log("You seem to be using Gecko. Some optimizations have been applied to try and fix a certain bug. If you're spoofing your user agent and you are currently using a Chromium-based browser, you should stop, or this thing breaks to bits.")
     }
 
 
