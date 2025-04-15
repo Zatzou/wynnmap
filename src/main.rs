@@ -1,13 +1,19 @@
 use components::sidebar::ShowSidebar;
 use dialog::{DialogRenderer, provide_dialogs};
 use leptos::prelude::*;
+use leptos_router::{
+    components::{Route, Router, Routes},
+    path,
+};
 use modes::war::WarMap;
+use notfound::NotFound;
 use settings::provide_settings;
 
 mod components;
 mod datasource;
 mod dialog;
 mod modes;
+mod notfound;
 mod settings;
 mod wynnmap;
 
@@ -25,7 +31,11 @@ pub fn App() -> impl IntoView {
     provide_context(ShowSidebar(RwSignal::new(false)));
 
     view! {
-        <WarMap/>
+        <Router>
+            <Routes fallback=NotFound>
+                <Route path=path!("") view=WarMap />
+            </Routes>
+        </Router>
 
         <DialogRenderer />
     }
