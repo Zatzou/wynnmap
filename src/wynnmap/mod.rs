@@ -1,7 +1,7 @@
 use core::panic;
 use std::sync::{Arc, Mutex};
 
-use leptos::{ev, prelude::*};
+use leptos::{ev, leptos_dom::helpers, prelude::*};
 use web_sys::{KeyboardEvent, MouseEvent, TouchEvent, TouchList, WheelEvent};
 
 pub mod conns;
@@ -10,6 +10,14 @@ pub mod terrs;
 
 #[component]
 pub fn WynnMap(children: Children) -> impl IntoView {
+    // grab user agent
+    let user_agent = helpers::window()
+        .navigator()
+        .user_agent()
+        .unwrap_or_default();
+    // test if Gecko engine. If it contains `like Gecko` then its probably not Gecko.
+    let is_gecko = user_agent.contains("Gecko/") && !user_agent.contains("like Gecko");
+
     // is the map being dragged currently
     let (dragging, set_dragging) = signal(false);
     // is the map being moved currently
@@ -291,7 +299,8 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 // disable the transition after it has run
                 on:transitionend=move |_| {set_transitioning.set(false);}
 
-                style:will-change=move || {if moving.get() {"transform"} else {""}}
+                // will-change:transform if using gecko (according to user agent) or you're currently holding down (moving.get())
+                style:will-change=move || {if is_gecko || moving.get() {"transform"} else {""}}
                 style:transform=move || {
                     format!(
                         "matrix3d({z},0,0,0,0,{z},0,0,0,0,1,0,{x},{y},0,1)",
