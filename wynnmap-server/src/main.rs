@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use axum::http::Method;
 use axum::response::IntoResponse;
 use axum::{Json, Router, middleware};
@@ -7,7 +9,7 @@ use tokio::net::TcpListener;
 use tower::ServiceBuilder;
 use tower_http::compression::CompressionLayer;
 use tower_http::cors::{self, CorsLayer};
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 use tracing::info;
 use trackers::{images::create_image_tracker, territories::create_terr_tracker};
 
@@ -45,7 +47,11 @@ async fn main() {
         .fallback_service(
             ServiceBuilder::new()
                 .layer(middleware::from_fn(file_cache::file_cache_control))
-                .service(ServeDir::new(config.server.fe_dir.as_ref())),
+                .service(
+                    ServeDir::new(config.server.fe_dir.as_ref()).fallback(ServeFile::new(
+                        PathBuf::from(config.server.fe_dir.as_ref()).join("index.html"),
+                    )),
+                ),
         )
         .layer(
             ServiceBuilder::new()
