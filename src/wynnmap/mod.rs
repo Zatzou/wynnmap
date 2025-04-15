@@ -1,7 +1,7 @@
 use core::panic;
 use std::sync::{Arc, Mutex};
 
-use leptos::{ev, leptos_dom::{logging::*, helpers}, prelude::*};
+use leptos::{ev, leptos_dom::helpers, prelude::*};
 use web_sys::{KeyboardEvent, MouseEvent, TouchEvent, TouchList, WheelEvent};
 
 pub mod conns;
@@ -11,15 +11,12 @@ pub mod terrs;
 #[component]
 pub fn WynnMap(children: Children) -> impl IntoView {
     // grab user agent
-    let user_agent = helpers::window().navigator().user_agent()
+    let user_agent = helpers::window()
+        .navigator()
+        .user_agent()
         .unwrap_or_default();
-    // test if Gecko engine. If it contains `like Gecko` then its probably not Gecko. 
+    // test if Gecko engine. If it contains `like Gecko` then its probably not Gecko.
     let is_gecko = user_agent.contains("Gecko/") && !user_agent.contains("like Gecko");
-    // print to console if detecting is gecko
-    if is_gecko {
-        console_log("You seem to be using Gecko. Some optimizations have been applied to try and fix a certain bug. If you're spoofing your user agent and you are currently using a Chromium-based browser, you should stop, or this thing breaks to bits.")
-    }
-
 
     // is the map being dragged currently
     let (dragging, set_dragging) = signal(false);
