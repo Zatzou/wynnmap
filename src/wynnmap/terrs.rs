@@ -16,6 +16,7 @@ pub fn TerrView(
     extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
     #[prop(optional)] hovered: RwSignal<Option<Arc<str>>>,
     #[prop(optional)] selected: RwSignal<Option<Arc<str>>>,
+    #[prop(optional)] hide_timers: bool,
 ) -> impl IntoView {
     view! {
         <div>
@@ -24,7 +25,7 @@ pub fn TerrView(
                 key=|(k, v)| (k.clone(), v.guild.clone())
                 children=move |(k, v)| {
                     view! {
-                        <Territory name=k terr=v.into() extradata=extradata hovered=hovered selected=selected />
+                        <Territory name=k terr=v.into() extradata=extradata hovered=hovered selected=selected hide_timers=hide_timers />
                     }
                 }
             />
@@ -39,6 +40,7 @@ pub fn Territory(
     extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
     #[prop(optional)] hovered: RwSignal<Option<Arc<str>>>,
     #[prop(optional)] selected: RwSignal<Option<Arc<str>>>,
+    #[prop(optional)] hide_timers: bool,
 ) -> impl IntoView {
     let col = terr.read().guild.get_color();
     let col_rgb = format!("{}, {}, {}", col.0, col.1, col.2);
@@ -94,7 +96,7 @@ pub fn Territory(
                 <ResIcons name={name.clone()} extradata=extradata />
             </Show>
             // timer
-            <Show when={move || show_timers.get()}>
+            <Show when={move || show_timers.get() && !hide_timers}>
                 <TerrTimer terr=terr />
             </Show>
         </div>

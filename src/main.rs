@@ -5,7 +5,7 @@ use leptos_router::{
     components::{Route, Router, Routes},
     path,
 };
-use modes::war::WarMap;
+use modes::{planning::PlanningMap, war::WarMap};
 use notfound::NotFound;
 use settings::provide_settings;
 
@@ -34,6 +34,7 @@ pub fn App() -> impl IntoView {
         <Router>
             <Routes fallback=NotFound>
                 <Route path=path!("") view=WarMap />
+                <Route path=path!("plan") view=PlanningMap />
             </Routes>
         </Router>
 

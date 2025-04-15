@@ -3514,6 +3514,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "uuid",
  "web-sys",
  "wynnmap-types",
 ]
