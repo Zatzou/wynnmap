@@ -84,7 +84,7 @@ pub fn WarMap() -> impl IntoView {
                     </svg>
                 </div>
                 <hr class="border-neutral-600" class:hidden={move || !show_guild_leaderboard.get()} />
-                <div class="overflow-scroll shrink min-h-0">
+                <div class="overflow-y-auto shrink min-h-0">
                     <Gleaderboard terrs={terrs} class="w-full" class:hidden={move || !show_guild_leaderboard.get()} />
                 </div>
             </div>
