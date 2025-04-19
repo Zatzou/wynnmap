@@ -63,9 +63,9 @@ pub struct Territory {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash)]
 pub struct Guild {
-    pub uuid: Uuid,
-    pub name: Arc<str>,
-    pub prefix: Arc<str>,
+    pub uuid: Option<Uuid>,
+    pub name: Option<Arc<str>>,
+    pub prefix: Option<Arc<str>>,
     pub color: Option<Arc<str>>,
 }
 
@@ -78,13 +78,17 @@ impl Guild {
 
             (col[2], col[1], col[0])
         } else {
-            let mut hasher = Hasher::new();
-            hasher.update(self.name.as_bytes());
-            let hash = hasher.finalize();
+            if let Some(name) = &self.name {
+                let mut hasher = Hasher::new();
+                hasher.update(name.as_bytes());
+                let hash = hasher.finalize();
 
-            let bytes: Vec<u8> = hash.to_ne_bytes().into_iter().rev().collect();
+                let bytes: Vec<u8> = hash.to_ne_bytes().into_iter().rev().collect();
 
-            (bytes[1], bytes[2], bytes[3])
+                (bytes[1], bytes[2], bytes[3])
+            } else {
+                (255, 255, 255)
+            }
         }
     }
 }

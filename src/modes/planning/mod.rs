@@ -22,6 +22,7 @@ pub fn PlanningMap() -> impl IntoView {
 
     let extradata = move || extradata.get().map_or_else(HashMap::new, |t| t.take());
 
+    let e = terrs.get();
     let terrs = Memo::new(move |_| terrs.get().map_or_else(HashMap::new, |t| t.take()));
 
     let guilds: RwSignal<Vec<Guild>> = RwSignal::new(Vec::new());
@@ -39,9 +40,9 @@ pub fn PlanningMap() -> impl IntoView {
             }
 
             terr.guild = Guild {
-                uuid: Uuid::nil(),
-                name: Arc::from("None"),
-                prefix: Arc::from("None"),
+                uuid: Some(Uuid::nil()),
+                name: Some(Arc::from("None")),
+                prefix: Some(Arc::from("None")),
                 color: Some(Arc::from("#FFFFFF")),
             }
         }

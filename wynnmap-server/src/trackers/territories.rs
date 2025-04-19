@@ -95,8 +95,10 @@ async fn territory_tracker(state: TerritoryState, bc_send: broadcast::Sender<Ter
 
             // update the guild colors on the data
             for terr in data.values_mut() {
-                if let Some(col) = collock.get(&terr.guild.prefix) {
-                    terr.guild.color = Some(col.clone());
+                if let Some(pfx) = &terr.guild.prefix {
+                    if let Some(col) = collock.get(pfx) {
+                        terr.guild.color = Some(col.clone());
+                    }
                 }
             }
 
@@ -177,7 +179,12 @@ async fn wynntils_color_grabber(state: TerritoryState) {
         let mut lock = state.colors.write().await;
 
         for (prefix, color) in colors {
-            lock.insert(prefix, color);
+            match (prefix, color) {
+                (Some(p), Some(c)) => {
+                    lock.insert(p, c);
+                }
+                _ => continue,
+            }
         }
 
         drop(lock);
@@ -194,9 +201,9 @@ struct WynntilsApiResponse {
 #[derive(Deserialize)]
 struct WynntilsTerr {
     #[serde(rename = "guildPrefix")]
-    prefix: Arc<str>,
+    prefix: Option<Arc<str>>,
     #[serde(rename = "guildColor")]
-    color: Arc<str>,
+    color: Option<Arc<str>>,
 }
 
 async fn extra_data_loader(state: TerritoryState) {

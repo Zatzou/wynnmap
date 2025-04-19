@@ -261,7 +261,9 @@ fn TerrCalc(
         terrs
             .read()
             .get(&name.get())
-            .map_or_else(Arc::default, |t| t.guild.prefix.clone())
+            .map_or_else(Arc::default, |t| {
+                t.guild.prefix.clone().unwrap_or_else(|| Arc::from("None"))
+            })
     });
     let conn_names = Memo::new(move |_| {
         extradata
@@ -289,7 +291,7 @@ fn TerrCalc(
                 terrs
                     .read_untracked()
                     .get(*n)
-                    .is_some_and(|t| t.guild.prefix == *guild.read_untracked())
+                    .is_some_and(|t| t.guild.prefix == Some(guild.read_untracked().clone()))
             })
             .count() as i32,
     );
@@ -302,7 +304,7 @@ fn TerrCalc(
                 terrs
                     .read_untracked()
                     .get(*n)
-                    .is_some_and(|t| t.guild.prefix == *guild.read_untracked())
+                    .is_some_and(|t| t.guild.prefix == Some(guild.read_untracked().clone()))
             })
             .count() as i32,
     );
