@@ -69,6 +69,17 @@ pub struct Guild {
     pub color: Option<Arc<str>>,
 }
 
+impl Default for Guild {
+    fn default() -> Self {
+        Self {
+            uuid: None,
+            name: Some(Arc::from("Nobody")),
+            prefix: Some(Arc::from("None")),
+            color: Some(Arc::from("#FFFFFF")),
+        }
+    }
+}
+
 impl Guild {
     pub fn get_color(&self) -> (u8, u8, u8) {
         if let Some(color) = &self.color {
