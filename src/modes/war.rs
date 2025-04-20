@@ -1,11 +1,18 @@
-use std::{collections::HashMap, ops::Range, sync::Arc, time::Duration};
+use std::{collections::HashMap, ops::Range, sync::Arc};
 
 use leptos::prelude::*;
 use wynnmap_types::{ExTerrInfo, Territory};
 
 use crate::{
     components::{
-        checkbox::Checkbox, gleaderboard::Gleaderboard, incrementor::Incrementor, sidebar::Sidebar,
+        checkbox::Checkbox,
+        gleaderboard::Gleaderboard,
+        incrementor::Incrementor,
+        sidebar::Sidebar,
+        sidecard::{
+            SideCard, SideCardHover,
+            terr::{GuildInfo, TerrInfo},
+        },
     },
     datasource,
     settings::use_toggle,
@@ -54,9 +61,13 @@ pub fn WarMap() -> impl IntoView {
             }
 
             Some(view! {
-                <div class="fixed top-4 right-4 bg-neutral-900 text-white rounded-md w-sm terrinfo-hoverbox pointer-events-none">
-                    <TerrStats name={hovered} terrs={terrs} extradata={Signal::derive(extradata)} />
-                </div>
+                <SideCardHover>
+                    <TerrStats
+                        name={hovered}
+                        terrs={terrs}
+                        extradata={Signal::derive(extradata)}
+                    />
+                </SideCardHover>
             })
         } else {None}}
 
@@ -95,16 +106,11 @@ pub fn WarMap() -> impl IntoView {
             let sel2 = sel.clone();
 
             Some(view! {
-                <div class="fixed top-0 right-0 bg-neutral-900 text-white w-full max-w-full md:max-w-sm md:top-4 md:right-4 md:rounded max-h-dvh overflow-x-hidden overflow-y-auto">
-                    // close button
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 cursor-pointer absolute top-2 right-2" on:click={move |_| selected.set(None)}>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                    </svg>
-
+                <SideCard closefn={move || selected.set(None)}>
                     <TerrStats name={sel} terrs={terrs} extradata={Signal::derive(extradata)} />
 
                     <TerrCalc name={sel2} terrs={terrs} extradata={Signal::derive(extradata)} />
-                </div>
+                </SideCard>
             })
         })}
     }
@@ -116,138 +122,29 @@ fn TerrStats(
     #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
     extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
 ) -> impl IntoView {
-    let exdata = Memo::new(move |_| extradata.get().get(&name.get()).unwrap().clone());
-    let t = Memo::new(move |_| terrs.get().get(&name.get()).unwrap().clone());
-
-    let now = chrono::Utc::now();
-    let time = now
-        .signed_duration_since(t.read_untracked().acquired)
-        .num_seconds();
-
-    let (time, set_time) = signal(time);
-
-    let i = set_interval_with_handle(
-        move || {
-            let now = chrono::Utc::now();
-
-            let time = now.signed_duration_since(t.read().acquired).num_seconds();
-
-            set_time.set(time);
-        },
-        Duration::from_millis(1000),
-    )
-    .ok();
-
-    on_cleanup(move || {
-        if let Some(i) = i {
-            i.clear();
-        }
-    });
-
-    let timestr = move || {
-        let time = time.get();
-
-        let days = time / 86400;
-        let hours = (time % 86400) / 3600;
-        let minutes = (time % 3600) / 60;
-        let seconds = time % 60;
-
-        if days > 0 {
-            format!("{}d {}h {}m {}s", days, hours, minutes, seconds)
-        } else if hours > 0 {
-            format!("{}h {}m {}s", hours, minutes, seconds)
-        } else if minutes > 0 {
-            format!("{}m {}s", minutes, seconds)
-        } else {
-            format!("{}s", seconds)
-        }
+    let acquired = move || {
+        terrs
+            .read()
+            .get(&name.get())
+            .map_or_else(chrono::Utc::now, |t| t.acquired)
     };
 
-    let treas_col = move || {
-        let time = time.get();
-
-        // times based on treasury
-        if time < 3600 {
-            "oklch(0.723 0.219 149.579)"
-        } else if time < (3600 * 24) {
-            "oklch(0.768 0.233 130.85)"
-        } else if time < (3600 * 24 * 5) {
-            "oklch(0.795 0.184 86.047)"
-        } else if time < (3600 * 24 * 12) {
-            "oklch(0.705 0.213 47.604)"
-        } else {
-            "oklch(0.637 0.237 25.331)"
-        }
-    };
-
-    let treas_text = move || {
-        let time = time.get();
-
-        // times based on treasury
-        if time < 3600 {
-            "Very Low"
-        } else if time < (3600 * 24) {
-            "Low"
-        } else if time < (3600 * 24 * 5) {
-            "Medium"
-        } else if time < (3600 * 24 * 12) {
-            "High"
-        } else {
-            "Very High"
-        }
+    let guild = move || {
+        terrs
+            .read()
+            .get(&name.get())
+            .map_or_else(Default::default, |t| t.guild.clone())
     };
 
     view! {
-        <div class="p-2">
-            <h1 class="text-2xl">{name}</h1>
-
-            <div class="p-2">
-                <Show when={move || exdata.read().resources.emeralds > 0}>
-                    <div class="flex gap-1 items-center">
-                        <div class="icon-emerald"></div>
-                        <p>"+"{exdata.read().resources.emeralds}" emeralds per hour"</p>
-                    </div>
-                </Show>
-                <Show when={move || exdata.read().resources.ore > 0}>
-                    <div class="flex gap-1 items-center">
-                        <div class="icon-ores"></div>
-                        <p>"+"{exdata.read().resources.ore}" ore per hour"</p>
-                    </div>
-                </Show>
-                <Show when={move || exdata.read().resources.wood > 0}>
-                    <div class="flex gap-1 items-center">
-                        <div class="icon-wood"></div>
-                        <p>"+"{exdata.read().resources.wood}" wood per hour"</p>
-                    </div>
-                </Show>
-                <Show when={move || exdata.read().resources.fish > 0}>
-                    <div class="flex gap-1 items-center">
-                        <div class="icon-fish"></div>
-                        <p>"+"{exdata.read().resources.fish}" fish per hour"</p>
-                    </div>
-                </Show>
-                <Show when={move || exdata.read().resources.crops > 0}>
-                    <div class="flex gap-1 items-center">
-                        <div class="icon-crops"></div>
-                        <p>"+"{exdata.read().resources.crops}" crops per hour"</p>
-                    </div>
-                </Show>
-            </div>
-        </div>
+        <TerrInfo name={name} extradata={extradata} />
 
         <hr class="border-neutral-600" />
 
-        <div class="p-2">
-            <h1 class="text-xl">
-                {move || t.get().guild.name}" "
-                <span class="font-mono">"["{move || t.get().guild.prefix}"]"</span>
-            </h1>
-
-            <div class="p-2">
-                <h2>"Time held: "{move || timestr()}</h2>
-                <h2>"Treasury: "<span style:color=move || treas_col()>{move || treas_text()}</span></h2>
-            </div>
-        </div>
+        <GuildInfo
+            acquired={Signal::derive(acquired)}
+            guild={Signal::derive(guild)}
+        />
     }
 }
 
