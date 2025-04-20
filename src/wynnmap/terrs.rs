@@ -84,7 +84,9 @@ pub fn Territory(
                 }
             }
         >
-            <AttackBorder terr=terr />
+            <Show when={move || !hide_timers}>
+                <AttackBorder terr=terr />
+            </Show>
             // guild tag
             <Show when={move || show_gtag.get()}>
                 <svg style:height="1.875rem" class="w-full overflow-visible">
