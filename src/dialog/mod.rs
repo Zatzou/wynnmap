@@ -63,17 +63,26 @@ fn DialogFrame(children: Children) -> impl IntoView {
 }
 
 #[component]
-pub fn DialogCloseButton() -> impl IntoView {
+pub fn DialogCloseButton(#[prop(optional)] children: Option<Children>) -> impl IntoView {
     let Dialogs(dialogs) = use_context::<Dialogs>().expect("Dialogs context not found");
 
     let close = move |_| {
         close_dialog(dialogs);
     };
 
-    view! {
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 cursor-pointer" on:click=close>
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-        </svg>
+    if let Some(children) = children {
+        view! {
+            <div on:click=close>
+                {children()}
+            </div>
+        }
+        .into_any()
+    } else {
+        view! {
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 cursor-pointer" on:click=close>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+        }.into_any()
     }
 }
 
