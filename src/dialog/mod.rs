@@ -1,5 +1,6 @@
 use leptos::prelude::*;
 
+pub mod planning;
 pub mod settings;
 
 #[derive(Clone)]
