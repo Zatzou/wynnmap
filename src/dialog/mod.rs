@@ -17,13 +17,11 @@ pub fn DialogRenderer() -> impl IntoView {
 
     let top_dialog = move || {
         let mut dialogs = dialogs.get();
-        dialogs.reverse();
         dialogs.pop()
     };
 
     let rest = move || {
         let mut dialogs = dialogs.get();
-        dialogs.reverse();
         dialogs.pop();
         dialogs
     };
