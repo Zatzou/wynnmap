@@ -64,6 +64,7 @@ pub struct Territory {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash)]
 pub struct Guild {
     pub uuid: Option<Uuid>,
+    #[serde(alias = "_id")]
     pub name: Option<Arc<str>>,
     pub prefix: Option<Arc<str>>,
     pub color: Option<Arc<str>>,

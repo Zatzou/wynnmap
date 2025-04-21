@@ -6,7 +6,7 @@ use tokio::{
     time::{Instant, sleep},
 };
 use tracing::{error, info};
-use wynnmap_types::{ExTerrInfo, TerrRes, Territory, ws::TerrSockMessage};
+use wynnmap_types::{ExTerrInfo, Guild, TerrRes, Territory, ws::TerrSockMessage};
 
 use crate::{
     config::Config,
@@ -34,7 +34,7 @@ pub(crate) async fn create_terr_tracker(config: Arc<Config>) -> TerritoryState {
             expires: chrono::Utc::now(),
         })),
 
-        colors: Arc::new(RwLock::new(HashMap::new())),
+        guilds: Arc::new(RwLock::new(HashMap::new())),
         extra: Arc::new(RwLock::new(HashMap::new())),
 
         bc_recv: Arc::new(bc_recv),
@@ -91,13 +91,13 @@ async fn territory_tracker(state: TerritoryState, bc_send: broadcast::Sender<Ter
             // parse the json
             let mut data: HashMap<Arc<str>, Territory> = req.json().await?;
 
-            let collock = state.colors.read().await;
+            let collock = state.guilds.read().await;
 
             // update the guild colors on the data
             for terr in data.values_mut() {
                 if let Some(pfx) = &terr.guild.prefix {
-                    if let Some(col) = collock.get(pfx) {
-                        terr.guild.color = Some(col.clone());
+                    if let Some(guild) = collock.get(pfx) {
+                        terr.guild.color = guild.color.clone();
                     }
                 }
             }
@@ -157,53 +157,34 @@ async fn wynntils_color_grabber(state: TerritoryState) {
             error!("Wynntils color grabber failed: {}", e);
         }
 
-        tokio::time::sleep(Duration::from_secs(30)).await;
+        tokio::time::sleep(Duration::from_secs(60 * 60)).await;
     }
 
     async fn wynntils_color_grabber_inner(state: &TerritoryState) -> Result<(), reqwest::Error> {
-        let terrs: WynntilsApiResponse = state
+        let guilds: Vec<Guild> = state
             .client
-            .get("https://athena.wynntils.com/cache/get/territoryList")
+            .get("https://athena.wynntils.com/cache/get/guildList")
             .send()
             .await?
             .json()
             .await?;
 
-        // prepare the values so we hold the lock for as little time as possible
-        let mut colors = HashMap::new();
-        for (_, gcol) in terrs.territories {
-            colors.insert(gcol.prefix, gcol.color);
-        }
+        // convert the Vec<Guild> to a HashMap<Arc<str>, Guild>
+        let guilds = guilds
+            .into_iter()
+            .filter(|g| g.prefix.is_some())
+            .map(|g| (g.prefix.clone().unwrap(), g))
+            .collect::<HashMap<Arc<str>, Guild>>();
 
-        // update the actual values
-        let mut lock = state.colors.write().await;
+        // lock
+        let mut lock = state.guilds.write().await;
 
-        for (prefix, color) in colors {
-            match (prefix, color) {
-                (Some(p), Some(c)) => {
-                    lock.insert(p, c);
-                }
-                _ => continue,
-            }
-        }
-
+        // update the guilds
+        *lock = guilds;
         drop(lock);
 
         Ok(())
     }
-}
-
-#[derive(Deserialize)]
-struct WynntilsApiResponse {
-    territories: HashMap<Arc<str>, WynntilsTerr>,
-}
-
-#[derive(Deserialize)]
-struct WynntilsTerr {
-    #[serde(rename = "guildPrefix")]
-    prefix: Option<Arc<str>>,
-    #[serde(rename = "guildColor")]
-    color: Option<Arc<str>>,
 }
 
 async fn extra_data_loader(state: TerritoryState) {
