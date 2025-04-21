@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use axum::body::Bytes;
 use tokio::sync::{RwLock, broadcast};
-use wynnmap_types::{ExTerrInfo, Territory, WynntilsMapTile, ws::TerrSockMessage};
+use wynnmap_types::{ExTerrInfo, Guild, Territory, WynntilsMapTile, ws::TerrSockMessage};
 
 use crate::config::Config;
 
@@ -20,7 +20,7 @@ pub(crate) struct TerritoryState {
     pub client: reqwest::Client,
 
     pub inner: Arc<RwLock<TerritoryStateInner>>,
-    pub colors: Arc<RwLock<HashMap<Arc<str>, Arc<str>>>>,
+    pub guilds: Arc<RwLock<HashMap<Arc<str>, Guild>>>,
     pub extra: Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>>,
 
     pub bc_recv: Arc<broadcast::Receiver<TerrSockMessage>>,

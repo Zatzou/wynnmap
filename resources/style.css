@@ -107,6 +107,10 @@ html::before {
     image-rendering: pixelated;
 }
 
+.wynnmap-container [class^="icon-"] {
+    image-rendering: smooth;
+}
+
 .wynnmap-zoomedin [class^="icon-"] {
     image-rendering: pixelated;
 }
