@@ -30,27 +30,21 @@ pub fn PlanningMap() -> impl IntoView {
 
     let terrs = Memo::new(move |_| terrs.get().map_or_else(HashMap::new, |t| t.take()));
 
-    let guilds: RwSignal<Vec<ArcRwSignal<Guild>>> =
-        RwSignal::new(vec![ArcRwSignal::new(Guild::default())]);
-    let owned: RwSignal<HashMap<Arc<str>, ArcRwSignal<Guild>>> = RwSignal::new(HashMap::new());
+    let guilds: RwSignal<Vec<Guild>> = RwSignal::new(vec![Guild::default()]);
+    let owned: RwSignal<HashMap<Arc<str>, u8>> = RwSignal::new(HashMap::new());
 
     let mapterrs = move || {
         let mut terrs = terrs.get();
 
         for (name, terr) in terrs.iter_mut() {
-            if let Some(owner) = owned.with(|o| o.get(name).cloned()) {
-                if let Some(guild) = guilds.with(|g| g.iter().find(|&g| *g == owner).cloned()) {
-                    terr.guild = guild.get();
-                } else {
-                    owned.update(|o| {
-                        o.remove(name);
-                    });
-
-                    terr.guild = Guild::default();
+            if let Some(owner) = owned.with(|o| o.get(name).copied()) {
+                if let Some(guild) = guilds.with(|g| g.get(usize::from(owner)).cloned()) {
+                    terr.guild = guild;
+                    continue;
                 }
-            } else {
-                terr.guild = Guild::default();
             }
+
+            terr.guild = Guild::default();
         }
 
         terrs
@@ -89,7 +83,7 @@ pub fn PlanningMap() -> impl IntoView {
                     <hr class="border-neutral-600" />
                     <GuildName
                         guild={Signal::derive(move || {
-                            owned.read().get(&*hovered.read()).map(|g| g.get()).unwrap_or_default()
+                            guilds.read().get(usize::from(owned.with(|o| o.get(&hovered.get()).copied().unwrap_or(0)))).cloned().unwrap_or_default()
                         })}
                     />
                 </SideCardHover>
@@ -146,33 +140,16 @@ pub fn PlanningMap() -> impl IntoView {
 #[component]
 pub fn GuildSelect(
     terr_name: Signal<Arc<str>>,
-    terr_owners: RwSignal<HashMap<Arc<str>, ArcRwSignal<Guild>>>,
-    #[prop(into)] guilds: RwSignal<Vec<ArcRwSignal<Guild>>>,
+    terr_owners: RwSignal<HashMap<Arc<str>, u8>>,
+    #[prop(into)] guilds: RwSignal<Vec<Guild>>,
 ) -> impl IntoView {
-    // find the index of the current owner if any otherwise default to none
-    let owner = move || {
-        // get the owner value of the territory
-        terr_owners
-            .with(|o| o.get(&terr_name.get()).cloned())
-            .and_then(|e| {
-                // if we have an owner value find the index of the owner in the guilds list
-                guilds
-                    .read()
-                    .iter()
-                    .enumerate()
-                    .find(|(_, g)| *g == &e)
-                    .map(|(i, _)| i)
-            })
-            .unwrap_or(0)
-    };
+    let owner = move || terr_owners.with(|o| o.get(&terr_name.get()).copied().unwrap_or(0));
 
     let onselect = move |sel: String| {
         if let Ok(idx) = sel.parse::<usize>() {
-            if let Some(guild) = guilds.read().get(idx) {
-                terr_owners.update(|o| {
-                    o.insert(terr_name.get().clone(), guild.clone());
-                });
-            }
+            terr_owners.update(|o| {
+                o.insert(terr_name.get().clone(), idx as u8);
+            });
         }
     };
 
@@ -181,11 +158,11 @@ pub fn GuildSelect(
             <select class="text-xl p-1 rounded border-1 border-neutral-600" on:input:target=move |ev| onselect(ev.target().value())>
                 <ForEnumerate
                     each=move || guilds.get()
-                    key=|guild| guild.get()
+                    key=|guild| guild.clone()
                     children=move |idx, guild| {
                         view! {
                             <option value={idx} selected={move || owner() as usize == idx.get()}>
-                                {guild.get().name} " ["{guild.get().prefix}"]"
+                                {guild.name} " ["{guild.prefix}"]"
                             </option>
                         }
                     }

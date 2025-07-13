@@ -5,7 +5,7 @@ use wynnmap_types::Guild;
 
 use crate::dialog::{DialogCloseButton, Dialogs, close_dialog, planning::GuildFields};
 
-pub(super) fn add_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>) -> impl IntoView {
+pub(super) fn add_guild(guilds: RwSignal<Vec<Guild>>) -> impl IntoView {
     let tag = RwSignal::new(String::new());
     let name = RwSignal::new(String::new());
     let color = RwSignal::new(String::from("#FFFFFF"));
@@ -36,12 +36,12 @@ pub(super) fn add_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>) -> impl IntoV
                     move |_| {
                         // TODO: validate inputs
                         guilds.update(|guilds| {
-                            guilds.push(ArcRwSignal::new(Guild {
+                            guilds.push(Guild {
                                 uuid: None,
                                 prefix: Some(Arc::from(tag.get())),
                                 name: Some(Arc::from(name.get())),
                                 color: Some(Arc::from(color.get())),
-                            }));
+                            });
                         });
 
                         close_dialog(dialogs);

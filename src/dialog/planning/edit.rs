@@ -5,16 +5,16 @@ use wynnmap_types::Guild;
 
 use crate::dialog::{DialogCloseButton, Dialogs, close_dialog, planning::GuildFields};
 
-pub(super) fn edit_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>, n: u8) -> impl IntoView {
+pub(super) fn edit_guild(guilds: RwSignal<Vec<Guild>>, n: u8) -> impl IntoView {
     let guild = guilds
         .read_untracked()
         .get(n as usize)
         .cloned()
         .unwrap_or_default();
 
-    let tag = RwSignal::new(guild.get().prefix.unwrap_or_default().to_string());
-    let name = RwSignal::new(guild.get().name.unwrap_or_default().to_string());
-    let color = RwSignal::new(guild.get().color.unwrap_or_default().to_string());
+    let tag = RwSignal::new(guild.prefix.unwrap_or_default().to_string());
+    let name = RwSignal::new(guild.name.unwrap_or_default().to_string());
+    let color = RwSignal::new(guild.color.unwrap_or_default().to_string());
 
     view! {
         <div class="bg-neutral-900 md:rounded-xl text-white flex flex-col">
@@ -43,11 +43,9 @@ pub(super) fn edit_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>, n: u8) -> im
                         // TODO: validate inputs
                         guilds.update(|guilds| {
                             if let Some(guild) = guilds.get_mut(n as usize) {
-                                guild.update(|guild| {
-                                    guild.prefix = Some(Arc::from(tag.get()));
-                                    guild.name = Some(Arc::from(name.get()));
-                                    guild.color = Some(Arc::from(color.get()));
-                                });
+                                guild.prefix = Some(Arc::from(tag.get()));
+                                guild.name = Some(Arc::from(name.get()));
+                                guild.color = Some(Arc::from(color.get()));
                             }
                         });
 
