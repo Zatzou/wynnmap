@@ -9,44 +9,50 @@ pub fn TerrInfo(
     #[prop(into)] name: Signal<Arc<str>>,
     extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
 ) -> impl IntoView {
-    let exdata = Memo::new(move |_| extradata.get().get(&name.get()).unwrap().clone());
-
     view! {
         <div class="p-2">
             <h1 class="text-2xl">{name}</h1>
 
-            <div class="p-2">
-                <Show when={move || exdata.read().resources.emeralds > 0}>
-                    <div class="flex gap-1 items-center">
-                        <div class="icon-emerald"></div>
-                        <p>"+"{exdata.read().resources.emeralds}" emeralds per hour"</p>
-                    </div>
-                </Show>
-                <Show when={move || exdata.read().resources.ore > 0}>
-                    <div class="flex gap-1 items-center">
-                        <div class="icon-ores"></div>
-                        <p>"+"{exdata.read().resources.ore}" ore per hour"</p>
-                    </div>
-                </Show>
-                <Show when={move || exdata.read().resources.wood > 0}>
-                    <div class="flex gap-1 items-center">
-                        <div class="icon-wood"></div>
-                        <p>"+"{exdata.read().resources.wood}" wood per hour"</p>
-                    </div>
-                </Show>
-                <Show when={move || exdata.read().resources.fish > 0}>
-                    <div class="flex gap-1 items-center">
-                        <div class="icon-fish"></div>
-                        <p>"+"{exdata.read().resources.fish}" fish per hour"</p>
-                    </div>
-                </Show>
-                <Show when={move || exdata.read().resources.crops > 0}>
-                    <div class="flex gap-1 items-center">
-                        <div class="icon-crops"></div>
-                        <p>"+"{exdata.read().resources.crops}" crops per hour"</p>
-                    </div>
-                </Show>
-            </div>
+            {move || if let Some(exdata) = extradata.read().get(&*name.read()).cloned() {
+                Some(
+                    view! {
+                        <div class="p-2">
+                            <Show when={move || exdata.resources.emeralds > 0}>
+                                <div class="flex gap-1 items-center">
+                                    <div class="icon-emerald"></div>
+                                    <p>"+"{exdata.resources.emeralds}" emeralds per hour"</p>
+                                </div>
+                            </Show>
+                            <Show when={move || exdata.resources.ore > 0}>
+                                <div class="flex gap-1 items-center">
+                                    <div class="icon-ores"></div>
+                                    <p>"+"{exdata.resources.ore}" ore per hour"</p>
+                                </div>
+                            </Show>
+                            <Show when={move || exdata.resources.wood > 0}>
+                                <div class="flex gap-1 items-center">
+                                    <div class="icon-wood"></div>
+                                    <p>"+"{exdata.resources.wood}" wood per hour"</p>
+                                </div>
+                            </Show>
+                            <Show when={move || exdata.resources.fish > 0}>
+                                <div class="flex gap-1 items-center">
+                                    <div class="icon-fish"></div>
+                                    <p>"+"{exdata.resources.fish}" fish per hour"</p>
+                                </div>
+                            </Show>
+                            <Show when={move || exdata.resources.crops > 0}>
+                                <div class="flex gap-1 items-center">
+                                    <div class="icon-crops"></div>
+                                    <p>"+"{exdata.resources.crops}" crops per hour"</p>
+                                </div>
+                            </Show>
+                        </div>
+                    }
+                )
+            } else {
+                None
+            }}
         </div>
     }
 }
