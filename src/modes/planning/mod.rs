@@ -31,7 +31,7 @@ pub fn PlanningMap() -> impl IntoView {
     let terrs = Memo::new(move |_| terrs.get().map_or_else(HashMap::new, |t| t.take()));
 
     let guilds: RwSignal<Vec<Guild>> = RwSignal::new(vec![Guild::default()]);
-    let owned: RwSignal<HashMap<Arc<str>, usize>> = RwSignal::new(HashMap::new());
+    let owned: RwSignal<HashMap<Arc<str>, u8>> = RwSignal::new(HashMap::new());
 
     let mapterrs = move || {
         let mut terrs = terrs.get();
@@ -140,7 +140,7 @@ pub fn PlanningMap() -> impl IntoView {
 #[component]
 pub fn GuildSelect(
     terr_name: Signal<Arc<str>>,
-    terr_owners: RwSignal<HashMap<Arc<str>, usize>>,
+    terr_owners: RwSignal<HashMap<Arc<str>, u8>>,
     #[prop(into)] guilds: RwSignal<Vec<Guild>>,
 ) -> impl IntoView {
     let owner = move || terr_owners.with(|o| o.get(&terr_name.get()).copied().unwrap_or(0));
@@ -148,7 +148,7 @@ pub fn GuildSelect(
     let onselect = move |sel: String| {
         if let Ok(idx) = sel.parse::<usize>() {
             terr_owners.update(|o| {
-                o.insert(terr_name.get().clone(), idx);
+                o.insert(terr_name.get().clone(), idx as u8);
             });
         }
     };
