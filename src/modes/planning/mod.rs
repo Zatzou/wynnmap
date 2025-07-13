@@ -31,14 +31,20 @@ pub fn PlanningMap() -> impl IntoView {
     let terrs = Memo::new(move |_| terrs.get().map_or_else(HashMap::new, |t| t.take()));
 
     let guilds: RwSignal<Vec<Guild>> = RwSignal::new(vec![Guild::default()]);
-    let owned: RwSignal<HashMap<Arc<str>, usize>> = RwSignal::new(HashMap::new());
+    // key = terr name, value = guild tag
+    let owned: RwSignal<HashMap<Arc<str>, Arc<str>>> = RwSignal::new(HashMap::new());
 
     let mapterrs = move || {
         let mut terrs = terrs.get();
 
         for (name, terr) in terrs.iter_mut() {
-            if let Some(owner) = owned.with(|o| o.get(name).copied()) {
-                if let Some(guild) = guilds.with(|g| g.get(usize::from(owner)).cloned()) {
+            if let Some(owner) = owned.with(|o| o.get(name).cloned()) {
+                if let Some(guild) = guilds
+                    .read()
+                    .iter()
+                    .find(|g| g.prefix == Some(owner.clone()))
+                    .cloned()
+                {
                     terr.guild = guild;
                     continue;
                 }
@@ -83,7 +89,7 @@ pub fn PlanningMap() -> impl IntoView {
                     <hr class="border-neutral-600" />
                     <GuildName
                         guild={Signal::derive(move || {
-                            guilds.read().get(usize::from(owned.with(|o| o.get(&hovered.get()).copied().unwrap_or(0)))).cloned().unwrap_or_default()
+                            guilds.read().iter().find(|g| owned.with(|o| g.prefix == o.get(&hovered.get()).cloned())).cloned().unwrap_or_default()
                         })}
                     />
                 </SideCardHover>
@@ -140,17 +146,18 @@ pub fn PlanningMap() -> impl IntoView {
 #[component]
 pub fn GuildSelect(
     terr_name: Signal<Arc<str>>,
-    terr_owners: RwSignal<HashMap<Arc<str>, usize>>,
+    terr_owners: RwSignal<HashMap<Arc<str>, Arc<str>>>,
     #[prop(into)] guilds: RwSignal<Vec<Guild>>,
 ) -> impl IntoView {
-    let owner = move || terr_owners.with(|o| o.get(&terr_name.get()).copied().unwrap_or(0));
+    let owner = move || {
+        // find the tag of the guild which owns the terr
+        terr_owners.with(|o| o.get(&terr_name.get()).cloned())
+    };
 
     let onselect = move |sel: String| {
-        if let Ok(idx) = sel.parse::<usize>() {
-            terr_owners.update(|o| {
-                o.insert(terr_name.get().clone(), idx);
-            });
-        }
+        terr_owners.update(|o| {
+            o.insert(terr_name.get().clone(), Arc::from(sel));
+        });
     };
 
     view! {
@@ -159,9 +166,11 @@ pub fn GuildSelect(
                 <ForEnumerate
                     each=move || guilds.get()
                     key=|guild| guild.clone()
-                    children=move |idx, guild| {
+                    children=move |_, guild| {
+                        let prefix = guild.prefix.clone();
+
                         view! {
-                            <option value={idx} selected={move || owner() as usize == idx.get()}>
+                            <option value={prefix.clone()} selected={move || owner() == prefix.clone()}>
                                 {guild.name} " ["{guild.prefix}"]"
                             </option>
                         }
