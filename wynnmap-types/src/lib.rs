@@ -82,6 +82,7 @@ impl Default for Guild {
 }
 
 impl Guild {
+    /// Get the color of this guild
     pub fn get_color(&self) -> (u8, u8, u8) {
         if let Some(color) = &self.color {
             let col = u32::from_str_radix(&color[1..], 16)
@@ -90,17 +91,35 @@ impl Guild {
 
             (col[2], col[1], col[0])
         } else {
-            if let Some(name) = &self.name {
-                let mut hasher = Hasher::new();
-                hasher.update(name.as_bytes());
-                let hash = hasher.finalize();
+            self.calculate_color()
+        }
+    }
 
-                let bytes: Vec<u8> = hash.to_ne_bytes().into_iter().rev().collect();
+    /// Get the hex color of this guild
+    pub fn hex_color(&self) -> String {
+        if let Some(col) = &self.color {
+            col.to_string()
+        } else {
+            let col = self.calculate_color();
 
-                (bytes[1], bytes[2], bytes[3])
-            } else {
-                (255, 255, 255)
-            }
+            format!("#{:02X}{:02X}{:02X}", col.0, col.1, col.2)
+        }
+    }
+
+    /// Calculate the guild color using the wynntils crc32 method
+    ///
+    /// This gives the default guild color which wynntils would assign a given guild
+    pub fn calculate_color(&self) -> (u8, u8, u8) {
+        if let Some(name) = &self.name {
+            let mut hasher = Hasher::new();
+            hasher.update(name.as_bytes());
+            let hash = hasher.finalize();
+
+            let bytes: Vec<u8> = hash.to_ne_bytes().into_iter().rev().collect();
+
+            (bytes[1], bytes[2], bytes[3])
+        } else {
+            (255, 255, 255)
         }
     }
 }
