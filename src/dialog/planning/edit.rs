@@ -12,9 +12,9 @@ pub(super) fn edit_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>, n: u8) -> im
         .cloned()
         .unwrap_or_default();
 
-    let tag = RwSignal::new(guild.get().prefix.unwrap_or_default().to_string());
-    let name = RwSignal::new(guild.get().name.unwrap_or_default().to_string());
-    let color = RwSignal::new(guild.get().color.unwrap_or_default().to_string());
+    let tag = RwSignal::new(guild.get_untracked().prefix.unwrap_or_default().to_string());
+    let name = RwSignal::new(guild.get_untracked().name.unwrap_or_default().to_string());
+    let color = RwSignal::new(guild.get_untracked().color.unwrap_or_default().to_string());
 
     view! {
         <div class="bg-neutral-900 md:rounded-xl text-white flex flex-col">
