@@ -1,9 +1,11 @@
-use std::sync::Arc;
-
 use leptos::prelude::*;
 use wynnmap_types::Guild;
 
-use crate::dialog::{self, DialogCloseButton, Dialogs, close_dialog, show_dialog};
+use crate::dialog::{
+    DialogCloseButton,
+    planning::{add::add_guild, edit::edit_guild},
+    show_dialog,
+};
 
 pub fn manage_guilds(guilds: RwSignal<Vec<Guild>>) -> impl IntoView {
     view! {
@@ -23,7 +25,7 @@ pub fn manage_guilds(guilds: RwSignal<Vec<Guild>>) -> impl IntoView {
                     let owner = Owner::new();
                     move |_| {
                         owner.with(move || {
-                            show_dialog(move || dialog::planning::add_guild(guilds));
+                            show_dialog(move || add_guild(guilds));
                         });
                     }
                 }>
@@ -98,133 +100,6 @@ pub fn manage_guilds(guilds: RwSignal<Vec<Guild>>) -> impl IntoView {
                     </tbody>
                 </table>
             </div>
-        </div>
-    }
-}
-
-fn add_guild(guilds: RwSignal<Vec<Guild>>) -> impl IntoView {
-    let tag = RwSignal::new(String::new());
-    let name = RwSignal::new(String::new());
-    let color = RwSignal::new(String::from("#FFFFFF"));
-
-    view! {
-        <div class="bg-neutral-900 md:rounded-xl text-white flex flex-col">
-            <div>
-                <div class="flex justify-between p-2 items-center">
-                    <h1 class="text-2xl">"Add guild"</h1>
-                </div>
-
-                <hr class="border-neutral-600" />
-            </div>
-
-            <GuildFields tag=tag name=name color=color />
-
-            <hr class="border-neutral-600" />
-
-            <div class="p-2 flex justify-between">
-                <DialogCloseButton>
-                    <button class="p-2 m-2 border-red-600 border rounded-md hover:bg-neutral-700">
-                        "Cancel"
-                    </button>
-                </DialogCloseButton>
-
-                <button class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" on:click={
-                    let Dialogs(dialogs) = use_context::<Dialogs>().expect("Dialogs context not found");
-                    move |_| {
-                        // TODO: validate inputs
-                        guilds.update(|guilds| {
-                            guilds.push(Guild {
-                                uuid: None,
-                                prefix: Some(Arc::from(tag.get())),
-                                name: Some(Arc::from(name.get())),
-                                color: Some(Arc::from(color.get())),
-                            });
-                        });
-
-                        close_dialog(dialogs);
-                    }
-                }>
-                    "Add guild"
-                </button>
-            </div>
-        </div>
-    }
-}
-
-fn edit_guild(guilds: RwSignal<Vec<Guild>>, n: u8) -> impl IntoView {
-    let guild = guilds
-        .read_untracked()
-        .get(n as usize)
-        .cloned()
-        .unwrap_or_default();
-
-    let tag = RwSignal::new(guild.prefix.unwrap_or_default().to_string());
-    let name = RwSignal::new(guild.name.unwrap_or_default().to_string());
-    let color = RwSignal::new(guild.color.unwrap_or_default().to_string());
-
-    view! {
-        <div class="bg-neutral-900 md:rounded-xl text-white flex flex-col">
-            <div>
-                <div class="flex justify-between p-2 items-center">
-                    <h1 class="text-2xl">"Edit guild"</h1>
-                </div>
-
-                <hr class="border-neutral-600" />
-            </div>
-
-            <GuildFields tag=tag name=name color=color />
-
-            <hr class="border-neutral-600" />
-
-            <div class="p-2 flex justify-between">
-                <DialogCloseButton>
-                    <button class="p-2 m-2 border-red-600 border rounded-md hover:bg-neutral-700">
-                        "Cancel"
-                    </button>
-                </DialogCloseButton>
-
-                <button class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" on:click={
-                    let Dialogs(dialogs) = use_context::<Dialogs>().expect("Dialogs context not found");
-                    move |_| {
-                        // TODO: validate inputs
-                        guilds.update(|guilds| {
-                            if let Some(guild) = guilds.get_mut(n as usize) {
-                                guild.prefix = Some(Arc::from(tag.get()));
-                                guild.name = Some(Arc::from(name.get()));
-                                guild.color = Some(Arc::from(color.get()));
-                            }
-                        });
-
-                        close_dialog(dialogs);
-                    }
-                }>
-                    "Save"
-                </button>
-            </div>
-        </div>
-    }
-}
-
-#[component]
-fn guild_fields(
-    tag: RwSignal<String>,
-    name: RwSignal<String>,
-    color: RwSignal<String>,
-) -> impl IntoView {
-    view! {
-        <div class="p-2 flex flex-col">
-            <label class="flex flex-col">
-                "Guild tag:"
-                <input type="text" placeholder="Some" bind:value=tag maxlength="4" class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" />
-            </label>
-            <label class="flex flex-col">
-                "Guild name:"
-                <input type="text" placeholder="Some" bind:value=name class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" />
-            </label>
-            <label class="flex flex-col">
-                "Guild color:"
-                <input type="color" placeholder="Some" bind:value=color class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" />
-            </label>
         </div>
     }
 }
