@@ -32,16 +32,17 @@ pub fn manage_guilds(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>) -> impl IntoView
                     "Add guild"
                 </button>
 
-                <button class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" on:click={
-                    let owner = Owner::new();
-                    move |_| {
-                        owner.with(move || {
-                            // show_dialog(dialog::planning::manage_terrs);
-                        });
-                    }
-                }>
-                    "Import guild"
-                </button>
+                // TODO: allow importing guilds from the map/api
+                // <button class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" on:click={
+                //     let owner = Owner::new();
+                //     move |_| {
+                //         owner.with(move || {
+                //             // show_dialog(dialog::planning::manage_terrs);
+                //         });
+                //     }
+                // }>
+                //     "Import guild"
+                // </button>
             </div>
 
             <hr class="border-neutral-600" />
