@@ -25,7 +25,7 @@ pub fn SideCardHover(#[prop(optional)] children: Option<Children>) -> impl IntoV
 #[component]
 pub fn SideCard(
     #[prop(optional)] children: Option<Children>,
-    closefn: impl Fn() -> () + 'static,
+    closefn: impl Fn() + 'static,
 ) -> impl IntoView {
     view! {
         <div class="fixed top-0 right-0 bg-neutral-900 text-white w-full max-w-full md:max-w-sm md:top-4 md:right-4 md:rounded max-h-dvh overflow-x-hidden overflow-y-auto">

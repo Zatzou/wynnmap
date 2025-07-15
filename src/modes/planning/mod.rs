@@ -1,6 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
-use leptos::prelude::*;
+use leptos::{leptos_dom::logging::console_log, prelude::*};
+use leptos_router::hooks::use_location;
 use wynnmap_types::Guild;
 
 use crate::{
@@ -19,6 +20,47 @@ use crate::{
 
 #[component]
 pub fn PlanningMap() -> impl IntoView {
+    let location = use_location();
+    // read a share string from the url
+    let sharedata = move || {
+        // get the hash part of the url
+        let hash = Some(location.hash.get()).filter(|s| !s.is_empty());
+
+        // remove the # from the start
+        let hash = hash.map(|h| h.replace('#', ""));
+
+        console_log(&format!("{:?}", hash));
+
+        // decode the data
+        hash.map(dialog::planning::formats::urlshare::WynnmapData::from_string)
+    };
+
+    // handle errors
+    let sharedata = move || {
+        if let Some(data) = sharedata() {
+            match data {
+                Ok(data) => Some(data),
+                Err(err) => {
+                    show_dialog(move || {
+                        dialog::info::info(
+                            String::from("Failed to read share URL"),
+                            view! {
+                                <pre>{format!("{}", err)}</pre>
+                            },
+                        )
+                    });
+
+                    let _ = window().location().set_hash("");
+                    None
+                }
+            }
+        } else {
+            None
+        }
+    };
+
+    // console_log(&format!("{:?}", sharedata));
+
     let show_conns = use_toggle("conns", true);
 
     let extradata =
@@ -33,6 +75,32 @@ pub fn PlanningMap() -> impl IntoView {
     let guilds: RwSignal<Vec<ArcRwSignal<Guild>>> =
         RwSignal::new(vec![ArcRwSignal::new(Guild::default())]);
     let owned: RwSignal<HashMap<Arc<str>, ArcRwSignal<Guild>>> = RwSignal::new(HashMap::new());
+
+    // apply the share string when territories have loaded
+    Effect::new(move || {
+        if !terrs.read().is_empty()
+            && let Some(data) = sharedata()
+        {
+            if data.verify_terrhash(&terrs.read()) {
+                let (gu, ow) = data.into_data(&terrs.read());
+
+                guilds.set(gu);
+                owned.set(ow);
+
+                // ensure that the sharedata is only decoded once
+                let _ = window().location().set_hash("");
+            } else {
+                show_dialog(move || {
+                    dialog::info::info(
+                        String::from("Territory hash mismatch"),
+                        view! {
+                            <p>"Territories have changed since the creation of this share URL. This URL can no longer be decoded."</p>
+                        },
+                    )
+                });
+            }
+        }
+    });
 
     let mapterrs = move || {
         let mut terrs = terrs.get();
@@ -112,7 +180,7 @@ pub fn PlanningMap() -> impl IntoView {
                 let owner = Owner::new();
                 move |_| {
                     owner.with(move || {
-                        // show_dialog(move || dialog::planning::manage_terrs(guilds));
+                        show_dialog(move || dialog::planning::save_dialog(terrs.into(), guilds, owned));
                     });
                 }
             }>
@@ -184,7 +252,7 @@ pub fn GuildSelect(
                     key=|guild| guild.get()
                     children=move |idx, guild| {
                         view! {
-                            <option value={idx} selected={move || owner() as usize == idx.get()}>
+                            <option value={idx} selected={move || owner() == idx.get()}>
                                 {guild.get().name} " ["{guild.get().prefix}"]"
                             </option>
                         }

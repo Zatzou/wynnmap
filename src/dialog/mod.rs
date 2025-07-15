@@ -1,5 +1,6 @@
 use leptos::prelude::*;
 
+pub mod info;
 pub mod planning;
 pub mod settings;
 

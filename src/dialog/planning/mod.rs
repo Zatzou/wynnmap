@@ -4,10 +4,15 @@ use leptos::prelude::*;
 mod add;
 /// Dialog to edit an existing guild
 mod edit;
+/// save formats used by the planning mode
+pub mod formats;
 /// The whole manage guilds dialog
 mod manage;
+/// save/import dialog
+mod save;
 
 pub use manage::manage_guilds;
+pub use save::save_dialog;
 
 /// Component for the fields that are shared by add guild and edit guild dialogs
 #[component]
