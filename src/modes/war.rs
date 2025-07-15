@@ -30,7 +30,7 @@ pub fn WarMap() -> impl IntoView {
     let extradata =
         LocalResource::new(async move || datasource::get_extra_terr_info().await.unwrap());
 
-    let extradata = move || extradata.get().map_or_else(HashMap::new, |t| t.take());
+    let extradata = move || extradata.get().unwrap_or_else(HashMap::new);
 
     let terrs = RwSignal::new(HashMap::new());
 

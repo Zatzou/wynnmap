@@ -68,9 +68,9 @@ pub fn PlanningMap() -> impl IntoView {
 
     let terrs = LocalResource::new(async move || datasource::get_terrs().await.unwrap());
 
-    let extradata = move || extradata.get().map_or_else(HashMap::new, |t| t.take());
+    let extradata = move || extradata.get().unwrap_or_else(HashMap::new);
 
-    let terrs = Memo::new(move |_| terrs.get().map_or_else(HashMap::new, |t| t.take()));
+    let terrs = Memo::new(move |_| terrs.get().unwrap_or_else(HashMap::new));
 
     let guilds: RwSignal<Vec<ArcRwSignal<Guild>>> =
         RwSignal::new(vec![ArcRwSignal::new(Guild::default())]);

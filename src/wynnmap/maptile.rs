@@ -50,7 +50,7 @@ pub fn MapTiles(tiles: Signal<Vec<WynntilsMapTile>>) -> impl IntoView {
 pub fn DefaultMapTiles() -> impl IntoView {
     let tiles = LocalResource::new(async move || datasource::load_map_tiles().await.unwrap());
 
-    let tiles = move || tiles.get().map_or(Vec::new(), |t| t.take());
+    let tiles = move || tiles.get().unwrap_or_else(Vec::new);
 
     view! { <MapTiles tiles=Signal::derive(tiles) /> }
 }
