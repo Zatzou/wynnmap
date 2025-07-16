@@ -87,8 +87,8 @@ impl WynnmapData {
         serde_json::to_vec(&self).unwrap()
     }
 
-    pub fn from_bytes(bytes: &[u8]) -> Self {
-        serde_json::from_slice(bytes).unwrap()
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, serde_json::Error> {
+        serde_json::from_slice(bytes)
     }
 }
 

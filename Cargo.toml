@@ -35,6 +35,7 @@ base64 = "0.22.1"
 zstd = "0.13.3"
 thiserror = "2.0.12"
 wasm-bindgen-futures = "0.4"
+lz4_flex = "0.11.5"
 
 [profile.release]
 lto = true

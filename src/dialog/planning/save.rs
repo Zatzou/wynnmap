@@ -70,12 +70,22 @@ pub fn save_dialog(
             )
             .into_bytes(),
             FileFormat::Farog => todo!(),
-            FileFormat::RueaES => todo!(),
+            FileFormat::RueaES => {
+                formats::rueaes::RueaES::from_data(&terrs.read(), &guilds.read(), &owned.read())
+                    .to_bytes()
+            }
         };
 
         // let jsbytes = JsValue::from(bytes);
         // let blob = Blob::new_with_u8_array_sequence(&jsbytes).unwrap();
-        let blob = gloo_file::Blob::new_with_options(bytes.as_slice(), Some("application/json"));
+        let blob = gloo_file::Blob::new_with_options(
+            bytes.as_slice(),
+            match fileformat.get() {
+                FileFormat::Wynnmap => Some("application/json"),
+                FileFormat::Farog => Some("application/json"),
+                FileFormat::RueaES => Some("application/x-lz4"),
+            },
+        );
         let url = gloo_file::ObjectUrl::from(blob);
 
         let doc = document();
@@ -86,7 +96,7 @@ pub fn save_dialog(
             match fileformat.get() {
                 FileFormat::Wynnmap => "wynnmap",
                 FileFormat::Farog => todo!(),
-                FileFormat::RueaES => todo!(),
+                FileFormat::RueaES => "lz4",
             },
         ));
         href.set_href(&url);
@@ -97,6 +107,9 @@ pub fn save_dialog(
     let file_load_error = RwSignal::new(None);
 
     let loadfile = move |e: leptos::ev::Event| {
+        // reset error
+        file_load_error.set(None);
+
         let input: HtmlInputElement = e.target().unwrap().unchecked_into();
 
         if let Some(file) = input.files().and_then(|f| f.get(0)) {
@@ -108,18 +121,42 @@ pub fn save_dialog(
                         let array_buffer = ab.dyn_into::<ArrayBuffer>().unwrap();
                         let bytes = Uint8Array::new(&array_buffer).to_vec();
 
-                        let data = formats::wynnmap::WynnmapData::from_bytes(&bytes);
+                        match formats::wynnmap::WynnmapData::from_bytes(&bytes) {
+                            Ok(data) => {
+                                let (gu, ow) = data.into_data();
 
-                        let (gu, ow) = data.into_data();
-
-                        guilds.set(gu);
-                        owned.set(ow);
+                                guilds.set(gu);
+                                owned.set(ow);
+                            }
+                            Err(e) => file_load_error.set(Some(format!("{e}"))),
+                        }
                     }));
 
                     _ = file.array_buffer().then(&parse_wynnmap.read());
                 }
+                // RueaES
+                Some("lz4") => {
+                    let parse_rueaes = RwSignal::new_local(Closure::new(move |ab: JsValue| {
+                        let array_buffer = ab.dyn_into::<ArrayBuffer>().unwrap();
+                        let bytes = Uint8Array::new(&array_buffer).to_vec();
 
-                _ => file_load_error.set(Some("Unknown file extension")),
+                        // let data = formats::rueaes::RueaES::from_bytes(&bytes);
+
+                        match formats::rueaes::RueaES::from_bytes(&bytes) {
+                            Ok(data) => {
+                                let (gu, ow) = data.into_data();
+
+                                guilds.set(gu);
+                                owned.set(ow);
+                            }
+                            Err(e) => file_load_error.set(Some(format!("{e}"))),
+                        }
+                    }));
+
+                    _ = file.array_buffer().then(&parse_rueaes.read());
+                }
+
+                _ => file_load_error.set(Some(String::from("Unknown file extension"))),
             }
         }
     };
@@ -162,6 +199,7 @@ pub fn save_dialog(
                     <select class="border-1 border-neutral-600 p-1 px-2 rounded-lg ml-1" on:input:target={move |e| formatselect(e.target().value()) }>
                         <option value=1 selected={move || *fileformat.read() == FileFormat::Wynnmap}>"Wynnmap"</option>
                         // <option value=2 selected={move || *fileformat.read() == FileFormat::Farog}>"fa-rog's economy simulator"</option>
+                        <option value=3 selected={move || *fileformat.read() == FileFormat::RueaES}>"Ruea Economy Studio"</option>
                     </select>
                 </div>
 
@@ -170,7 +208,8 @@ pub fn save_dialog(
                     <span class="border-1 border-l-0 border-neutral-600 p-1 pr-2 text-neutral-400">
                         {move || match fileformat.get() {
                             FileFormat::Wynnmap => ".wynnmap",
-                            FileFormat::Farog | FileFormat::RueaES => ".json"
+                            FileFormat::Farog => ".json",
+                            FileFormat::RueaES => ".lz4"
                         }}
                     </span>
                     <button class="border-1 border-l-0 border-neutral-600 p-1 px-2 rounded-r-lg hover:bg-neutral-700" on:click={downloadbtn}>"Download"</button>
@@ -184,8 +223,12 @@ pub fn save_dialog(
 
                 <input type="file" class="border-1 border-neutral-600 p-1 px-2 rounded-l" on:input={loadfile}/>
 
+                <Show when={move || file_load_error.read().is_some()}>
+                    <p class="text-red-600 mt-1">{file_load_error}</p>
+                </Show>
+
                 <p class="text-neutral-400">
-                    "Supported filetypes: Wynnmap"
+                    "Supported filetypes: Wynnmap, RueaES (lz4)"
                 </p>
             </div>
         </div>
