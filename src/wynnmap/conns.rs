@@ -1,5 +1,6 @@
 use std::{
     collections::{BTreeSet, HashMap},
+    fmt::Write,
     sync::Arc,
 };
 
@@ -69,13 +70,15 @@ pub fn create_route_paths(
 
     let mut pathing = String::new();
     for (start, end) in terr_conns {
-        pathing.push_str(&format!(
+        write!(
+            pathing,
             "M{} {}L{} {}",
             start.0,
             start.1, // x and y of starting point
             end.0,
             end.1 // x and y of ending point
-        ));
+        )
+        .expect("Write should not fail");
     }
 
     pathing

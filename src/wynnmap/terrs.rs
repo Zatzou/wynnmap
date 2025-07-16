@@ -79,6 +79,8 @@ pub fn Territory(
             on:pointerup=move |e: PointerEvent| {
                 let lastpos = lastpos2.lock().unwrap();
                 let (x, y) = *lastpos;
+                drop(lastpos);
+
                 if e.client_x().abs_diff(x) < 5 && e.client_y().abs_diff(y) < 5 {
                     selected.set(Some(name3.clone()));
                 }

@@ -51,8 +51,7 @@ impl WynnmapData {
                     .iter()
                     .enumerate()
                     .find(|(_, g)| *g == owner)
-                    .map(|(i, _)| i)
-                    .unwrap_or(0);
+                    .map_or(0, |(i, _)| i);
 
                 owneds.push(idx);
             } else {
@@ -99,8 +98,7 @@ impl WynnmapData {
                 .iter()
                 .enumerate()
                 .find(|(i, _)| *i == idx)
-                .map(|(_, g)| g)
-                .unwrap_or_else(|| guilds2.first().unwrap());
+                .map_or_else(|| guilds2.first().unwrap(), |(_, g)| g);
 
             terrs2.insert(name, guild.clone());
         }

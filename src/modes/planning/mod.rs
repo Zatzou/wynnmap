@@ -105,7 +105,7 @@ pub fn PlanningMap() -> impl IntoView {
     let mapterrs = move || {
         let mut terrs = terrs.get();
 
-        for (name, terr) in terrs.iter_mut() {
+        for (name, terr) in &mut terrs {
             if let Some(owner) = owned.with(|o| o.get(name).cloned()) {
                 if let Some(guild) = guilds.with(|g| g.iter().find(|&g| *g == owner).cloned()) {
                     terr.guild = guild.get();
@@ -238,7 +238,7 @@ pub fn GuildSelect(
         if let Ok(idx) = sel.parse::<usize>() {
             if let Some(guild) = guilds.read().get(idx) {
                 terr_owners.update(|o| {
-                    o.insert(terr_name.get().clone(), guild.clone());
+                    o.insert(terr_name.get(), guild.clone());
                 });
             }
         }

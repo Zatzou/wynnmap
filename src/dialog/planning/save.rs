@@ -108,7 +108,7 @@ pub fn save_dialog(
                         let array_buffer = ab.dyn_into::<ArrayBuffer>().unwrap();
                         let bytes = Uint8Array::new(&array_buffer).to_vec();
 
-                        let data = formats::wynnmap::WynnmapData::from_bytes(bytes);
+                        let data = formats::wynnmap::WynnmapData::from_bytes(&bytes);
 
                         let (gu, ow) = data.into_data();
 

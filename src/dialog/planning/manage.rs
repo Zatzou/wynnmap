@@ -80,7 +80,7 @@ pub fn manage_guilds(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>) -> impl IntoView
                                                     move |_| {
                                                         if idx != 0 {
                                                             owner.with(move || {
-                                                                show_dialog(move || edit_guild(guilds, idx as u8));
+                                                                show_dialog(move || edit_guild(guilds, idx));
                                                             });
                                                         }
                                                     }

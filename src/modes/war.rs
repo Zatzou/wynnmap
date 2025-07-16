@@ -169,7 +169,7 @@ fn TerrCalc(
             .map_or_else(Vec::new, |e| e.conns.clone())
     });
     let ext_names =
-        Memo::new(move |_| wynnmap_types::util::find_externals(name.get(), extradata.get()));
+        Memo::new(move |_| wynnmap_types::util::find_externals(&name.read(), &extradata.read()));
 
     let hq = RwSignal::new(false);
 
@@ -218,8 +218,11 @@ fn TerrCalc(
     };
 
     let def_num = Memo::new(move |_| {
-        let mut x =
+        let x =
             damage.get() + attacks.get() + health.get() + defense.get() + aura.get() + volley.get();
+
+        let mut x = x as i32;
+
         if aura.get() == 0 {
             x -= 5;
         }
@@ -311,7 +314,7 @@ fn TerrCalc(
             <h2>"Avg DPS: "{move || {
                 let dmg_low = calc_stat(DAMAGES[*damage.read() as usize].start);
                 let dmg_high = calc_stat(DAMAGES[*damage.read() as usize].end);
-                let dmg_avg = (dmg_low + dmg_high) / 2.0;
+                let dmg_avg = f64::midpoint(dmg_low, dmg_high);
 
                 let att_rate = ATTACK_RATES[*attacks.read() as usize];
 

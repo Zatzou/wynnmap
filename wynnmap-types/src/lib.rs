@@ -157,12 +157,12 @@ impl Location {
 
     /// calculate midpoint on x (horizontal scale)
     pub fn midpoint_x(&self) -> i32 {
-        (self.left_side() + self.right_side()) / 2
+        i32::midpoint(self.left_side(), self.right_side())
     }
 
     /// calculate midpoint on y (vertical scale)
     pub fn midpoint_y(&self) -> i32 {
-        (self.top_side() + self.bottom_side()) / 2
+        i32::midpoint(self.top_side(), self.bottom_side())
     }
 
     pub fn get_midpoint(&self) -> (i32, i32) {

@@ -78,8 +78,9 @@ pub fn WynnMap(children: Children) -> impl IntoView {
         set_transitioning.set(true);
 
         // get the mouse position
-        let mpos = mousepos2.lock().unwrap();
-        let mpos = (f64::from(mpos.0), f64::from(mpos.1));
+        let mpos1 = mousepos2.lock().unwrap();
+        let mpos = (f64::from(mpos1.0), f64::from(mpos1.1));
+        drop(mpos1);
 
         // calculate the new zoom level
         let zoom = zoom.get();

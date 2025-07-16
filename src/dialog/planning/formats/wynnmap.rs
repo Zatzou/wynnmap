@@ -35,8 +35,7 @@ impl WynnmapData {
                         .iter()
                         .enumerate()
                         .find(|(_, g)| *g == own)
-                        .map(|(i, _)| i)
-                        .unwrap_or(0)
+                        .map_or(0, |(i, _)| i)
                 } else {
                     0
                 },
@@ -76,8 +75,7 @@ impl WynnmapData {
                 .iter()
                 .enumerate()
                 .find(|(i, _)| *i == terr.owner)
-                .map(|(_, g)| g)
-                .unwrap_or_else(|| guilds2.first().unwrap());
+                .map_or_else(|| guilds2.first().unwrap(), |(_, g)| g);
 
             terrs2.insert(Arc::from(name), guild.clone());
         }
@@ -89,8 +87,8 @@ impl WynnmapData {
         serde_json::to_vec(&self).unwrap()
     }
 
-    pub fn from_bytes(bytes: Vec<u8>) -> Self {
-        serde_json::from_slice(&bytes).unwrap()
+    pub fn from_bytes(bytes: &[u8]) -> Self {
+        serde_json::from_slice(bytes).unwrap()
     }
 }
 

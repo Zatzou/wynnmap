@@ -5,12 +5,8 @@ use wynnmap_types::Guild;
 
 use crate::dialog::{DialogCloseButton, Dialogs, close_dialog, planning::GuildFields};
 
-pub(super) fn edit_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>, n: u8) -> impl IntoView {
-    let guild = guilds
-        .read_untracked()
-        .get(n as usize)
-        .cloned()
-        .unwrap_or_default();
+pub(super) fn edit_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>, n: usize) -> impl IntoView {
+    let guild = guilds.read_untracked().get(n).cloned().unwrap_or_default();
 
     let tag = RwSignal::new(guild.get_untracked().prefix.unwrap_or_default().to_string());
     let name = RwSignal::new(guild.get_untracked().name.unwrap_or_default().to_string());
@@ -42,7 +38,7 @@ pub(super) fn edit_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>, n: u8) -> im
                     move |_| {
                         // TODO: validate inputs
                         guilds.update(|guilds| {
-                            if let Some(guild) = guilds.get_mut(n as usize) {
+                            if let Some(guild) = guilds.get_mut(n) {
                                 guild.update(|guild| {
                                     guild.prefix = Some(Arc::from(tag.get()));
                                     guild.name = Some(Arc::from(name.get()));

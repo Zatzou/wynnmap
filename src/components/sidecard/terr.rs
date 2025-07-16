@@ -13,8 +13,8 @@ pub fn TerrInfo(
         <div class="p-2">
             <h1 class="text-2xl">{name}</h1>
 
-            {move || if let Some(exdata) = extradata.read().get(&*name.read()).cloned() {
-                Some(
+            {move ||
+                extradata.read().get(&*name.read()).cloned().map(|exdata| {
                     view! {
                         <div class="p-2">
                             <Show when={move || exdata.resources.emeralds > 0}>
@@ -49,10 +49,8 @@ pub fn TerrInfo(
                             </Show>
                         </div>
                     }
-                )
-            } else {
-                None
-            }}
+                })
+            }
         </div>
     }
 }

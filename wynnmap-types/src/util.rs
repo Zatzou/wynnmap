@@ -9,8 +9,8 @@ use crate::ExTerrInfo;
 ///
 /// An external is a territory which is within 3 connections of the given territory.
 pub fn find_externals(
-    name: Arc<str>,
-    extradata: HashMap<Arc<str>, ExTerrInfo>,
+    name: &Arc<str>,
+    extradata: &HashMap<Arc<str>, ExTerrInfo>,
 ) -> HashSet<Arc<str>> {
     let mut externals = HashSet::new();
 
@@ -21,14 +21,14 @@ pub fn find_externals(
 
         for ext in exts {
             if let Some(external) = extradata.get(&ext) {
-                for territory in external.conns.iter() {
+                for territory in &external.conns {
                     externals.insert(territory.clone());
                 }
             }
         }
     }
 
-    externals.remove(&name);
+    externals.remove(name);
 
     externals
 }
