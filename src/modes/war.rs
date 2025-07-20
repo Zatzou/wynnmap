@@ -273,27 +273,27 @@ fn TerrCalc(
 
                 <div class="flex flex-col gap-2">
                     <div class="flex justify-between">
-                        <h2>"Damage: "{move || fmt_num(calc_stat(DAMAGES[damage.get() as usize].start))}" - "{move || fmt_num(calc_stat(DAMAGES[damage.get() as usize].end))}</h2>
+                        <h2>"Damage: "{move || fmt_num(calc_stat(DAMAGES[damage.get()].start))}" - "{move || fmt_num(calc_stat(DAMAGES[damage.get()].end))}</h2>
                         <Incrementor value={damage} max=11 />
                     </div>
                     <div class="flex justify-between">
-                        <h2>"Attacks per second: "{move || ATTACK_RATES[attacks.get() as usize]}</h2>
+                        <h2>"Attacks per second: "{move || ATTACK_RATES[attacks.get()]}</h2>
                         <Incrementor value={attacks} max=11 />
                     </div>
                     <div class="flex justify-between">
-                        <h2>"Health: "{move || fmt_num(calc_stat(HEALTHS[health.get() as usize]))}</h2>
+                        <h2>"Health: "{move || fmt_num(calc_stat(HEALTHS[health.get()]))}</h2>
                         <Incrementor value={health} max=11 />
                     </div>
                     <div class="flex justify-between">
-                        <h2>"Defense: "{move || DEFENSES[defense.get() as usize] * 100.0}"%"</h2>
+                        <h2>"Defense: "{move || DEFENSES[defense.get()] * 100.0}"%"</h2>
                         <Incrementor value={defense} max=11 />
                     </div>
                     <div class="flex justify-between">
-                        <h2>"Aura: "{move || AURA_TIMES[aura.get() as usize]}</h2>
+                        <h2>"Aura: "{move || AURA_TIMES[aura.get()]}</h2>
                         <Incrementor value={aura} max=3 />
                     </div>
                     <div class="flex justify-between">
-                        <h2>"Volley: "{move || VOLLEY_TIMES[volley.get() as usize]}</h2>
+                        <h2>"Volley: "{move || VOLLEY_TIMES[volley.get()]}</h2>
                         <Incrementor value={volley} max=3 />
                     </div>
                     <div class="flex justify-between">
@@ -312,17 +312,17 @@ fn TerrCalc(
 
         <div class="p-4">
             <h2>"Avg DPS: "{move || {
-                let dmg_low = calc_stat(DAMAGES[*damage.read() as usize].start);
-                let dmg_high = calc_stat(DAMAGES[*damage.read() as usize].end);
+                let dmg_low = calc_stat(DAMAGES[*damage.read()].start);
+                let dmg_high = calc_stat(DAMAGES[*damage.read()].end);
                 let dmg_avg = f64::midpoint(dmg_low, dmg_high);
 
-                let att_rate = ATTACK_RATES[*attacks.read() as usize];
+                let att_rate = ATTACK_RATES[*attacks.read()];
 
                 fmt_num(dmg_avg * att_rate)
             }}</h2>
             <h2>"EHP: "{move || {
-                let health = calc_stat(HEALTHS[*health.read() as usize]);
-                let def = DEFENSES[*defense.read() as usize];
+                let health = calc_stat(HEALTHS[*health.read()]);
+                let def = DEFENSES[*defense.read()];
 
                 fmt_num(health / (1.0 - def))
             }}</h2>
