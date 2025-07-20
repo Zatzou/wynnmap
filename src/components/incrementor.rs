@@ -1,13 +1,26 @@
+use std::ops::{Add, Sub};
+
 use leptos::prelude::*;
 
 #[component]
-pub fn Incrementor(
-    value: RwSignal<i32>,
-    #[prop(into, optional)] min: Signal<i32>,
-    #[prop(into, optional)] max: Signal<i32>,
-) -> impl IntoView {
-    let increment = move |_| value.update(|v| *v = (*v + 1).min(max.get()));
-    let decrement = move |_| value.update(|v| *v = (*v - 1).max(min.get()));
+pub fn Incrementor<T>(
+    value: RwSignal<T>,
+    #[prop(into, optional)] min: Signal<T>,
+    #[prop(into, optional)] max: Signal<T>,
+) -> impl IntoView
+where
+    T: RenderHtml
+        + Add<T, Output = T>
+        + Sub<T, Output = T>
+        + From<u8>
+        + Ord
+        + Copy
+        + Default
+        + Sync
+        + 'static,
+{
+    let increment = move |_| value.update(|v| *v = (*v + 1.into()).min(max.get()));
+    let decrement = move |_| value.update(|v| *v = (*v - 1.into()).max(min.get()));
 
     view! {
         <div class="items-center">
