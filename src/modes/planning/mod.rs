@@ -32,7 +32,7 @@ pub fn PlanningMap() -> impl IntoView {
         console_log(&format!("{hash:?}"));
 
         // decode the data
-        hash.map(dialog::planning::formats::urlshare::WynnmapData::from_string)
+        hash.map(dialog::planning::formats::urlshare::ShareUrlData::decode_string)
     };
 
     // handle errors

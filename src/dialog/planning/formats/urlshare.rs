@@ -10,7 +10,7 @@ use thiserror::Error;
 use wynnmap_types::Guild;
 
 #[derive(Debug, Clone, Encode, Decode)]
-pub enum WynnmapData {
+pub enum ShareUrlData {
     V1 {
         terrhash: u32,
         guilds: Vec<V1Guild>,
@@ -18,7 +18,7 @@ pub enum WynnmapData {
     },
 }
 
-impl WynnmapData {
+impl ShareUrlData {
     pub fn from_data(
         terrs: &HashMap<Arc<str>, wynnmap_types::Territory>,
         guilds: &[ArcRwSignal<Guild>],
@@ -106,7 +106,7 @@ impl WynnmapData {
         (guilds2, terrs2)
     }
 
-    pub fn from_string(input: impl AsRef<str>) -> Result<Self, UrlShareDecodeError> {
+    pub fn decode_string(input: impl AsRef<str>) -> Result<Self, UrlShareDecodeError> {
         let compressed_bytes = URL_SAFE_NO_PAD.decode(input.as_ref())?;
 
         let decompressed_bytes = zstd::decode_all(compressed_bytes.as_slice())?;
@@ -116,7 +116,7 @@ impl WynnmapData {
         Ok(data)
     }
 
-    pub fn to_string(&self) -> String {
+    pub fn encode_string(&self) -> String {
         let bytes = bitcode::encode(self);
 
         let zstd = zstd::encode_all(bytes.as_slice(), 22).unwrap();
@@ -181,9 +181,9 @@ impl From<V1Guild> for Guild {
 #[derive(Debug, Error)]
 pub enum UrlShareDecodeError {
     #[error("Failed to decode share string using base64: {0}")]
-    Base64Error(#[from] base64::DecodeError),
+    Base64(#[from] base64::DecodeError),
     #[error("Failed to decompress share string: {0}")]
-    DecompressError(#[from] std::io::Error),
+    Decompress(#[from] std::io::Error),
     #[error("Failed to decode share string: {0}")]
-    DecodeError(#[from] bitcode::Error),
+    Decode(#[from] bitcode::Error),
 }

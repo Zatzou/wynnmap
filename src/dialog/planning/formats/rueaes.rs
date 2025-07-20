@@ -7,10 +7,12 @@ use leptos::prelude::{ArcRwSignal, GetUntracked};
 use serde::{Deserialize, Serialize};
 use wynnmap_types::{Guild, Location};
 
+use crate::dialog::planning::formats::{DataConvert, FileConvert, PlanningModeData};
+
 /// Base structure for the Ruea economy studio file format
 #[derive(Debug, Deserialize, Serialize)]
 pub struct RueaES {
-    /// Type of data should be "state_save"
+    /// Type of data should be `"state_save"`
     #[serde(rename = "type")]
     type_: String,
     /// Version of the data. At the time of writing "1.1"
@@ -29,10 +31,10 @@ pub struct RueaES {
     total_guilds: usize,
 }
 
-impl RueaES {
-    pub fn from_data(
+impl DataConvert for RueaES {
+    fn from_data(
         terrs: &HashMap<Arc<str>, wynnmap_types::Territory>,
-        guilds: &Vec<ArcRwSignal<Guild>>,
+        guilds: &[ArcRwSignal<Guild>],
         owned: &HashMap<Arc<str>, ArcRwSignal<Guild>>,
     ) -> Self {
         let guilds2 = guilds
@@ -67,12 +69,7 @@ impl RueaES {
         }
     }
 
-    pub fn into_data(
-        &self,
-    ) -> (
-        Vec<ArcRwSignal<Guild>>,
-        HashMap<Arc<str>, ArcRwSignal<Guild>>,
-    ) {
+    fn to_data(self) -> super::PlanningModeData {
         // convert the guilds
         // first guild will always be [None]
         let mut guilds = vec![ArcRwSignal::new(Guild::default())];
@@ -112,10 +109,15 @@ impl RueaES {
             terrs.insert(Arc::from(terr.name.as_ref()), guildref);
         }
 
-        (guilds, terrs)
+        PlanningModeData {
+            guilds,
+            owned_territories: terrs,
+        }
     }
+}
 
-    pub fn to_bytes(&self) -> Vec<u8> {
+impl FileConvert for RueaES {
+    fn to_bytes(&self) -> Vec<u8> {
         let out = Vec::new();
 
         let mut writer = lz4_flex::frame::FrameEncoder::new(out);
@@ -125,10 +127,13 @@ impl RueaES {
         writer.finish().expect("compression should not fail")
     }
 
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, serde_json::Error> {
+    fn from_bytes(bytes: &[u8]) -> Result<Self, super::FileConvertError>
+    where
+        Self: Sized,
+    {
         let mut decomp = lz4_flex::frame::FrameDecoder::new(bytes);
 
-        serde_json::from_reader(&mut decomp)
+        Ok(serde_json::from_reader(&mut decomp)?)
     }
 }
 

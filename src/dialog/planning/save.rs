@@ -8,7 +8,10 @@ use web_sys::{
 };
 use wynnmap_types::Guild;
 
-use crate::dialog::{DialogCloseButton, planning::formats};
+use crate::dialog::{
+    DialogCloseButton,
+    planning::formats::{self, DataConvert, FileConvert, PlanningModeData},
+};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum FileFormat {
@@ -28,10 +31,13 @@ pub fn save_dialog(
     let filename = RwSignal::new(String::new());
     let fileformat = RwSignal::new(FileFormat::Wynnmap);
     let sharestring = Memo::new(move |_| {
-        let data =
-            formats::urlshare::WynnmapData::from_data(&terrs.read(), &guilds.read(), &owned.read());
+        let data = formats::urlshare::ShareUrlData::from_data(
+            &terrs.read(),
+            &guilds.read(),
+            &owned.read(),
+        );
 
-        let encoded = data.to_string();
+        let encoded = data.encode_string();
 
         let location = window().location();
 
@@ -68,7 +74,7 @@ pub fn save_dialog(
                 &guilds.read(),
                 &owned.read(),
             )
-            .into_bytes(),
+            .to_bytes(),
             FileFormat::Farog => todo!(),
             FileFormat::RueaES => {
                 formats::rueaes::RueaES::from_data(&terrs.read(), &guilds.read(), &owned.read())
@@ -123,7 +129,10 @@ pub fn save_dialog(
 
                         match formats::wynnmap::WynnmapData::from_bytes(&bytes) {
                             Ok(data) => {
-                                let (gu, ow) = data.into_data();
+                                let PlanningModeData {
+                                    guilds: gu,
+                                    owned_territories: ow,
+                                } = data.to_data();
 
                                 guilds.set(gu);
                                 owned.set(ow);
@@ -144,7 +153,10 @@ pub fn save_dialog(
 
                         match formats::rueaes::RueaES::from_bytes(&bytes) {
                             Ok(data) => {
-                                let (gu, ow) = data.into_data();
+                                let PlanningModeData {
+                                    guilds: gu,
+                                    owned_territories: ow,
+                                } = data.to_data();
 
                                 guilds.set(gu);
                                 owned.set(ow);

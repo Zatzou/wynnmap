@@ -4,6 +4,8 @@ use leptos::prelude::{ArcRwSignal, GetUntracked};
 use serde::{Deserialize, Serialize};
 use wynnmap_types::Guild;
 
+use crate::dialog::planning::formats::{DataConvert, FileConvert, PlanningModeData};
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "version", content = "content")]
 pub enum WynnmapData {
@@ -13,10 +15,10 @@ pub enum WynnmapData {
     },
 }
 
-impl WynnmapData {
-    pub fn from_data(
+impl DataConvert for WynnmapData {
+    fn from_data(
         terrs: &HashMap<Arc<str>, wynnmap_types::Territory>,
-        guilds: &Vec<ArcRwSignal<Guild>>,
+        guilds: &[ArcRwSignal<Guild>],
         owned: &HashMap<Arc<str>, ArcRwSignal<Guild>>,
     ) -> Self {
         let mut newguilds = Vec::new();
@@ -50,12 +52,7 @@ impl WynnmapData {
         }
     }
 
-    pub fn into_data(
-        self,
-    ) -> (
-        Vec<ArcRwSignal<Guild>>,
-        HashMap<Arc<str>, ArcRwSignal<Guild>>,
-    ) {
+    fn to_data(self) -> super::PlanningModeData {
         let Self::V1 {
             guilds,
             territories,
@@ -80,15 +77,23 @@ impl WynnmapData {
             terrs2.insert(Arc::from(name), guild.clone());
         }
 
-        (guilds2, terrs2)
+        PlanningModeData {
+            guilds: guilds2,
+            owned_territories: terrs2,
+        }
+    }
+}
+
+impl FileConvert for WynnmapData {
+    fn to_bytes(&self) -> Vec<u8> {
+        serde_json::to_vec(&self).expect("Serialization should not fail")
     }
 
-    pub fn into_bytes(&self) -> Vec<u8> {
-        serde_json::to_vec(&self).unwrap()
-    }
-
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, serde_json::Error> {
-        serde_json::from_slice(bytes)
+    fn from_bytes(bytes: &[u8]) -> Result<Self, super::FileConvertError>
+    where
+        Self: Sized,
+    {
+        Ok(serde_json::from_slice(bytes)?)
     }
 }
 

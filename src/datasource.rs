@@ -84,7 +84,7 @@ pub fn ws_terr_changes(
                 TerrSockMessage::Territory(hash_map) => {
                     terrs.write().extend(hash_map);
                 }
-                TerrSockMessage::Capture { name, old, new } => {
+                TerrSockMessage::Capture { name, old: _, new } => {
                     terrs.write().insert(name, new);
                 }
             }
