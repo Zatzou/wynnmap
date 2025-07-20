@@ -252,13 +252,3 @@ fn decode<T: DataConvert + FileConvert>(
         Err(e) => err.set(Some(format!("{e}"))),
     }
 }
-
-fn encode<T: DataConvert + FileConvert>(
-    terrs: &HashMap<Arc<str>, wynnmap_types::Territory>,
-    guilds: &[ArcRwSignal<Guild>],
-    owned: &HashMap<Arc<str>, ArcRwSignal<Guild>>,
-) -> Vec<u8> {
-    let e = T::from_data(terrs, guilds, owned);
-
-    e.to_bytes()
-}
