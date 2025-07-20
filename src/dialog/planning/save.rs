@@ -23,6 +23,23 @@ enum FileFormat {
     RueaES = 3,
 }
 
+impl FileFormat {
+    fn mime_type(&self) -> &'static str {
+        match self {
+            FileFormat::Wynnmap | FileFormat::Farog => "application/json",
+            FileFormat::RueaES => "application/x-lz4",
+        }
+    }
+
+    fn file_ext(&self) -> &'static str {
+        match self {
+            FileFormat::Wynnmap => "wynnmap",
+            FileFormat::Farog => "json",
+            FileFormat::RueaES => "lz4",
+        }
+    }
+}
+
 pub fn save_dialog(
     terrs: Signal<HashMap<Arc<str>, wynnmap_types::Territory>>,
     guilds: RwSignal<Vec<ArcRwSignal<Guild>>>,
@@ -86,11 +103,7 @@ pub fn save_dialog(
         // let blob = Blob::new_with_u8_array_sequence(&jsbytes).unwrap();
         let blob = gloo_file::Blob::new_with_options(
             bytes.as_slice(),
-            match fileformat.get() {
-                FileFormat::Wynnmap => Some("application/json"),
-                FileFormat::Farog => Some("application/json"),
-                FileFormat::RueaES => Some("application/x-lz4"),
-            },
+            Some(fileformat.read().mime_type()),
         );
         let url = gloo_file::ObjectUrl::from(blob);
 
@@ -99,22 +112,23 @@ pub fn save_dialog(
         href.set_download(&format!(
             "{}.{}",
             filename.get(),
-            match fileformat.get() {
-                FileFormat::Wynnmap => "wynnmap",
-                FileFormat::Farog => todo!(),
-                FileFormat::RueaES => "lz4",
-            },
+            fileformat.read().file_ext()
         ));
         href.set_href(&url);
         href.click();
         href.remove();
     };
 
-    let file_load_error = RwSignal::new(None);
+    let file_load_err = RwSignal::new(None);
+
+    let load_data = move |data: PlanningModeData| {
+        guilds.set(data.guilds);
+        owned.set(data.owned_territories);
+    };
 
     let loadfile = move |e: leptos::ev::Event| {
         // reset error
-        file_load_error.set(None);
+        file_load_err.set(None);
 
         let input: HtmlInputElement = e.target().unwrap().unchecked_into();
 
@@ -122,53 +136,30 @@ pub fn save_dialog(
             let name = PathBuf::from(file.name());
 
             match name.extension().and_then(|s| s.to_str()) {
-                Some("wynnmap") => {
-                    let parse_wynnmap = RwSignal::new_local(Closure::new(move |ab: JsValue| {
+                Some(name) => {
+                    let name = name.to_owned();
+
+                    let parse = RwSignal::new_local(Closure::new(move |ab: JsValue| {
                         let array_buffer = ab.dyn_into::<ArrayBuffer>().unwrap();
                         let bytes = Uint8Array::new(&array_buffer).to_vec();
 
-                        match formats::wynnmap::WynnmapData::from_bytes(&bytes) {
-                            Ok(data) => {
-                                let PlanningModeData {
-                                    guilds: gu,
-                                    owned_territories: ow,
-                                } = data.to_data();
-
-                                guilds.set(gu);
-                                owned.set(ow);
+                        match name.as_str() {
+                            "wynnmap" => decode::<formats::wynnmap::WynnmapData>(
+                                &bytes,
+                                load_data,
+                                file_load_err,
+                            ),
+                            "lz4" => {
+                                decode::<formats::rueaes::RueaES>(&bytes, load_data, file_load_err)
                             }
-                            Err(e) => file_load_error.set(Some(format!("{e}"))),
+                            _ => file_load_err.set(Some(String::from("Unknown file extension"))),
                         }
                     }));
 
-                    _ = file.array_buffer().then(&parse_wynnmap.read());
+                    // decode the binary data
+                    _ = file.array_buffer().then(&parse.read());
                 }
-                // RueaES
-                Some("lz4") => {
-                    let parse_rueaes = RwSignal::new_local(Closure::new(move |ab: JsValue| {
-                        let array_buffer = ab.dyn_into::<ArrayBuffer>().unwrap();
-                        let bytes = Uint8Array::new(&array_buffer).to_vec();
-
-                        // let data = formats::rueaes::RueaES::from_bytes(&bytes);
-
-                        match formats::rueaes::RueaES::from_bytes(&bytes) {
-                            Ok(data) => {
-                                let PlanningModeData {
-                                    guilds: gu,
-                                    owned_territories: ow,
-                                } = data.to_data();
-
-                                guilds.set(gu);
-                                owned.set(ow);
-                            }
-                            Err(e) => file_load_error.set(Some(format!("{e}"))),
-                        }
-                    }));
-
-                    _ = file.array_buffer().then(&parse_rueaes.read());
-                }
-
-                _ => file_load_error.set(Some(String::from("Unknown file extension"))),
+                _ => file_load_err.set(Some(String::from("Unknown file extension"))),
             }
         }
     };
@@ -235,8 +226,8 @@ pub fn save_dialog(
 
                 <input type="file" class="border-1 border-neutral-600 p-1 px-2 rounded-l" on:input={loadfile}/>
 
-                <Show when={move || file_load_error.read().is_some()}>
-                    <p class="text-red-600 mt-1">{file_load_error}</p>
+                <Show when={move || file_load_err.read().is_some()}>
+                    <p class="text-red-600 mt-1">{file_load_err}</p>
                 </Show>
 
                 <p class="text-neutral-400">
@@ -245,4 +236,29 @@ pub fn save_dialog(
             </div>
         </div>
     }
+}
+
+fn decode<T: DataConvert + FileConvert>(
+    data: &[u8],
+    update: impl Fn(PlanningModeData),
+    err: RwSignal<Option<String>>,
+) {
+    match T::from_bytes(data) {
+        Ok(decoded) => {
+            let data = decoded.to_data();
+
+            update(data);
+        }
+        Err(e) => err.set(Some(format!("{e}"))),
+    }
+}
+
+fn encode<T: DataConvert + FileConvert>(
+    terrs: &HashMap<Arc<str>, wynnmap_types::Territory>,
+    guilds: &[ArcRwSignal<Guild>],
+    owned: &HashMap<Arc<str>, ArcRwSignal<Guild>>,
+) -> Vec<u8> {
+    let e = T::from_data(terrs, guilds, owned);
+
+    e.to_bytes()
 }
