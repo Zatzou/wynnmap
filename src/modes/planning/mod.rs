@@ -29,7 +29,7 @@ pub fn PlanningMap() -> impl IntoView {
         // remove the # from the start
         let hash = hash.map(|h| h.replace('#', ""));
 
-        console_log(&format!("{:?}", hash));
+        console_log(&format!("{hash:?}"));
 
         // decode the data
         hash.map(dialog::planning::formats::urlshare::WynnmapData::from_string)
@@ -45,7 +45,7 @@ pub fn PlanningMap() -> impl IntoView {
                         dialog::info::info(
                             String::from("Failed to read share URL"),
                             view! {
-                                <pre>{format!("{}", err)}</pre>
+                                <pre>{format!("{err}")}</pre>
                             },
                         )
                     });

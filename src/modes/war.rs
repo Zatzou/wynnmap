@@ -332,7 +332,7 @@ fn TerrCalc(
 }
 
 fn fmt_num(n: f64) -> String {
-    let s = format!("{:.2}", n);
+    let s = format!("{n:.2}");
     let mut out = String::new();
 
     let (start, end) = s.split_once('.').unwrap();

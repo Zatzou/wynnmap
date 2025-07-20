@@ -139,7 +139,7 @@ impl WynnmapData {
 
         let Self::V1 { terrhash, .. } = self;
 
-        console_log(&format!("th1: {} th2: {}", terrhash, terrhash2));
+        console_log(&format!("th1: {terrhash} th2: {terrhash2}"));
 
         *terrhash == terrhash2
     }

@@ -86,10 +86,8 @@ impl RueaES {
         // collect guilds from the territories to avoid getting guilds which are not on the map
         let mut gs = HashSet::new();
         for terr in &self.territories {
-            if terr.guild.tag.to_lowercase() != "none" {
-                if !gs.contains(&terr.guild) {
-                    gs.insert(terr.guild.clone());
-                }
+            if terr.guild.tag.to_lowercase() != "none" && !gs.contains(&terr.guild) {
+                gs.insert(terr.guild.clone());
             }
         }
 

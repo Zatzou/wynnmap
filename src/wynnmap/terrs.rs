@@ -62,8 +62,8 @@ pub fn Territory(
             style:width={move || format!("{}px", terr.read().location.width())}
             style:height={move || format!("{}px", terr.read().location.height())}
             style:transform={move || format!("translate3D({}px, {}px, 0)", terr.read().location.left_side(), terr.read().location.top_side())}
-            style:background-color={move || format!("rgba({}, 0.35)", col_rgb)}
-            style:border-color={move || format!("rgb({})", col_rgb2)}
+            style:background-color={move || format!("rgba({col_rgb}, 0.35)")}
+            style:border-color={move || format!("rgb({col_rgb2})")}
 
             on:mouseenter=move |_| {
                 hovered.set(Some(name2.clone()));
@@ -193,13 +193,13 @@ fn TerrTimer(terr: Signal<Territory>) -> impl IntoView {
         let seconds = time % 60;
 
         if days > 0 {
-            format!("{}d {}h", days, hours)
+            format!("{days}d {hours}h")
         } else if hours > 0 {
-            format!("{}h {}m", hours, minutes)
+            format!("{hours}h {minutes}m")
         } else if minutes > 0 {
-            format!("{}m {}s", minutes, seconds)
+            format!("{minutes}m {seconds}s")
         } else {
-            format!("{}s", seconds)
+            format!("{seconds}s")
         }
     };
 
