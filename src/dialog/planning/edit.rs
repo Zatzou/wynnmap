@@ -1,15 +1,15 @@
 use std::sync::Arc;
 
 use leptos::prelude::*;
-use wynnmap_types::Guild;
+use wynnmap_types::guild::Guild;
 
 use crate::dialog::{DialogCloseButton, Dialogs, close_dialog, planning::GuildFields};
 
 pub(super) fn edit_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>, n: usize) -> impl IntoView {
     let guild = guilds.read_untracked().get(n).cloned().unwrap_or_default();
 
-    let tag = RwSignal::new(guild.get_untracked().prefix.unwrap_or_default().to_string());
-    let name = RwSignal::new(guild.get_untracked().name.unwrap_or_default().to_string());
+    let tag = RwSignal::new(guild.get_untracked().prefix.to_string());
+    let name = RwSignal::new(guild.get_untracked().name.to_string());
     let color = RwSignal::new(guild.get_untracked().color.unwrap_or_default().to_string());
 
     view! {
@@ -40,8 +40,8 @@ pub(super) fn edit_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>, n: usize) ->
                         guilds.update(|guilds| {
                             if let Some(guild) = guilds.get_mut(n) {
                                 guild.update(|guild| {
-                                    guild.prefix = Some(Arc::from(tag.get()));
-                                    guild.name = Some(Arc::from(name.get()));
+                                    guild.prefix = Arc::from(tag.get());
+                                    guild.name = Arc::from(name.get());
                                     guild.color = Some(Arc::from(color.get()));
                                 });
                             }

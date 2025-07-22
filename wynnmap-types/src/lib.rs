@@ -1,150 +1,53 @@
-use std::{
-    cmp::{max, min},
-    sync::Arc,
-};
-
-use crc32fast::Hasher;
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
-pub mod util;
 pub mod ws;
 
-/// A wynntils map tile as sourced from the wynntils/static-storage repository.
-#[derive(Clone, Deserialize, Serialize)]
-pub struct WynntilsMapTile {
-    /// The url where the map tile image can be found.
-    pub url: Arc<str>,
+pub mod guild;
+pub mod maptile;
+pub mod terr;
 
-    pub x1: i32,
-    pub x2: i32,
-    pub z1: i32,
-    pub z2: i32,
+pub mod api;
 
-    /// The md5 hash of the map tile image.
-    pub md5: Arc<str>,
-
-    /// The original name of the map tile image.
-    pub orig_name: Option<Arc<str>>,
-}
-
-impl WynntilsMapTile {
-    pub fn left_side(&self) -> i32 {
-        self.x1.min(self.x2)
-    }
-
-    pub fn right_side(&self) -> i32 {
-        self.x1.max(self.x2)
-    }
-
-    pub fn top_side(&self) -> i32 {
-        self.z1.min(self.z2)
-    }
-
-    pub fn bottom_side(&self) -> i32 {
-        self.z1.max(self.z2)
-    }
-
-    pub fn width(&self) -> u32 {
-        self.x1.abs_diff(self.x2)
-    }
-
-    pub fn height(&self) -> u32 {
-        self.z1.abs_diff(self.z2)
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Territory {
-    pub guild: Guild,
-    pub acquired: chrono::DateTime<chrono::Utc>,
-    pub location: Location,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash)]
-pub struct Guild {
-    pub uuid: Option<Uuid>,
-    #[serde(alias = "_id")]
-    pub name: Option<Arc<str>>,
-    pub prefix: Option<Arc<str>>,
-    pub color: Option<Arc<str>>,
-}
-
-impl Default for Guild {
-    fn default() -> Self {
-        Self {
-            uuid: None,
-            name: Some(Arc::from("Nobody")),
-            prefix: Some(Arc::from("None")),
-            color: Some(Arc::from("#FFFFFF")),
-        }
-    }
-}
-
-impl Guild {
-    /// Get the color of this guild
-    pub fn get_color(&self) -> (u8, u8, u8) {
-        if let Some(color) = &self.color {
-            let col = u32::from_str_radix(&color[1..], 16)
-                .unwrap_or(0)
-                .to_ne_bytes();
-
-            (col[2], col[1], col[0])
-        } else {
-            self.calculate_color()
-        }
-    }
-
-    /// Get the hex color of this guild
-    pub fn hex_color(&self) -> String {
-        if let Some(col) = &self.color {
-            col.to_string()
-        } else {
-            let col = self.calculate_color();
-
-            format!("#{:02X}{:02X}{:02X}", col.0, col.1, col.2)
-        }
-    }
-
-    /// Calculate the guild color using the wynntils crc32 method
-    ///
-    /// This gives the default guild color which wynntils would assign a given guild
-    pub fn calculate_color(&self) -> (u8, u8, u8) {
-        if let Some(name) = &self.name {
-            let mut hasher = Hasher::new();
-            hasher.update(name.as_bytes());
-            let hash = hasher.finalize();
-
-            let bytes: Vec<u8> = hash.to_ne_bytes().into_iter().rev().collect();
-
-            (bytes[1], bytes[2], bytes[3])
-        } else {
-            (255, 255, 255)
-        }
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Location {
+/// A rectangular region in the minecraft world
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Region {
+    /// Start positions of the region. First value is the X and second is the Z
     pub start: [i32; 2],
+    /// End positions of the region. First value is the X and second is the Z
     pub end: [i32; 2],
 }
 
-impl Location {
-    pub fn left_side(&self) -> i32 {
-        min(self.start[0], self.end[0])
+impl Region {
+    pub const fn left_side(&self) -> i32 {
+        if self.start[0] < self.end[0] {
+            self.start[0]
+        } else {
+            self.end[0]
+        }
     }
 
-    pub fn right_side(&self) -> i32 {
-        max(self.start[0], self.end[0])
+    pub const fn right_side(&self) -> i32 {
+        if self.start[0] > self.end[0] {
+            self.start[0]
+        } else {
+            self.end[0]
+        }
     }
 
-    pub fn top_side(&self) -> i32 {
-        min(self.start[1], self.end[1])
+    pub const fn top_side(&self) -> i32 {
+        if self.start[1] < self.end[1] {
+            self.start[1]
+        } else {
+            self.end[1]
+        }
     }
 
-    pub fn bottom_side(&self) -> i32 {
-        max(self.start[1], self.end[1])
+    pub const fn bottom_side(&self) -> i32 {
+        if self.start[1] > self.end[1] {
+            self.start[1]
+        } else {
+            self.end[1]
+        }
     }
 
     pub const fn width(&self) -> u32 {
@@ -156,89 +59,16 @@ impl Location {
     }
 
     /// calculate midpoint on x (horizontal scale)
-    pub fn midpoint_x(&self) -> i32 {
-        i32::midpoint(self.left_side(), self.right_side())
+    pub const fn midpoint_x(&self) -> i32 {
+        i32::midpoint(self.start[0], self.end[0])
     }
 
-    /// calculate midpoint on y (vertical scale)
-    pub fn midpoint_y(&self) -> i32 {
-        i32::midpoint(self.top_side(), self.bottom_side())
+    /// calculate midpoint on z (vertical scale)
+    pub const fn midpoint_y(&self) -> i32 {
+        i32::midpoint(self.start[1], self.end[1])
     }
 
-    pub fn get_midpoint(&self) -> (i32, i32) {
+    pub const fn get_midpoint(&self) -> (i32, i32) {
         (self.midpoint_x(), self.midpoint_y())
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-pub struct ExTerrInfo {
-    pub resources: TerrRes,
-
-    pub conns: Vec<Arc<str>>,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-pub struct TerrRes {
-    pub emeralds: i32,
-    pub ore: i32,
-    pub crops: i32,
-    pub fish: i32,
-    pub wood: i32,
-}
-
-impl TerrRes {
-    pub const fn has_emeralds(&self) -> bool {
-        self.emeralds > 9000
-    }
-
-    pub const fn has_ore(&self) -> bool {
-        self.ore != 0
-    }
-
-    pub const fn has_crops(&self) -> bool {
-        self.crops != 0
-    }
-
-    pub const fn has_fish(&self) -> bool {
-        self.fish != 0
-    }
-
-    pub const fn has_wood(&self) -> bool {
-        self.wood != 0
-    }
-
-    pub const fn has_double_ore(&self) -> bool {
-        self.ore >= 7200
-    }
-
-    pub const fn has_double_crops(&self) -> bool {
-        self.crops >= 7200
-    }
-
-    pub const fn has_double_fish(&self) -> bool {
-        self.fish >= 7200
-    }
-
-    pub const fn has_double_wood(&self) -> bool {
-        self.wood >= 7200
-    }
-
-    pub const fn has_res(&self) -> (bool, bool, bool, bool, bool) {
-        (
-            self.has_emeralds(),
-            self.has_crops(),
-            self.has_fish(),
-            self.has_ore(),
-            self.has_wood(),
-        )
-    }
-
-    pub const fn has_double_res(&self) -> (bool, bool, bool, bool) {
-        (
-            self.has_double_crops(),
-            self.has_double_fish(),
-            self.has_double_ore(),
-            self.has_double_wood(),
-        )
     }
 }

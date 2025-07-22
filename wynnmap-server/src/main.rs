@@ -13,6 +13,8 @@ use tower_http::services::{ServeDir, ServeFile};
 use tracing::info;
 use trackers::{images::create_image_tracker, territories::create_terr_tracker};
 
+use crate::trackers::guilds::create_guild_tracker;
+
 mod api;
 mod config;
 mod etag;
@@ -27,7 +29,8 @@ async fn main() {
     info!("Loaded config",);
 
     let img_state = create_image_tracker(config.clone()).await;
-    let terr_state = create_terr_tracker(config.clone()).await;
+    let guild_state = create_guild_tracker(config.clone()).await;
+    let terr_state = create_terr_tracker(config.clone(), guild_state.guilds.clone()).await;
 
     let cors = CorsLayer::new()
         .allow_origin(cors::Any)
@@ -39,8 +42,8 @@ async fn main() {
             Router::new().nest(
                 "/v1",
                 Router::new()
-                    .nest("/images", api::images::router(img_state))
-                    .nest("/territories", api::territories::router(terr_state))
+                    .nest("/images", api::v1::images::router(img_state))
+                    .nest("/terr", api::v1::territories::router(terr_state))
                     .fallback(api_404),
             ),
         )

@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use leptos::prelude::ArcRwSignal;
 use thiserror::Error;
-use wynnmap_types::Guild;
+use wynnmap_types::{guild::Guild, terr::Territory};
 
 pub mod rueaes;
 pub mod urlshare;
@@ -16,7 +16,7 @@ pub struct PlanningModeData {
 
 pub trait DataConvert {
     fn from_data(
-        terrs: &HashMap<Arc<str>, wynnmap_types::Territory>,
+        terrs: &HashMap<Arc<str>, Territory>,
         guilds: &[ArcRwSignal<Guild>],
         owned: &HashMap<Arc<str>, ArcRwSignal<Guild>>,
     ) -> Self;

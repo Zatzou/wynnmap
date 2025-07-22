@@ -5,7 +5,7 @@ use std::{
 
 use leptos::prelude::{ArcRwSignal, GetUntracked};
 use serde::{Deserialize, Serialize};
-use wynnmap_types::{Guild, Location};
+use wynnmap_types::{Region, guild::Guild, terr::Territory};
 
 use crate::dialog::planning::formats::{DataConvert, FileConvert, PlanningModeData};
 
@@ -33,7 +33,7 @@ pub struct RueaES {
 
 impl DataConvert for RueaES {
     fn from_data(
-        terrs: &HashMap<Arc<str>, wynnmap_types::Territory>,
+        terrs: &HashMap<Arc<str>, Territory>,
         guilds: &[ArcRwSignal<Guild>],
         owned: &HashMap<Arc<str>, ArcRwSignal<Guild>>,
     ) -> Self {
@@ -50,7 +50,7 @@ impl DataConvert for RueaES {
             terrs2.push(RTerritory {
                 name: name.to_string(),
                 guild: owner.get_untracked().into(),
-                location: terr.location.clone(),
+                location: terr.location,
             });
         }
 
@@ -98,11 +98,7 @@ impl DataConvert for RueaES {
         for terr in &self.territories {
             let guildref = guilds
                 .iter()
-                .find(|g| {
-                    g.get_untracked()
-                        .prefix
-                        .is_some_and(|pfx| pfx.to_string() == terr.guild.tag)
-                })
+                .find(|g| g.get_untracked().prefix.to_string() == terr.guild.tag)
                 .cloned()
                 .unwrap_or_else(|| guilds.first().unwrap().clone());
 
@@ -142,7 +138,7 @@ impl FileConvert for RueaES {
 struct RTerritory {
     name: String,
     guild: RGuild,
-    location: Location,
+    location: Region,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Hash, PartialEq, Eq)]
@@ -155,8 +151,8 @@ struct RGuild {
 impl From<Guild> for RGuild {
     fn from(value: Guild) -> Self {
         Self {
-            name: value.name.unwrap_or_default().to_string(),
-            tag: value.prefix.unwrap_or_default().to_string(),
+            name: value.name.to_string(),
+            tag: value.prefix.to_string(),
         }
     }
 }
@@ -165,8 +161,8 @@ impl From<RGuild> for Guild {
     fn from(value: RGuild) -> Self {
         Self {
             uuid: None,
-            name: Some(Arc::from(value.name)),
-            prefix: Some(Arc::from(value.tag)),
+            name: Arc::from(value.name),
+            prefix: Arc::from(value.tag),
             color: None,
         }
     }

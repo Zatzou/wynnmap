@@ -7,7 +7,7 @@ use leptos::{
     prelude::{ArcRwSignal, GetUntracked},
 };
 use thiserror::Error;
-use wynnmap_types::Guild;
+use wynnmap_types::{guild::Guild, terr::Territory};
 
 #[derive(Debug, Clone, Encode, Decode)]
 pub enum ShareUrlData {
@@ -20,7 +20,7 @@ pub enum ShareUrlData {
 
 impl ShareUrlData {
     pub fn from_data(
-        terrs: &HashMap<Arc<str>, wynnmap_types::Territory>,
+        terrs: &HashMap<Arc<str>, Territory>,
         guilds: &[ArcRwSignal<Guild>],
         owned: &HashMap<Arc<str>, ArcRwSignal<Guild>>,
     ) -> Self {
@@ -69,7 +69,7 @@ impl ShareUrlData {
     /// Turn the url share back into the planning mode data
     pub fn into_data(
         self,
-        terrs: &HashMap<Arc<str>, wynnmap_types::Territory>,
+        terrs: &HashMap<Arc<str>, Territory>,
     ) -> (
         Vec<ArcRwSignal<Guild>>,
         HashMap<Arc<str>, ArcRwSignal<Guild>>,
@@ -124,7 +124,7 @@ impl ShareUrlData {
         URL_SAFE_NO_PAD.encode(zstd)
     }
 
-    pub fn verify_terrhash(&self, terrs: &HashMap<Arc<str>, wynnmap_types::Territory>) -> bool {
+    pub fn verify_terrhash(&self, terrs: &HashMap<Arc<str>, Territory>) -> bool {
         let mut terrnames = terrs.keys().map(Clone::clone).collect::<Vec<_>>();
 
         // sort the terr names
@@ -157,8 +157,8 @@ impl From<Guild> for V1Guild {
         let col = value.get_color();
 
         Self {
-            name: value.name.unwrap_or_default().to_string(),
-            prefix: value.prefix.unwrap_or_default().to_string(),
+            name: value.name.to_string(),
+            prefix: value.prefix.to_string(),
             color: col,
         }
     }
@@ -168,8 +168,8 @@ impl From<V1Guild> for Guild {
     fn from(value: V1Guild) -> Self {
         Self {
             uuid: None,
-            name: Some(Arc::from(value.name)),
-            prefix: Some(Arc::from(value.prefix)),
+            name: Arc::from(value.name),
+            prefix: Arc::from(value.prefix),
             color: Some(Arc::from(format!(
                 "#{:02X}{:02X}{:02X}",
                 value.color.0, value.color.1, value.color.2

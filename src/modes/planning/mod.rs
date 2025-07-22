@@ -2,10 +2,14 @@ use std::{collections::HashMap, sync::Arc};
 
 use leptos::{leptos_dom::logging::console_log, prelude::*};
 use leptos_router::hooks::use_location;
-use wynnmap_types::Guild;
+use wynnmap_types::{
+    guild::Guild,
+    terr::{TerrOwner, Territory},
+};
 
 use crate::{
     components::{
+        loader::loader,
         sidebar::Sidebar,
         sidecard::{
             SideCard, SideCardHover,
@@ -20,6 +24,12 @@ use crate::{
 
 #[component]
 pub fn PlanningMap() -> impl IntoView {
+    let terrs = LocalResource::new(async move || datasource::get_terrs().await);
+
+    move || loader(terrs, |terrs| planningmap_inner(terrs).into_any())
+}
+
+fn planningmap_inner(terrs: HashMap<Arc<str>, Territory>) -> impl IntoView {
     let location = use_location();
     // read a share string from the url
     let sharedata = move || {
@@ -63,14 +73,7 @@ pub fn PlanningMap() -> impl IntoView {
 
     let show_conns = use_toggle("conns", true);
 
-    let extradata =
-        LocalResource::new(async move || datasource::get_extra_terr_info().await.unwrap());
-
-    let terrs = LocalResource::new(async move || datasource::get_terrs().await.unwrap());
-
-    let extradata = move || extradata.get().unwrap_or_else(HashMap::new);
-
-    let terrs = Memo::new(move |_| terrs.get().unwrap_or_else(HashMap::new));
+    let terrs = RwSignal::new(terrs);
 
     let guilds: RwSignal<Vec<ArcRwSignal<Guild>>> =
         RwSignal::new(vec![ArcRwSignal::new(Guild::default())]);
@@ -102,26 +105,20 @@ pub fn PlanningMap() -> impl IntoView {
         }
     });
 
-    let mapterrs = move || {
-        let mut terrs = terrs.get();
+    let mapowneds = move || {
+        let mut owners = HashMap::new();
 
-        for (name, terr) in &mut terrs {
-            if let Some(owner) = owned.with(|o| o.get(name).cloned()) {
-                if let Some(guild) = guilds.with(|g| g.iter().find(|&g| *g == owner).cloned()) {
-                    terr.guild = guild.get();
-                } else {
-                    owned.update(|o| {
-                        o.remove(name);
-                    });
-
-                    terr.guild = Guild::default();
-                }
-            } else {
-                terr.guild = Guild::default();
-            }
+        for (tname, owner) in &*owned.read() {
+            owners.insert(
+                tname.clone(),
+                TerrOwner {
+                    guild: owner.get().clone(),
+                    acquired: None,
+                },
+            );
         }
 
-        terrs
+        owners
     };
 
     let hovered = RwSignal::new(None);
@@ -133,11 +130,11 @@ pub fn PlanningMap() -> impl IntoView {
 
             // conns
             <Show when={move || show_conns.get()}>
-                <Connections terrs={terrs} extradata={Signal::derive(extradata)} />
+                <Connections terrs={terrs} />
             </Show>
 
             // territories
-            <TerrView terrs={Signal::derive(mapterrs)} extradata={Signal::derive(extradata)} hovered=hovered selected=selected hide_timers=true />
+            <TerrView terrs={terrs} owners={Signal::derive(mapowneds)} hovered=hovered selected=selected hide_timers=true />
         </WynnMap>
 
         // hover box
@@ -152,7 +149,7 @@ pub fn PlanningMap() -> impl IntoView {
                 <SideCardHover>
                     <TerrInfo
                         name={hovered}
-                        extradata={Signal::derive(extradata)}
+                        terrs={terrs}
                     />
                     <hr class="border-neutral-600" />
                     <GuildName
@@ -197,7 +194,7 @@ pub fn PlanningMap() -> impl IntoView {
                 <SideCard closefn={move || selected.set(None)}>
                     <TerrInfo
                         name={sel}
-                        extradata={Signal::derive(extradata)}
+                        terrs={terrs}
                     />
                     <hr class="border-neutral-600" />
                     <GuildSelect

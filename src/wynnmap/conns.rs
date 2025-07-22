@@ -5,14 +5,11 @@ use std::{
 };
 
 use leptos::prelude::*;
-use wynnmap_types::{ExTerrInfo, Territory};
+use wynnmap_types::terr::Territory;
 
 #[component]
-pub fn Connections(
-    #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
-    extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
-) -> impl IntoView {
-    let conn_path = move || create_route_paths(&terrs.read(), extradata.get());
+pub fn Connections(#[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>) -> impl IntoView {
+    let conn_path = move || create_route_paths(&terrs.read());
 
     view! {
         <svg style="position: absolute;overflow: visible;contain: layout;" >
@@ -39,30 +36,23 @@ pub fn Connections(
     }
 }
 
-pub fn create_route_paths(
-    terrs: &HashMap<Arc<str>, Territory>,
-    extradata: HashMap<Arc<str>, ExTerrInfo>,
-) -> String {
+pub fn create_route_paths(terrs: &HashMap<Arc<str>, Territory>) -> String {
     let mut terr_conns: BTreeSet<((i32, i32), (i32, i32))> = BTreeSet::new();
-    for (orig, v) in extradata {
-        for conn in v.conns {
-            if orig < conn {
+    for (name, terr) in terrs {
+        for conn in &terr.connections {
+            if name < conn {
                 terr_conns.insert((
+                    terr.location.get_midpoint(),
                     terrs
-                        .get(&orig)
-                        .map_or((0, 0), |v| v.location.get_midpoint()),
-                    terrs
-                        .get(&conn)
+                        .get(conn)
                         .map_or((0, 0), |v| v.location.get_midpoint()),
                 ));
             } else {
                 terr_conns.insert((
                     terrs
-                        .get(&conn)
+                        .get(conn)
                         .map_or((0, 0), |v| v.location.get_midpoint()),
-                    terrs
-                        .get(&orig)
-                        .map_or((0, 0), |v| v.location.get_midpoint()),
+                    terr.location.get_midpoint(),
                 ));
             }
         }

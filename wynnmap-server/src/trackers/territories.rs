@@ -6,14 +6,22 @@ use tokio::{
     time::{Instant, sleep},
 };
 use tracing::{error, info};
-use wynnmap_types::{ExTerrInfo, Guild, TerrRes, Territory, ws::TerrSockMessage};
+use wynnmap_types::{
+    Region,
+    guild::Guild,
+    terr::{TerrOwner, Territory},
+    ws::TerrSockMessage,
+};
 
 use crate::{
     config::Config,
-    state::{TerritoryState, TerritoryStateInner},
+    state::{ExTerrInfo, TerritoryState, TerritoryStateInner},
 };
 
-pub(crate) async fn create_terr_tracker(config: Arc<Config>) -> TerritoryState {
+pub(crate) async fn create_terr_tracker(
+    config: Arc<Config>,
+    guilds: Arc<RwLock<HashMap<Arc<str>, Guild>>>,
+) -> TerritoryState {
     let client = reqwest::Client::builder()
         .user_agent(format!(
             "{}/{} ({})",
@@ -31,17 +39,17 @@ pub(crate) async fn create_terr_tracker(config: Arc<Config>) -> TerritoryState {
 
         inner: Arc::new(RwLock::new(TerritoryStateInner {
             territories: HashMap::new(),
+            owners: HashMap::new(),
             expires: chrono::Utc::now(),
         })),
 
-        guilds: Arc::new(RwLock::new(HashMap::new())),
+        guilds: guilds,
         extra: Arc::new(RwLock::new(HashMap::new())),
 
         bc_recv: Arc::new(bc_recv),
     };
 
     tokio::spawn(territory_tracker(state.clone(), bc_send));
-    tokio::spawn(wynntils_color_grabber(state.clone()));
     tokio::spawn(extra_data_loader(state.clone()));
 
     state
@@ -89,26 +97,62 @@ async fn territory_tracker(state: TerritoryState, bc_send: broadcast::Sender<Ter
             let diff = expires.naive_utc().signed_duration_since(date);
 
             // parse the json
-            let mut data: HashMap<Arc<str>, Territory> = req.json().await?;
+            let data: HashMap<Arc<str>, WynnTerritory> = req.json().await?;
 
+            // get the extradata
+            let exdata = state.extra.read().await;
+
+            // create the territory data
+            let territories = data
+                .iter()
+                .map(|(name, t)| {
+                    let exdata = exdata.get(name);
+                    (
+                        name.clone(),
+                        Territory {
+                            location: t.location,
+                            connections: exdata.map(|e| e.connections.clone()).unwrap_or_default(),
+                            generates: exdata.map(|e| e.resources.clone()).unwrap_or_default(),
+                        },
+                    )
+                })
+                .collect::<HashMap<_, _>>();
+
+            // drop the exdata lock
+            drop(exdata);
+
+            // read the guilds data to get guild colors
             let collock = state.guilds.read().await;
 
-            // update the guild colors on the data
-            for terr in data.values_mut() {
-                if let Some(pfx) = &terr.guild.prefix {
-                    if let Some(guild) = collock.get(pfx) {
-                        terr.guild.color = guild.color.clone();
-                    }
-                }
-            }
+            // generate the owners data
+            let owners = data
+                .iter()
+                .map(|(name, t)| {
+                    let mut guild = t.guild.clone();
 
+                    guild.color = collock.get(&t.guild.prefix).and_then(|g| g.color.clone());
+
+                    (
+                        name.clone(),
+                        TerrOwner {
+                            guild,
+                            acquired: Some(t.acquired),
+                        },
+                    )
+                })
+                .collect::<HashMap<_, _>>();
+
+            // drop the lock on the guilds data
             drop(collock);
 
             let mut lock = state.inner.write().await;
 
-            // update the territories and get the old data
-            let mut old = data.clone();
-            mem::swap(&mut lock.territories, &mut old);
+            // update the territories
+            lock.territories = territories;
+
+            // update the guild owner data and get the old
+            let mut old_owners = owners.clone();
+            mem::swap(&mut lock.owners, &mut old_owners);
 
             // update the expires so caching works
             lock.expires = expires + Duration::from_secs(1);
@@ -117,26 +161,15 @@ async fn territory_tracker(state: TerritoryState, bc_send: broadcast::Sender<Ter
             drop(lock);
 
             // compare the new and old data and send the changes
-            for (k, new) in data.iter() {
-                if let Some(old) = old.get(k) {
-                    if old != new {
-                        if old.guild.name != new.guild.name {
-                            bc_send.send(TerrSockMessage::Capture {
-                                name: k.clone(),
-                                old: old.clone(),
-                                new: new.clone(),
-                            })?;
-                        } else {
-                            bc_send.send(TerrSockMessage::Territory(HashMap::from_iter(vec![
-                                (k.clone(), new.clone()),
-                            ])))?;
-                        }
-                    }
-                } else {
-                    bc_send.send(TerrSockMessage::Territory(HashMap::from_iter(vec![(
-                        k.clone(),
-                        new.clone(),
-                    )])))?;
+            for (tname, new) in owners {
+                let old = old_owners.get(&tname);
+
+                if old != Some(&new) {
+                    bc_send.send(TerrSockMessage::Capture {
+                        name: tname,
+                        old: old.cloned(),
+                        new: new,
+                    })?;
                 }
             }
 
@@ -149,42 +182,11 @@ async fn territory_tracker(state: TerritoryState, bc_send: broadcast::Sender<Ter
     }
 }
 
-async fn wynntils_color_grabber(state: TerritoryState) {
-    loop {
-        let res = wynntils_color_grabber_inner(&state).await;
-
-        if let Err(e) = res {
-            error!("Wynntils color grabber failed: {}", e);
-        }
-
-        tokio::time::sleep(Duration::from_secs(60 * 60)).await;
-    }
-
-    async fn wynntils_color_grabber_inner(state: &TerritoryState) -> Result<(), reqwest::Error> {
-        let guilds: Vec<Guild> = state
-            .client
-            .get("https://athena.wynntils.com/cache/get/guildList")
-            .send()
-            .await?
-            .json()
-            .await?;
-
-        // convert the Vec<Guild> to a HashMap<Arc<str>, Guild>
-        let guilds = guilds
-            .into_iter()
-            .filter(|g| g.prefix.is_some())
-            .map(|g| (g.prefix.clone().unwrap(), g))
-            .collect::<HashMap<Arc<str>, Guild>>();
-
-        // lock
-        let mut lock = state.guilds.write().await;
-
-        // update the guilds
-        *lock = guilds;
-        drop(lock);
-
-        Ok(())
-    }
+#[derive(Deserialize)]
+struct WynnTerritory {
+    guild: Guild,
+    acquired: chrono::DateTime<chrono::Utc>,
+    location: Region,
 }
 
 async fn extra_data_loader(state: TerritoryState) {
@@ -192,65 +194,25 @@ async fn extra_data_loader(state: TerritoryState) {
         let r = extra_data_loader_inner(&state).await;
 
         if let Err(e) = r {
-            error!("Extra data loader failed: {}", e);
+            error!("Extra data loader failed: {:?}", e);
         }
 
         sleep(Duration::from_secs(60)).await;
     }
 
     async fn extra_data_loader_inner(state: &TerritoryState) -> Result<(), reqwest::Error> {
-        let data: HashMap<Arc<str>, ExTerrInfoOrig> = state
+        let data: HashMap<Arc<str>, ExTerrInfo> = state
             .client
-            .get("https://raw.githubusercontent.com/jakematt123/Wynncraft-Territory-Info/refs/heads/main/territories.json")
+            .get("https://gist.githubusercontent.com/Zatzou/14c82f2df0eb4093dfa1d543b78a73a8/raw/d03273fce33c031498c07e21b94f17644c8aae98/terrextra.json")
             .send()
             .await?
             .json()
             .await?;
-
-        let data = HashMap::from_iter(data.into_iter().map(|(k, v)| (k, v.into())));
 
         let mut lock = state.extra.write().await;
 
         *lock = data;
 
         Ok(())
-    }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ExTerrInfoOrig {
-    pub resources: TerrResOrig,
-
-    #[serde(rename = "Trading Routes")]
-    pub conns: Option<Vec<Arc<str>>>,
-}
-
-impl From<ExTerrInfoOrig> for ExTerrInfo {
-    fn from(orig: ExTerrInfoOrig) -> Self {
-        ExTerrInfo {
-            resources: orig.resources.into(),
-            conns: orig.conns.unwrap_or_default(),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct TerrResOrig {
-    pub emeralds: Arc<str>,
-    pub ore: Arc<str>,
-    pub crops: Arc<str>,
-    pub fish: Arc<str>,
-    pub wood: Arc<str>,
-}
-
-impl From<TerrResOrig> for TerrRes {
-    fn from(orig: TerrResOrig) -> Self {
-        TerrRes {
-            emeralds: orig.emeralds.parse().unwrap_or(0),
-            ore: orig.ore.parse().unwrap_or(0),
-            crops: orig.crops.parse().unwrap_or(0),
-            fish: orig.fish.parse().unwrap_or(0),
-            wood: orig.wood.parse().unwrap_or(0),
-        }
     }
 }

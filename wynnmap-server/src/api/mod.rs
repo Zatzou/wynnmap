@@ -1,2 +1,1 @@
-pub(crate) mod images;
-pub(crate) mod territories;
+pub(crate) mod v1;

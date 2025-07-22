@@ -6,7 +6,7 @@ use web_sys::{
     js_sys::{ArrayBuffer, Uint8Array},
     wasm_bindgen::{JsCast, JsValue, prelude::Closure},
 };
-use wynnmap_types::Guild;
+use wynnmap_types::{guild::Guild, terr::Territory};
 
 use crate::dialog::{
     DialogCloseButton,
@@ -41,7 +41,7 @@ impl FileFormat {
 }
 
 pub fn save_dialog(
-    terrs: Signal<HashMap<Arc<str>, wynnmap_types::Territory>>,
+    terrs: Signal<HashMap<Arc<str>, Territory>>,
     guilds: RwSignal<Vec<ArcRwSignal<Guild>>>,
     owned: RwSignal<HashMap<Arc<str>, ArcRwSignal<Guild>>>,
 ) -> impl IntoView {

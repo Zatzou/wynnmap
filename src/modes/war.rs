@@ -1,13 +1,18 @@
-use std::{collections::HashMap, ops::Range, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    ops::Range,
+    sync::Arc,
+};
 
 use leptos::prelude::*;
-use wynnmap_types::{ExTerrInfo, Territory};
+use wynnmap_types::terr::{TerrOwner, Territory};
 
 use crate::{
     components::{
         checkbox::Checkbox,
         gleaderboard::Gleaderboard,
         incrementor::Incrementor,
+        loader::loader,
         sidebar::Sidebar,
         sidecard::{
             SideCard, SideCardHover,
@@ -21,20 +26,34 @@ use crate::{
 
 #[component]
 pub fn WarMap() -> impl IntoView {
+    let data: LocalResource<Result<_, String>> = LocalResource::new(async move || {
+        let terrs = datasource::get_terrs().await?;
+        let owners = datasource::get_owners().await?;
+
+        Ok((terrs, owners))
+    });
+
+    move || {
+        loader(data, |(terrs, owners)| {
+            warmap_inner(terrs, owners).into_any()
+        })
+    }
+}
+
+fn warmap_inner(
+    terrs: HashMap<Arc<str>, Territory>,
+    owners: HashMap<Arc<str>, TerrOwner>,
+) -> impl IntoView {
     let show_terrs = use_toggle("terrs", true);
     let show_conns = use_toggle("conns", true);
     let show_res = use_toggle("resico", true);
     let show_timers = use_toggle("timers", true);
     let show_guild_leaderboard = use_toggle("gleaderboard", true);
 
-    let extradata =
-        LocalResource::new(async move || datasource::get_extra_terr_info().await.unwrap());
+    let terrs = RwSignal::new(terrs);
+    let owners = RwSignal::new(owners);
 
-    let extradata = move || extradata.get().unwrap_or_else(HashMap::new);
-
-    let terrs = RwSignal::new(HashMap::new());
-
-    datasource::ws_terr_changes(terrs).unwrap();
+    datasource::ws_terr_changes(owners).unwrap();
 
     let hovered = RwSignal::new(None);
     let selected = RwSignal::new(None);
@@ -45,12 +64,12 @@ pub fn WarMap() -> impl IntoView {
 
             // conns
             <Show when={move || show_conns.get()}>
-                <Connections terrs={terrs} extradata={Signal::derive(extradata)} />
+                <Connections terrs={terrs} />
             </Show>
 
             // territories
             <Show when={move || show_terrs.get()}>
-                <TerrView terrs={terrs} extradata={Signal::derive(extradata)} hovered=hovered selected=selected />
+                <TerrView terrs={terrs} owners={owners} hovered=hovered selected=selected />
             </Show>
         </WynnMap>
 
@@ -65,7 +84,7 @@ pub fn WarMap() -> impl IntoView {
                     <TerrStats
                         name={hovered}
                         terrs={terrs}
-                        extradata={Signal::derive(extradata)}
+                        owners={owners}
                     />
                 </SideCardHover>
             })
@@ -96,7 +115,7 @@ pub fn WarMap() -> impl IntoView {
                 </div>
                 <hr class="border-neutral-600" class:hidden={move || !show_guild_leaderboard.get()} />
                 <div class="overflow-y-auto shrink min-h-0">
-                    <Gleaderboard terrs={terrs} class="w-full" class:hidden={move || !show_guild_leaderboard.get()} />
+                    <Gleaderboard owners={owners} class="w-full" class:hidden={move || !show_guild_leaderboard.get()} />
                 </div>
             </div>
         </Sidebar>
@@ -107,9 +126,9 @@ pub fn WarMap() -> impl IntoView {
 
             Some(view! {
                 <SideCard closefn={move || selected.set(None)}>
-                    <TerrStats name={sel} terrs={terrs} extradata={Signal::derive(extradata)} />
+                    <TerrStats name={sel} terrs={terrs} owners={owners} />
 
-                    <TerrCalc name={sel2} terrs={terrs} extradata={Signal::derive(extradata)} />
+                    <TerrCalc name={sel2} terrs={terrs} owners={owners} />
                 </SideCard>
             })
         })}
@@ -120,31 +139,16 @@ pub fn WarMap() -> impl IntoView {
 fn TerrStats(
     #[prop(into)] name: Signal<Arc<str>>,
     #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
-    extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
+    #[prop(into)] owners: Signal<HashMap<Arc<str>, TerrOwner>>,
 ) -> impl IntoView {
-    let acquired = move || {
-        terrs
-            .read()
-            .get(&name.get())
-            .map_or_else(chrono::Utc::now, |t| t.acquired)
-    };
-
-    let guild = move || {
-        terrs
-            .read()
-            .get(&name.get())
-            .map_or_else(Default::default, |t| t.guild.clone())
-    };
+    let owner = move || owners.read().get(&name.get()).cloned().unwrap_or_default();
 
     view! {
-        <TerrInfo name={name} extradata={extradata} />
+        <TerrInfo name={name} terrs={terrs} />
 
         <hr class="border-neutral-600" />
 
-        <GuildInfo
-            acquired={Signal::derive(acquired)}
-            guild={Signal::derive(guild)}
-        />
+        <GuildInfo owner={Signal::derive(owner)} />
     }
 }
 
@@ -152,24 +156,23 @@ fn TerrStats(
 fn TerrCalc(
     #[prop(into)] name: Signal<Arc<str>>,
     #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
-    extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
+    #[prop(into)] owners: Signal<HashMap<Arc<str>, TerrOwner>>,
 ) -> impl IntoView {
     let guild = Memo::new(move |_| {
+        owners
+            .read()
+            .get(&name.get())
+            .map_or_else(Arc::default, |t| t.guild.prefix.clone())
+    });
+
+    let conn_names = Memo::new(move |_| {
         terrs
             .read()
             .get(&name.get())
-            .map_or_else(Arc::default, |t| {
-                t.guild.prefix.clone().unwrap_or_else(|| Arc::from("None"))
-            })
-    });
-    let conn_names = Memo::new(move |_| {
-        extradata
-            .read()
-            .get(&name.get())
-            .map_or_else(Vec::new, |e| e.conns.clone())
+            .map_or_else(HashSet::new, |e| e.connections.clone())
     });
     let ext_names =
-        Memo::new(move |_| wynnmap_types::util::find_externals(&name.read(), &extradata.read()));
+        Memo::new(move |_| wynnmap_types::terr::find_externals(&name.read(), &terrs.read()));
 
     let hq = RwSignal::new(false);
 
@@ -185,10 +188,10 @@ fn TerrCalc(
             .read_untracked()
             .iter()
             .filter(|n| {
-                terrs
+                owners
                     .read_untracked()
                     .get(*n)
-                    .is_some_and(|t| t.guild.prefix == Some(guild.read_untracked().clone()))
+                    .is_some_and(|t| t.guild.prefix == *guild.read_untracked())
             })
             .count() as i32,
     );
@@ -198,10 +201,10 @@ fn TerrCalc(
             .read_untracked()
             .iter()
             .filter(|n| {
-                terrs
+                owners
                     .read_untracked()
                     .get(*n)
-                    .is_some_and(|t| t.guild.prefix == Some(guild.read_untracked().clone()))
+                    .is_some_and(|t| t.guild.prefix == *guild.read_untracked())
             })
             .count() as i32,
     );

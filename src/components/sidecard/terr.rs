@@ -1,50 +1,53 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use leptos::prelude::*;
-use wynnmap_types::{ExTerrInfo, Guild};
+use wynnmap_types::{
+    guild::Guild,
+    terr::{TerrOwner, Territory},
+};
 
 // Displays the name of the territory and the resources it produces.
 #[component]
 pub fn TerrInfo(
     #[prop(into)] name: Signal<Arc<str>>,
-    extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
+    #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
 ) -> impl IntoView {
     view! {
         <div class="p-2">
             <h1 class="text-2xl">{name}</h1>
 
             {move ||
-                extradata.read().get(&*name.read()).cloned().map(|exdata| {
+                terrs.read().get(&*name.read()).cloned().map(|terr| {
                     view! {
                         <div class="p-2">
-                            <Show when={move || exdata.resources.emeralds > 0}>
+                            <Show when={move || terr.generates.has_emeralds()}>
                                 <div class="flex gap-1 items-center">
                                     <div class="icon-emerald"></div>
-                                    <p>"+"{exdata.resources.emeralds}" emeralds per hour"</p>
+                                    <p>"+"{terr.generates.emeralds}" emeralds per hour"</p>
                                 </div>
                             </Show>
-                            <Show when={move || exdata.resources.ore > 0}>
+                            <Show when={move || terr.generates.has_ore()}>
                                 <div class="flex gap-1 items-center">
                                     <div class="icon-ores"></div>
-                                    <p>"+"{exdata.resources.ore}" ore per hour"</p>
+                                    <p>"+"{terr.generates.ore}" ore per hour"</p>
                                 </div>
                             </Show>
-                            <Show when={move || exdata.resources.wood > 0}>
+                            <Show when={move || terr.generates.has_wood()}>
                                 <div class="flex gap-1 items-center">
                                     <div class="icon-wood"></div>
-                                    <p>"+"{exdata.resources.wood}" wood per hour"</p>
+                                    <p>"+"{terr.generates.wood}" wood per hour"</p>
                                 </div>
                             </Show>
-                            <Show when={move || exdata.resources.fish > 0}>
+                            <Show when={move || terr.generates.has_fish()}>
                                 <div class="flex gap-1 items-center">
                                     <div class="icon-fish"></div>
-                                    <p>"+"{exdata.resources.fish}" fish per hour"</p>
+                                    <p>"+"{terr.generates.fish}" fish per hour"</p>
                                 </div>
                             </Show>
-                            <Show when={move || exdata.resources.crops > 0}>
+                            <Show when={move || terr.generates.has_crops()}>
                                 <div class="flex gap-1 items-center">
                                     <div class="icon-crops"></div>
-                                    <p>"+"{exdata.resources.crops}" crops per hour"</p>
+                                    <p>"+"{terr.generates.crops}" crops per hour"</p>
                                 </div>
                             </Show>
                         </div>
@@ -70,24 +73,26 @@ pub fn GuildName(guild: Signal<Guild>) -> impl IntoView {
 
 // Displays the guild name, tag and how long the territory has been owned. Also displays the treasury.
 #[component]
-pub fn GuildInfo(
-    acquired: Signal<chrono::DateTime<chrono::Utc>>,
-    guild: Signal<Guild>,
-) -> impl IntoView {
+pub fn GuildInfo(#[prop(into)] owner: Signal<TerrOwner>) -> impl IntoView {
     let now = chrono::Utc::now();
-    let time = now
-        .signed_duration_since(acquired.read_untracked())
-        .num_seconds();
 
-    let (time, set_time) = signal(time);
+    let time = RwSignal::new(
+        owner
+            .read_untracked()
+            .acquired
+            .map(|acq| now.signed_duration_since(acq).num_seconds()),
+    );
 
     let i = set_interval_with_handle(
         move || {
             let now = chrono::Utc::now();
 
-            let time = now.signed_duration_since(acquired.read()).num_seconds();
+            let t = owner
+                .read_untracked()
+                .acquired
+                .map(|acq| now.signed_duration_since(acq).num_seconds());
 
-            set_time.set(time);
+            time.set(t)
         },
         Duration::from_millis(1000),
     )
@@ -99,9 +104,7 @@ pub fn GuildInfo(
         }
     });
 
-    let timestr = move || {
-        let time = time.get();
-
+    let timestr = move |time: i64| {
         let days = time / 86400;
         let hours = (time % 86400) / 3600;
         let minutes = (time % 3600) / 60;
@@ -118,9 +121,7 @@ pub fn GuildInfo(
         }
     };
 
-    let treas_col = move || {
-        let time = time.get();
-
+    let treas_col = move |time: i64| {
         // times based on treasury
         if time < 3600 {
             "oklch(0.723 0.219 149.579)"
@@ -135,9 +136,7 @@ pub fn GuildInfo(
         }
     };
 
-    let treas_text = move || {
-        let time = time.get();
-
+    let treas_text = move |time: i64| {
         // times based on treasury
         if time < 3600 {
             "Very Low"
@@ -155,14 +154,16 @@ pub fn GuildInfo(
     view! {
         <div class="p-2">
             <h1 class="text-xl">
-                {move || guild.read().name.clone()}" "
-                <span class="font-mono">"["{move || guild.read().prefix.clone()}"]"</span>
+                {move || owner.read().guild.name.clone()}" "
+                <span class="font-mono">"["{move || owner.read().guild.prefix.clone()}"]"</span>
             </h1>
 
-            <div class="p-2">
-                <h2>"Time held: "{move || timestr()}</h2>
-                <h2>"Treasury: "<span style:color=move || treas_col()>{move || treas_text()}</span></h2>
-            </div>
+            {move || time.get().map(|time| view! {
+                <div class="p-2">
+                    <h2>"Time held: "{move || timestr(time)}</h2>
+                    <h2>"Treasury: "<span style:color=move || treas_col(time)>{move || treas_text(time)}</span></h2>
+                </div>
+            })}
         </div>
     }
 }

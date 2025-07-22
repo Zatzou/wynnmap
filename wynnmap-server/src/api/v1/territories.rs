@@ -17,8 +17,8 @@ use crate::state::TerritoryState;
 pub(crate) fn router(state: TerritoryState) -> axum::Router {
     axum::Router::new()
         .route("/list", get(terr_list))
-        .route("/extra", get(extra_data))
-        .route("/ws", get(ws_handler))
+        .route("/guilds", get(guild_list))
+        .route("/guilds/ws", get(ws_handler))
         .with_state(state)
 }
 
@@ -37,12 +37,18 @@ async fn terr_list(State(state): State<TerritoryState>) -> impl IntoResponse {
     )
 }
 
-async fn extra_data(State(state): State<TerritoryState>) -> impl IntoResponse {
-    let read = state.extra.read().await;
+async fn guild_list(State(state): State<TerritoryState>) -> impl IntoResponse {
+    let read = state.inner.read().await;
+
+    let age = (read.expires - chrono::Utc::now()).num_seconds();
 
     (
-        [(header::CACHE_CONTROL, "public, max-age=3600")],
-        Json(read.clone()),
+        [
+            (header::CACHE_CONTROL, String::from("public, max-age=10")),
+            (header::AGE, age.to_string()),
+            (header::EXPIRES, read.expires.to_rfc2822()),
+        ],
+        Json(read.owners.clone()),
     )
 }
 
@@ -55,19 +61,19 @@ async fn ws_handler(
     })
 }
 
-async fn handle_socket(mut socket: WebSocket, state: TerritoryState) {
+async fn handle_socket(socket: WebSocket, state: TerritoryState) {
     let bc_recv = state.bc_recv.resubscribe();
 
-    socket
-        .send(Message::Text(
-            serde_json::to_string(&TerrSockMessage::Territory(
-                state.inner.read().await.territories.clone(),
-            ))
-            .unwrap()
-            .into(),
-        ))
-        .await
-        .unwrap();
+    // socket
+    //     .send(Message::Text(
+    //         serde_json::to_string(&TerrSockMessage::Territory(
+    //             state.inner.read().await.territories.clone(),
+    //         ))
+    //         .unwrap()
+    //         .into(),
+    //     ))
+    //     .await
+    //     .unwrap();
 
     if let Err(e) = handle_socket_inner(socket, bc_recv).await {
         tracing::error!("Error handling socket: {:?}", e);

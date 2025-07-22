@@ -1,5 +1,5 @@
 use leptos::prelude::*;
-use wynnmap_types::Guild;
+use wynnmap_types::guild::Guild;
 
 use crate::dialog::{
     DialogCloseButton,

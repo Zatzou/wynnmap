@@ -3,9 +3,10 @@ use std::{collections::HashMap, io::Cursor, sync::Arc};
 use crate::{ImageState, config::Config};
 use axum::body::Bytes;
 use image::ImageReader;
+use serde::Deserialize;
 use tracing::{error, info};
 use webp::Encoder;
-use wynnmap_types::WynntilsMapTile;
+use wynnmap_types::{Region, maptile::MapTile};
 
 pub(crate) async fn create_image_tracker(config: Arc<Config>) -> ImageState {
     let state = ImageState {
@@ -67,7 +68,7 @@ async fn image_tracker(state: ImageState) {
 
                 // load each map tile into the cache
                 for item in &data {
-                    load_image(state, item, client.clone(), &mut etag_cache).await?;
+                    download_image(state, item, client.clone(), &mut etag_cache).await?;
                 }
 
                 // replace the urls in the data with the local url
@@ -77,30 +78,23 @@ async fn image_tracker(state: ImageState) {
                     "png"
                 };
                 for item in &mut data {
-                    // figure out the filename and fall back to the md5
-                    let fname = item
-                        .url
-                        .split('/')
-                        .last()
-                        .and_then(|s| s.strip_suffix(".png"));
-
-                    item.orig_name = fname.map(Into::into);
-
                     item.url = Arc::from(format!(
                         "{}/api/v1/images/{}.{}",
                         state.config.server.base_url, item.md5, format
                     ));
                 }
 
+                let tiles = data.into_iter().map(|t| t.into()).collect::<Vec<_>>();
+
                 // replace the cache with the new data
-                state.maps.write().await.clone_from(&data);
+                state.maps.write().await.clone_from(&tiles);
 
                 // drop old images from the cache
                 state
                     .map_cache
                     .write()
                     .await
-                    .retain(|k, _| data.iter().any(|d| d.md5 == *k));
+                    .retain(|k, _| tiles.iter().any(|d| d.md5 == *k));
 
                 info!("Loaded maps.json");
             } else if status == reqwest::StatusCode::NOT_MODIFIED {
@@ -112,50 +106,79 @@ async fn image_tracker(state: ImageState) {
             tokio::time::sleep(std::time::Duration::from_secs(60 * 60)).await;
         }
     }
+}
 
-    async fn load_image(
-        state: &ImageState,
-        item: &WynntilsMapTile,
-        client: reqwest::Client,
-        etag_cache: &mut HashMap<Arc<str>, Arc<str>>,
-    ) -> Result<(), reqwest::Error> {
-        let res = client
-            .get(&*item.url)
-            .header(
-                "If-None-Match",
-                &**etag_cache.get(&item.md5).unwrap_or(&Arc::from("")),
-            )
-            .send()
-            .await?;
+/// Download the given file from the github
+async fn download_image(
+    state: &ImageState,
+    item: &WynntilsMapTile,
+    client: reqwest::Client,
+    etag_cache: &mut HashMap<Arc<str>, Arc<str>>,
+) -> Result<(), reqwest::Error> {
+    let res = client
+        .get(&*item.url)
+        .header(
+            "If-None-Match",
+            &**etag_cache.get(&item.md5).unwrap_or(&Arc::from("")),
+        )
+        .send()
+        .await?;
 
-        let status = res.status();
-        if status.is_success() {
-            let data = res.bytes().await?;
+    let status = res.status();
+    if status.is_success() {
+        let data = res.bytes().await?;
 
-            let data = if state.config.images.use_webp {
-                let img = ImageReader::new(Cursor::new(data))
-                    .with_guessed_format()
-                    .unwrap()
-                    .decode()
-                    .unwrap();
+        let data = if state.config.images.use_webp {
+            let img = ImageReader::new(Cursor::new(data))
+                .with_guessed_format()
+                .unwrap()
+                .decode()
+                .unwrap();
 
-                let encoder = Encoder::from_image(&img).unwrap();
-                let out = encoder.encode_lossless();
+            let encoder = Encoder::from_image(&img).unwrap();
+            let out = encoder.encode_lossless();
 
-                Bytes::from_iter(out.iter().copied())
-            } else {
-                data
-            };
-
-            state.map_cache.write().await.insert(item.md5.clone(), data);
-        } else if status == reqwest::StatusCode::NOT_MODIFIED {
-            info!("Image {} not modified", item.url);
+            Bytes::from_iter(out.iter().copied())
         } else {
-            error!("Failed to load image {}: {}", item.url, status);
+            data
+        };
+
+        state.map_cache.write().await.insert(item.md5.clone(), data);
+    } else if status == reqwest::StatusCode::NOT_MODIFIED {
+        info!("Image {} not modified", item.url);
+    } else {
+        error!("Failed to load image {}: {}", item.url, status);
+    }
+
+    info!("Loaded image {}", item.url);
+
+    Ok(())
+}
+
+/// The deserialization format for the wynntils `maps.json`
+#[derive(Deserialize)]
+struct WynntilsMapTile {
+    name: Arc<str>,
+    url: Arc<str>,
+
+    x1: i32,
+    z1: i32,
+    x2: i32,
+    z2: i32,
+
+    md5: Arc<str>,
+}
+
+impl From<WynntilsMapTile> for MapTile {
+    fn from(v: WynntilsMapTile) -> Self {
+        Self {
+            name: v.name,
+            url: v.url,
+            location: Region {
+                start: [v.x1, v.z1],
+                end: [v.x2, v.z2],
+            },
+            md5: v.md5,
         }
-
-        info!("Loaded image {}", item.url);
-
-        Ok(())
     }
 }

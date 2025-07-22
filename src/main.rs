@@ -9,9 +9,12 @@ use modes::{planning::PlanningMap, war::WarMap};
 use notfound::NotFound;
 use settings::provide_settings;
 
+use crate::wynnmap::maptile::ProvideDefaultMapTiles;
+
 mod components;
 mod datasource;
 mod dialog;
+mod error;
 mod modes;
 mod notfound;
 mod settings;
@@ -31,12 +34,14 @@ pub fn App() -> impl IntoView {
     provide_context(ShowSidebar(RwSignal::new(false)));
 
     view! {
-        <Router>
-            <Routes fallback=NotFound>
-                <Route path=path!("") view=WarMap />
-                <Route path=path!("plan") view=PlanningMap />
-            </Routes>
-        </Router>
+        <ProvideDefaultMapTiles>
+            <Router>
+                <Routes fallback=NotFound>
+                    <Route path=path!("") view=WarMap />
+                    <Route path=path!("plan") view=PlanningMap />
+                </Routes>
+            </Router>
+        </ProvideDefaultMapTiles>
 
         <DialogRenderer />
     }

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use leptos::prelude::*;
-use wynnmap_types::Guild;
+use wynnmap_types::guild::Guild;
 
 use crate::dialog::{DialogCloseButton, Dialogs, close_dialog, planning::GuildFields};
 
@@ -38,8 +38,8 @@ pub(super) fn add_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>) -> impl IntoV
                         guilds.update(|guilds| {
                             guilds.push(ArcRwSignal::new(Guild {
                                 uuid: None,
-                                prefix: Some(Arc::from(tag.get())),
-                                name: Some(Arc::from(name.get())),
+                                prefix: Arc::from(tag.get()),
+                                name: Arc::from(name.get()),
                                 color: Some(Arc::from(color.get())),
                             }));
                         });

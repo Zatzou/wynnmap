@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use leptos::prelude::{ArcRwSignal, GetUntracked};
 use serde::{Deserialize, Serialize};
-use wynnmap_types::Guild;
+use wynnmap_types::{guild::Guild, terr::Territory};
 
 use crate::dialog::planning::formats::{DataConvert, FileConvert, PlanningModeData};
 
@@ -17,7 +17,7 @@ pub enum WynnmapData {
 
 impl DataConvert for WynnmapData {
     fn from_data(
-        terrs: &HashMap<Arc<str>, wynnmap_types::Territory>,
+        terrs: &HashMap<Arc<str>, Territory>,
         guilds: &[ArcRwSignal<Guild>],
         owned: &HashMap<Arc<str>, ArcRwSignal<Guild>>,
     ) -> Self {
@@ -31,7 +31,7 @@ impl DataConvert for WynnmapData {
 
         for terr in terrs {
             let t = V1Territory {
-                location: terr.1.location.clone(),
+                location: terr.1.location,
                 owner: if let Some(own) = owned.get(terr.0) {
                     guilds
                         .iter()
@@ -109,8 +109,8 @@ impl From<Guild> for V1Guild {
         let col = value.hex_color();
 
         Self {
-            name: value.name.unwrap_or_default().to_string(),
-            prefix: value.prefix.unwrap_or_default().to_string(),
+            name: value.name.to_string(),
+            prefix: value.prefix.to_string(),
             color: col,
         }
     }
@@ -120,8 +120,8 @@ impl From<V1Guild> for Guild {
     fn from(value: V1Guild) -> Self {
         Self {
             uuid: None,
-            name: Some(Arc::from(value.name)),
-            prefix: Some(Arc::from(value.prefix)),
+            name: Arc::from(value.name),
+            prefix: Arc::from(value.prefix),
             color: Some(Arc::from(value.color)),
         }
     }
@@ -129,6 +129,6 @@ impl From<V1Guild> for Guild {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct V1Territory {
-    location: wynnmap_types::Location,
+    location: wynnmap_types::Region,
     owner: usize,
 }

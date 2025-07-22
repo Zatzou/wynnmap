@@ -3,7 +3,13 @@ use std::{collections::HashMap, sync::Arc, time::Duration};
 use codee::string::JsonSerdeWasmCodec;
 use leptos::prelude::*;
 use leptos_use::{UseWebSocketReturn, core::ConnectionReadyState, use_websocket};
-use wynnmap_types::{ExTerrInfo, Territory, WynntilsMapTile, ws::TerrSockMessage};
+use wynnmap_types::{
+    maptile::MapTile,
+    terr::{TerrOwner, Territory},
+    ws::TerrSockMessage,
+};
+
+use crate::error::debug_fmt_error;
 
 /// Get the api url to be used for fetching data. This by default uses the current window location
 /// to determine the host and whether or not encryption is used.
@@ -18,39 +24,42 @@ pub fn get_url(protocol: &str) -> String {
     format!("{protocol}{}://{host}", if proto { "s" } else { "" })
 }
 
-pub async fn load_map_tiles() -> Result<Vec<WynntilsMapTile>, reqwest::Error> {
-    let r = reqwest::get(format!("{}{}", get_url("http"), "/api/v1/images/maps.json")).await?;
+pub async fn load_map_tiles() -> Result<Vec<MapTile>, String> {
+    let r = reqwest::get(format!("{}{}", get_url("http"), "/api/v1/images/maps.json"))
+        .await
+        .map_err(debug_fmt_error)?;
 
-    let tiles: Vec<WynntilsMapTile> = r.json().await?;
+    let tiles: Vec<MapTile> = r.json().await.map_err(debug_fmt_error)?;
 
     Ok(tiles)
 }
 
-pub async fn get_terrs() -> Result<HashMap<Arc<str>, Territory>, reqwest::Error> {
+pub async fn get_terrs() -> Result<HashMap<Arc<str>, Territory>, String> {
     let resp: HashMap<Arc<str>, Territory> =
-        reqwest::get(format!("{}{}", get_url("http"), "/api/v1/territories/list"))
-            .await?
+        reqwest::get(format!("{}{}", get_url("http"), "/api/v1/terr/list"))
+            .await
+            .map_err(debug_fmt_error)?
             .json()
-            .await?;
+            .await
+            .map_err(debug_fmt_error)?;
 
     Ok(resp)
 }
 
-pub async fn get_extra_terr_info() -> Result<HashMap<Arc<str>, ExTerrInfo>, reqwest::Error> {
-    let resp: HashMap<Arc<str>, ExTerrInfo> = reqwest::get(format!(
-        "{}{}",
-        get_url("http"),
-        "/api/v1/territories/extra"
-    ))
-    .await?
-    .json()
-    .await?;
+pub async fn get_owners() -> Result<HashMap<Arc<str>, TerrOwner>, String> {
+    let resp: HashMap<Arc<str>, TerrOwner> =
+        reqwest::get(format!("{}{}", get_url("http"), "/api/v1/terr/guilds"))
+            .await
+            .map_err(debug_fmt_error)?
+            .json()
+            .await
+            .map_err(debug_fmt_error)?;
 
     Ok(resp)
 }
 
 pub fn ws_terr_changes(
-    terrs: RwSignal<HashMap<Arc<str>, Territory>>,
+    owners: RwSignal<HashMap<Arc<str>, TerrOwner>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let UseWebSocketReturn {
         ready_state,
@@ -58,7 +67,7 @@ pub fn ws_terr_changes(
         open,
         ..
     } = use_websocket::<TerrSockMessage, TerrSockMessage, JsonSerdeWasmCodec>(&format!(
-        "{}/api/v1/territories/ws",
+        "{}/api/v1/terr/guilds/ws",
         get_url("ws")
     ));
 
@@ -81,11 +90,8 @@ pub fn ws_terr_changes(
     Effect::new(move || {
         if let Some(msg) = message.get() {
             match msg {
-                TerrSockMessage::Territory(hash_map) => {
-                    terrs.write().extend(hash_map);
-                }
                 TerrSockMessage::Capture { name, old: _, new } => {
-                    terrs.write().insert(name, new);
+                    owners.write().insert(name, new);
                 }
             }
         }

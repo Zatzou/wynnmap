@@ -1,17 +1,17 @@
 use std::{collections::HashMap, sync::Arc};
 
 use leptos::prelude::*;
-use wynnmap_types::Territory;
+use wynnmap_types::terr::TerrOwner;
 
 #[component]
 pub fn Gleaderboard(
-    #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
+    #[prop(into)] owners: Signal<HashMap<Arc<str>, TerrOwner>>,
     class: &'static str,
 ) -> impl IntoView {
     let guild_leaderboard = move || {
         let mut guilds = HashMap::new();
 
-        for (_, v) in terrs.read().iter() {
+        for (_, v) in owners.read().iter() {
             let guild = v.guild.clone();
             let terr = guilds.entry(guild).or_insert(0);
             *terr += 1;
@@ -37,7 +37,7 @@ pub fn Gleaderboard(
                         let col = k.get_color();
                         let col = format!("{}, {}, {}", col.0, col.1, col.2);
                         let name = k.name.clone();
-                        let link = move || format!("https://wynncraft.com/stats/guild/{}", name.clone().unwrap_or_default());
+                        let link = move || format!("https://wynncraft.com/stats/guild/{}", name.clone());
 
                         view! {
                             <tr

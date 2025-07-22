@@ -6,26 +6,35 @@ use std::{
 
 use leptos::prelude::*;
 use web_sys::PointerEvent;
-use wynnmap_types::{ExTerrInfo, Territory};
+use wynnmap_types::terr::{Resources, TerrOwner, Territory};
 
 use crate::settings::use_toggle;
 
 #[component]
 pub fn TerrView(
     #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
-    extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
+    #[prop(into)] owners: Signal<HashMap<Arc<str>, TerrOwner>>,
     #[prop(optional)] hovered: RwSignal<Option<Arc<str>>>,
     #[prop(optional)] selected: RwSignal<Option<Arc<str>>>,
     #[prop(optional)] hide_timers: bool,
 ) -> impl IntoView {
+    let owner = move |name: &Arc<str>| owners.read().get(name).cloned().unwrap_or_default();
+
     view! {
         <div>
             <For
                 each=move || terrs.get().into_iter()
-                key=|(k, v)| (k.clone(), v.guild.clone())
+                key=move |(k, _)| (k.clone(), owner(k))
                 children=move |(k, v)| {
                     view! {
-                        <Territory name=k terr=v.into() extradata=extradata hovered=hovered selected=selected hide_timers=hide_timers />
+                        <Territory
+                            name=k.clone()
+                            terr=v.into()
+                            owner={Signal::derive(move || owner(&k))}
+                            hovered=hovered
+                            selected=selected
+                            hide_timers=hide_timers
+                        />
                     }
                 }
             />
@@ -37,14 +46,15 @@ pub fn TerrView(
 pub fn Territory(
     name: Arc<str>,
     terr: Signal<Territory>,
-    extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>,
+    owner: Signal<TerrOwner>,
     #[prop(optional)] hovered: RwSignal<Option<Arc<str>>>,
     #[prop(optional)] selected: RwSignal<Option<Arc<str>>>,
     #[prop(optional)] hide_timers: bool,
 ) -> impl IntoView {
-    let col = terr.read().guild.get_color();
-    let col_rgb = format!("{}, {}, {}", col.0, col.1, col.2);
-    let col_rgb2 = col_rgb.clone();
+    let col_rgb = move || {
+        let col = owner.read().guild.get_color();
+        format!("{}, {}, {}", col.0, col.1, col.2)
+    };
 
     // toggles for showing territory parts
     let show_gtag = use_toggle("terrs_show_guildtag", true);
@@ -62,8 +72,8 @@ pub fn Territory(
             style:width={move || format!("{}px", terr.read().location.width())}
             style:height={move || format!("{}px", terr.read().location.height())}
             style:transform={move || format!("translate3D({}px, {}px, 0)", terr.read().location.left_side(), terr.read().location.top_side())}
-            style:background-color={move || format!("rgba({col_rgb}, 0.35)")}
-            style:border-color={move || format!("rgb({col_rgb2})")}
+            style:background-color={move || format!("rgba({}, 0.35)", col_rgb())}
+            style:border-color={move || format!("rgb({})", col_rgb())}
 
             on:mouseenter=move |_| {
                 hovered.set(Some(name2.clone()));
@@ -86,41 +96,37 @@ pub fn Territory(
                 }
             }
         >
-            <Show when={move || !hide_timers}>
-                <AttackBorder terr=terr />
-            </Show>
+            // attack timer border
+            {move || owner.read().acquired.map(|a| view! {
+                <Show when={move || !hide_timers}>
+                    <AttackBorder acquired=a />
+                </Show>
+            })}
+
             // guild tag
             <Show when={move || show_gtag.get()}>
                 <svg style:height="1.875rem" class="w-full overflow-visible">
-                    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="30" font-weight="bold" fill="white" paint-order="stroke" stroke="black" stroke-width="3">{terr.read().guild.prefix.clone()}</text>
+                    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="30" font-weight="bold" fill="white" paint-order="stroke" stroke="black" stroke-width="3">{owner.read().guild.prefix.clone()}</text>
                 </svg>
             </Show>
             // resource icons
             <Show when={move || show_res.get()}>
-                <ResIcons name={name.clone()} extradata=extradata />
+                <ResIcons terr={Signal::derive(move || terr.get().generates)} />
             </Show>
             // timer
-            <Show when={move || show_timers.get() && !hide_timers}>
-                <TerrTimer terr=terr />
-            </Show>
+            {move || owner.read().acquired.map(|a| view! {
+                <Show when={move || show_timers.get() && !hide_timers}>
+                    <TerrTimer acquired=a />
+                </Show>
+            })}
         </div>
     }
 }
 
 #[component]
-fn ResIcons(name: Arc<str>, extradata: Signal<HashMap<Arc<str>, ExTerrInfo>>) -> impl IntoView {
-    let r = Memo::new(move |_| {
-        extradata.read().get(&name).map_or(
-            (
-                (false, false, false, false, false),
-                (false, false, false, false),
-            ),
-            |e| (e.resources.has_res(), e.resources.has_double_res()),
-        )
-    });
-
-    let res = move || r.read().0;
-    let res2 = move || r.read().1;
+fn ResIcons(terr: Signal<Resources>) -> impl IntoView {
+    let res = move || terr.read().has_res();
+    let res2 = move || terr.read().has_double_res();
 
     view! {
         <div class="flex pb-1 wynnmap-hide-zoomedout h-[24px]" >
@@ -156,10 +162,10 @@ fn ResIcon(#[prop(into)] icon: Signal<String>, #[prop(into)] show: Signal<bool>)
 }
 
 #[component]
-fn TerrTimer(terr: Signal<Territory>) -> impl IntoView {
+fn TerrTimer(#[prop(into)] acquired: Signal<chrono::DateTime<chrono::Utc>>) -> impl IntoView {
     let now = chrono::Utc::now();
     let time = now
-        .signed_duration_since(terr.read().acquired)
+        .signed_duration_since(acquired.read_untracked())
         .num_seconds();
 
     let (time, set_time) = signal(time);
@@ -168,9 +174,7 @@ fn TerrTimer(terr: Signal<Territory>) -> impl IntoView {
         move || {
             let now = chrono::Utc::now();
 
-            let time = now
-                .signed_duration_since(terr.read().acquired)
-                .num_seconds();
+            let time = now.signed_duration_since(acquired.read()).num_seconds();
 
             set_time.set(time);
         },
@@ -227,10 +231,10 @@ fn TerrTimer(terr: Signal<Territory>) -> impl IntoView {
 
 /// The component rendering the attack timer border for territories which are on attack cooldown.
 #[component]
-fn AttackBorder(terr: Signal<Territory>) -> impl IntoView {
+fn AttackBorder(#[prop(into)] acquired: Signal<chrono::DateTime<chrono::Utc>>) -> impl IntoView {
     let now = chrono::Utc::now();
     let time = now
-        .signed_duration_since(terr.read().acquired)
+        .signed_duration_since(acquired.read_untracked())
         .num_milliseconds();
 
     let (time, set_time) = signal(time);
