@@ -54,15 +54,6 @@ pub fn DefaultMapTiles() -> impl IntoView {
     let DefaultMapTilesCtx(tiles) = use_context().expect("Default maptiles context not found");
 
     view! { <MapTiles tiles={tiles.into()} /> }
-    // let tiles = LocalResource::new(async move || datasource::load_map_tiles().await);
-
-    // view! {
-    //     {move || match tiles.get() {
-    //         None => view! {"loading"}.into_any(),
-    //         Some(Err(e)) => view! {"Error"}.into_any(),
-    //         Some(Ok(tiles)) => .into_any()
-    //     }}
-    // }
 }
 
 /// Provide the default maptiles
