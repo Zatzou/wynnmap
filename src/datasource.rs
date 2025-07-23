@@ -58,9 +58,7 @@ pub async fn get_owners() -> Result<HashMap<Arc<str>, TerrOwner>, String> {
     Ok(resp)
 }
 
-pub fn ws_terr_changes(
-    owners: RwSignal<HashMap<Arc<str>, TerrOwner>>,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub fn ws_terr_changes(owners: RwSignal<HashMap<Arc<str>, TerrOwner>>) {
     let UseWebSocketReturn {
         ready_state,
         message,
@@ -96,6 +94,4 @@ pub fn ws_terr_changes(
             }
         }
     });
-
-    Ok(())
 }

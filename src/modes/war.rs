@@ -53,7 +53,7 @@ fn warmap_inner(
     let terrs = RwSignal::new(terrs);
     let owners = RwSignal::new(owners);
 
-    datasource::ws_terr_changes(owners).unwrap();
+    datasource::ws_terr_changes(owners);
 
     let hovered = RwSignal::new(None);
     let selected = RwSignal::new(None);

@@ -24,14 +24,14 @@ enum FileFormat {
 }
 
 impl FileFormat {
-    fn mime_type(&self) -> &'static str {
+    const fn mime_type(&self) -> &'static str {
         match self {
             FileFormat::Wynnmap | FileFormat::Farog => "application/json",
             FileFormat::RueaES => "application/x-lz4",
         }
     }
 
-    fn file_ext(&self) -> &'static str {
+    const fn file_ext(&self) -> &'static str {
         match self {
             FileFormat::Wynnmap => "wynnmap",
             FileFormat::Farog => "json",
@@ -152,6 +152,7 @@ pub fn save_dialog(
                             "lz4" => {
                                 decode::<formats::rueaes::RueaES>(&bytes, load_data, file_load_err)
                             }
+
                             _ => file_load_err.set(Some(String::from("Unknown file extension"))),
                         }
                     }));

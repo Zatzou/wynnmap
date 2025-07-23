@@ -92,7 +92,7 @@ pub fn GuildInfo(#[prop(into)] owner: Signal<TerrOwner>) -> impl IntoView {
                 .acquired
                 .map(|acq| now.signed_duration_since(acq).num_seconds());
 
-            time.set(t)
+            time.set(t);
         },
         Duration::from_millis(1000),
     )
