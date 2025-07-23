@@ -25,15 +25,15 @@ pub(self) fn guild_fields(
         <div class="p-2 flex flex-col">
             <label class="flex flex-col">
                 "Guild tag:"
-                <input type="text" placeholder="Some" bind:value=tag maxlength="4" class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" />
+                <input type="text" placeholder="Tag" bind:value=tag maxlength="4" class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" />
             </label>
             <label class="flex flex-col">
                 "Guild name:"
-                <input type="text" placeholder="Some" bind:value=name class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" />
+                <input type="text" placeholder="Name" bind:value=name class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" />
             </label>
             <label class="flex flex-col">
                 "Guild color:"
-                <input type="color" placeholder="Some" bind:value=color class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" />
+                <input type="color" bind:value=color class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" />
             </label>
         </div>
     }

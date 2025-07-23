@@ -10,7 +10,7 @@ pub(super) fn edit_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>, n: usize) ->
 
     let tag = RwSignal::new(guild.get_untracked().prefix.to_string());
     let name = RwSignal::new(guild.get_untracked().name.to_string());
-    let color = RwSignal::new(guild.get_untracked().color.unwrap_or_default().to_string());
+    let color = RwSignal::new(guild.get_untracked().hex_color());
 
     view! {
         <div class="bg-neutral-900 md:rounded-xl text-white flex flex-col">

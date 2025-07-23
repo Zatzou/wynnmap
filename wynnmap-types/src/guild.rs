@@ -35,7 +35,9 @@ impl Guild {
     ///
     /// This function falls back to calculate the color if no color is given
     pub fn get_color(&self) -> (u8, u8, u8) {
-        if let Some(color) = &self.color {
+        if let Some(color) = &self.color
+            && color.len() == 7
+        {
             let col = u32::from_str_radix(&color[1..], 16)
                 .unwrap_or(0)
                 .to_ne_bytes();
