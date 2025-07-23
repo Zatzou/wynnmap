@@ -18,19 +18,22 @@ pub fn TerrView(
     #[prop(optional)] selected: RwSignal<Option<Arc<str>>>,
     #[prop(optional)] hide_timers: bool,
 ) -> impl IntoView {
-    let owner = move |name: &Arc<str>| owners.read().get(name).cloned().unwrap_or_default();
-
     view! {
         <div>
             <For
                 each=move || terrs.get().into_iter()
-                key=move |(k, _)| (k.clone(), owner(k))
+                key=move |(k, _)| k.clone()
                 children=move |(k, v)| {
+                    let k2 = k.clone();
+                    let owner = Memo::new(move |_|
+                        owners.read().get(&k2).cloned().unwrap_or_default()
+                    );
+
                     view! {
                         <Territory
-                            name=k.clone()
+                            name=k
                             terr=v.into()
-                            owner={Signal::derive(move || owner(&k))}
+                            owner={owner.into()}
                             hovered=hovered
                             selected=selected
                             hide_timers=hide_timers

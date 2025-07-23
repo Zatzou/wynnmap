@@ -105,21 +105,21 @@ fn planningmap_inner(terrs: HashMap<Arc<str>, Territory>) -> impl IntoView {
         }
     });
 
-    let mapowneds = move || {
+    let mapowneds = Memo::new(move |_| {
         let mut owners = HashMap::new();
 
         for (tname, owner) in &*owned.read() {
             owners.insert(
                 tname.clone(),
                 TerrOwner {
-                    guild: owner.get().clone(),
+                    guild: owner.get(),
                     acquired: None,
                 },
             );
         }
 
         owners
-    };
+    });
 
     let hovered = RwSignal::new(None);
     let selected = RwSignal::new(None);
@@ -134,7 +134,7 @@ fn planningmap_inner(terrs: HashMap<Arc<str>, Territory>) -> impl IntoView {
             </Show>
 
             // territories
-            <TerrView terrs={terrs} owners={Signal::derive(mapowneds)} hovered=hovered selected=selected hide_timers=true />
+            <TerrView terrs={terrs} owners={mapowneds} hovered=hovered selected=selected hide_timers=true />
         </WynnMap>
 
         // hover box
