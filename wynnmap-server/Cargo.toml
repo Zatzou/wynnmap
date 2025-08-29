@@ -24,5 +24,5 @@ tower-http = { version = "0.6.2", features = [
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
 uuid = { version = "1.15.1", features = ["serde"] }
-webp = "0.3.0"
+webp = "0.3.1"
 wynnmap-types = { path = "../wynnmap-types" }
