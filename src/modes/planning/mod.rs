@@ -9,6 +9,7 @@ use wynnmap_types::{
 
 use crate::{
     components::{
+        gleaderboard::Gleaderboard,
         loader::loader,
         sidebar::Sidebar,
         sidecard::{
@@ -30,6 +31,8 @@ pub fn PlanningMap() -> impl IntoView {
 }
 
 fn planningmap_inner(terrs: HashMap<Arc<str>, Territory>) -> impl IntoView {
+    let show_guild_leaderboard = use_toggle("gleaderboard", true);
+
     let location = use_location();
     // read a share string from the url
     let sharedata = move || {
@@ -108,14 +111,25 @@ fn planningmap_inner(terrs: HashMap<Arc<str>, Territory>) -> impl IntoView {
     let mapowneds = Memo::new(move |_| {
         let mut owners = HashMap::new();
 
-        for (tname, owner) in &*owned.read() {
-            owners.insert(
-                tname.clone(),
-                TerrOwner {
-                    guild: owner.get(),
-                    acquired: None,
-                },
-            );
+        for (terr, _) in &*terrs.read() {
+            if let Some(own) = owned.read().get(terr) {
+                let own = own.get();
+                owners.insert(
+                    terr.clone(),
+                    TerrOwner {
+                        guild: own,
+                        acquired: None,
+                    },
+                );
+            } else {
+                owners.insert(
+                    terr.clone(),
+                    TerrOwner {
+                        guild: Guild::default(),
+                        acquired: None,
+                    },
+                );
+            }
         }
 
         owners
@@ -162,28 +176,45 @@ fn planningmap_inner(terrs: HashMap<Arc<str>, Territory>) -> impl IntoView {
         } else {None}}
 
         <Sidebar>
-            <button class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" on:click={
-                let owner = Owner::new();
-                move |_| {
-                    owner.with(move || {
-                        show_dialog(move || dialog::planning::manage_guilds(guilds));
-                    });
-                }
-            }>
-                "Manage Guilds"
-            </button>
+            <div class="flex-1 flex flex-col gap-2 p-2 text-lg">
+                <button class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" on:click={
+                    let owner = Owner::new();
+                    move |_| {
+                        owner.with(move || {
+                            show_dialog(move || dialog::planning::manage_guilds(guilds));
+                        });
+                    }
+                }>
+                    "Manage Guilds"
+                </button>
 
-            <button class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" on:click={
-                let owner = Owner::new();
-                move |_| {
-                    owner.with(move || {
-                        show_dialog(move || dialog::planning::save_dialog(terrs.into(), guilds, owned));
-                    });
-                }
-            }>
-                "Import/Export"
-            </button>
+                <button class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" on:click={
+                    let owner = Owner::new();
+                    move |_| {
+                        owner.with(move || {
+                            show_dialog(move || dialog::planning::save_dialog(terrs.into(), guilds, owned));
+                        });
+                    }
+                }>
+                    "Import/Export"
+                </button>
+            </div>
 
+            // guild leaderboard
+            <div class="flex flex-col min-h-0">
+                <hr class="border-neutral-600" />
+                <div class="flex justify-between items-center text-xl p-2 py-1" on:click={move |_| show_guild_leaderboard.set(!show_guild_leaderboard.get())}>
+                    <h2>"Guild leaderboard"</h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 cursor-pointer" >
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" class:hidden={move || show_guild_leaderboard.get()} />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" class:hidden={move || !show_guild_leaderboard.get()} />
+                    </svg>
+                </div>
+                <hr class="border-neutral-600" class:hidden={move || !show_guild_leaderboard.get()} />
+                <div class="overflow-y-auto shrink min-h-0">
+                    <Gleaderboard owners={mapowneds} class="w-full" class:hidden={move || !show_guild_leaderboard.get()} />
+                </div>
+            </div>
         </Sidebar>
 
         // selected terr info
