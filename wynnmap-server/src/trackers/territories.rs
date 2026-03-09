@@ -43,7 +43,7 @@ pub(crate) async fn create_terr_tracker(
             expires: chrono::Utc::now(),
         })),
 
-        guilds: guilds,
+        guilds,
         extra: Arc::new(RwLock::new(HashMap::new())),
 
         bc_recv: Arc::new(bc_recv),
@@ -112,7 +112,7 @@ async fn territory_tracker(state: TerritoryState, bc_send: broadcast::Sender<Ter
                         Territory {
                             location: t.location,
                             connections: exdata.map(|e| e.connections.clone()).unwrap_or_default(),
-                            generates: exdata.map(|e| e.resources.clone()).unwrap_or_default(),
+                            generates: exdata.map(|e| e.resources).unwrap_or_default(),
                         },
                     )
                 })
@@ -168,7 +168,7 @@ async fn territory_tracker(state: TerritoryState, bc_send: broadcast::Sender<Ter
                     bc_send.send(TerrSockMessage::Capture {
                         name: tname,
                         old: old.cloned(),
-                        new: new,
+                        new,
                     })?;
                 }
             }

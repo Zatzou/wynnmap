@@ -21,7 +21,7 @@ pub(crate) async fn create_guild_tracker(config: Arc<Config>) -> GuildState {
         .unwrap();
 
     let state = GuildState {
-        client: client,
+        client,
 
         guilds: Arc::new(RwLock::new(HashMap::new())),
     };
@@ -80,10 +80,10 @@ async fn guild_tracker(state: GuildState) {
 
         // get the color info from wynntils also
         for guild in wynntils_guilds {
-            if let Some(pfx) = guild.prefix {
-                if let Some(gu) = lock.get_mut(&pfx) {
-                    gu.color = guild.color
-                }
+            if let Some(pfx) = guild.prefix
+                && let Some(gu) = lock.get_mut(&pfx)
+            {
+                gu.color = guild.color;
             }
         }
 

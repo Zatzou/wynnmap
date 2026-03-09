@@ -1,7 +1,6 @@
 use std::{collections::HashMap, io::Cursor, sync::Arc};
 
 use crate::{ImageState, config::Config};
-use axum::body::Bytes;
 use image::ImageReader;
 use serde::Deserialize;
 use tracing::{error, info};
@@ -84,7 +83,7 @@ async fn image_tracker(state: ImageState) {
                     ));
                 }
 
-                let tiles = data.into_iter().map(|t| t.into()).collect::<Vec<_>>();
+                let tiles = data.into_iter().map(Into::into).collect::<Vec<_>>();
 
                 // replace the cache with the new data
                 state.maps.write().await.clone_from(&tiles);
@@ -138,7 +137,7 @@ async fn download_image(
             let encoder = Encoder::from_image(&img).unwrap();
             let out = encoder.encode_lossless();
 
-            Bytes::from_iter(out.iter().copied())
+            out.iter().copied().collect()
         } else {
             data
         };
