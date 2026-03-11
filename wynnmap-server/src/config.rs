@@ -7,6 +7,7 @@ pub(crate) struct Config {
     pub server: ServerConfig,
     pub client: ClientConfig,
     pub images: ImagesConfig,
+    pub otel: Option<OtelConfig>,
 }
 
 #[derive(Clone, Deserialize)]
@@ -25,6 +26,11 @@ pub(crate) struct ClientConfig {
 #[derive(Clone, Deserialize)]
 pub(crate) struct ImagesConfig {
     pub use_webp: bool,
+}
+
+#[derive(Clone, Deserialize)]
+pub(crate) struct OtelConfig {
+    pub tracing_endpoint: Arc<str>,
 }
 
 pub(crate) async fn load_config() -> Arc<Config> {

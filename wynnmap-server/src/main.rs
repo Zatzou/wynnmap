@@ -19,14 +19,22 @@ mod api;
 mod config;
 mod etag;
 mod file_cache;
+mod otel;
 mod state;
 mod trackers;
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt::init();
     let config = config::load_config().await;
-    info!("Loaded config",);
+    println!("Loaded config");
+
+    if let Some(conf) = &config.otel {
+        otel::init(conf);
+        info!("Initialized with otel and fmt logging");
+    } else {
+        tracing_subscriber::fmt().init();
+        info!("Otel not configured. Using only fmt logging.");
+    }
 
     let img_state = create_image_tracker(config.clone()).await;
     let guild_state = create_guild_tracker(config.clone()).await;
