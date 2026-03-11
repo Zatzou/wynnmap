@@ -1,11 +1,13 @@
 use std::{collections::HashMap, mem, sync::Arc, time::Duration};
 
+use axum::http::HeaderValue;
+use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use tokio::{
     sync::{RwLock, broadcast},
-    time::{Instant, sleep},
+    time::Instant,
 };
-use tracing::{error, info};
+use tracing::{Level, error, span};
 use wynnmap_types::{
     Region,
     guild::Guild,
@@ -15,96 +17,109 @@ use wynnmap_types::{
 
 use crate::{
     config::Config,
-    state::{ExTerrInfo, TerritoryState, TerritoryStateInner},
+    state::{ExTerrInfo, GuildState, TerritoryState},
 };
 
-pub(crate) async fn create_terr_tracker(
-    config: Arc<Config>,
+pub struct TerritoryTracker {
+    client: reqwest::Client,
     guilds: Arc<RwLock<HashMap<Arc<str>, Guild>>>,
-) -> TerritoryState {
-    let client = reqwest::Client::builder()
-        .user_agent(format!(
-            "{}/{} ({})",
-            env!("CARGO_PKG_NAME"),
-            env!("CARGO_PKG_VERSION"),
-            config.client.ua_contact
-        ))
-        .build()
-        .unwrap();
+    extra: Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>>,
 
-    let (bc_send, bc_recv) = broadcast::channel(500);
+    bc_send: broadcast::Sender<TerrSockMessage>,
 
-    let state = TerritoryState {
-        client,
-
-        inner: Arc::new(RwLock::new(TerritoryStateInner {
-            territories: HashMap::new(),
-            owners: HashMap::new(),
-            expires: chrono::Utc::now(),
-        })),
-
-        guilds,
-        extra: Arc::new(RwLock::new(HashMap::new())),
-
-        bc_recv: Arc::new(bc_recv),
-    };
-
-    tokio::spawn(territory_tracker(state.clone(), bc_send));
-    tokio::spawn(extra_data_loader(state.clone()));
-
-    state
+    state: Arc<TerritoryState>,
 }
 
-async fn territory_tracker(state: TerritoryState, bc_send: broadcast::Sender<TerrSockMessage>) {
-    loop {
-        let res = territory_tracker_inner(&state, bc_send.clone()).await;
+impl TerritoryTracker {
+    pub fn with_config(
+        config: &Config,
+        guild_state: Arc<GuildState>,
+        extra_data: Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>>,
+    ) -> Self {
+        let client = reqwest::Client::builder()
+            .user_agent(format!(
+                "{}/{} ({})",
+                env!("CARGO_PKG_NAME"),
+                env!("CARGO_PKG_VERSION"),
+                config.client.ua_contact
+            ))
+            .build()
+            .unwrap();
 
-        if let Err(e) = res {
-            error!("Territory tracker failed: {}", e);
+        let (bc_send, bc_recv) = broadcast::channel(500);
+
+        Self {
+            client,
+            guilds: guild_state.guilds.clone(),
+            extra: extra_data,
+
+            bc_send,
+
+            state: Arc::new(TerritoryState {
+                inner: Default::default(),
+
+                bc_recv: Arc::new(bc_recv),
+            }),
         }
-
-        tokio::time::sleep(std::time::Duration::from_secs(10)).await;
     }
 
-    async fn territory_tracker_inner(
-        state: &TerritoryState,
-        bc_send: broadcast::Sender<TerrSockMessage>,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        loop {
-            info!("Loading territories");
-            let req = state
-                .client
-                .get("https://api.wynncraft.com/v3/guild/list/territory")
-                .send()
-                .await?;
-            let reqend = Instant::now();
+    pub fn run(self) -> Arc<TerritoryState> {
+        let state2 = self.state.clone();
 
-            // calculate timings so we can wait until new data is available
-            let expires = req
-                .headers()
-                .get("expires")
-                .and_then(|e| e.to_str().ok())
-                .and_then(|e| chrono::DateTime::parse_from_rfc2822(e).ok())
-                .unwrap_or_default()
-                .to_utc();
-            let date = req
-                .headers()
-                .get("date")
-                .and_then(|e| e.to_str().ok())
-                .and_then(|e| chrono::DateTime::parse_from_rfc2822(e).ok())
-                .unwrap_or_default()
-                .naive_utc();
-            let diff = expires.naive_utc().signed_duration_since(date);
+        tokio::spawn(async move {
+            let tracker = self;
 
-            // parse the json
-            let data: HashMap<Arc<str>, WynnTerritory> = req.json().await?;
+            loop {
+                let res = tracker.query_territories().await;
+
+                let waittime = match res {
+                    Ok(expires) => {
+                        if let Some(exp) = expires {
+                            let now = Utc::now();
+
+                            let diff = exp.signed_duration_since(now);
+
+                            tokio::time::sleep_until(
+                                Instant::now()
+                                    + diff.to_std().unwrap_or_default()
+                                    + Duration::from_secs(1),
+                            )
+                            .await;
+
+                            Duration::from_secs(0)
+                        } else {
+                            Duration::from_mins(1)
+                        }
+                    }
+                    Err(e) => {
+                        error!(error = ?e, "Error occured while querying territories");
+                        Duration::from_mins(10)
+                    }
+                };
+
+                tokio::time::sleep(waittime).await;
+            }
+        });
+
+        state2
+    }
+
+    #[tracing::instrument(skip(self), err(Debug))]
+    async fn query_territories(
+        &self,
+    ) -> Result<Option<DateTime<Utc>>, Box<dyn std::error::Error + Send + Sync>> {
+        let (data, expires) = self.query_wynn_terrs().await?;
+
+        // add connections and res generation data from the extradata and form the territories
+        let territories = {
+            let span = span!(Level::INFO, "add_extradata");
+            let _enter = span.enter();
 
             // get the extradata
-            let exdata = state.extra.read().await;
+            let exdata = self.extra.read().await;
 
             // create the territory data
-            let territories = data
-                .iter()
+            data.iter()
                 .map(|(name, t)| {
                     let exdata = exdata.get(name);
                     (
@@ -116,21 +131,21 @@ async fn territory_tracker(state: TerritoryState, bc_send: broadcast::Sender<Ter
                         },
                     )
                 })
-                .collect::<HashMap<_, _>>();
+                .collect::<HashMap<_, _>>()
+        };
 
-            // drop the exdata lock
-            drop(exdata);
+        // create owner data
+        let owners = {
+            let span = span!(Level::INFO, "add_owners");
+            let _enter = span.enter();
 
-            // read the guilds data to get guild colors
-            let collock = state.guilds.read().await;
+            let guildlock = self.guilds.read().await;
 
-            // generate the owners data
-            let owners = data
-                .iter()
+            data.iter()
                 .map(|(name, t)| {
                     let mut guild = t.guild.clone();
 
-                    guild.color = collock.get(&t.guild.prefix).and_then(|g| g.color.clone());
+                    guild.color = guildlock.get(&t.guild.prefix).and_then(|g| g.color.clone());
 
                     (
                         name.clone(),
@@ -140,45 +155,73 @@ async fn territory_tracker(state: TerritoryState, bc_send: broadcast::Sender<Ter
                         },
                     )
                 })
-                .collect::<HashMap<_, _>>();
+                .collect::<HashMap<_, _>>()
+        };
 
-            // drop the lock on the guilds data
-            drop(collock);
+        // update territory data
+        let old_owners = {
+            let span = span!(Level::INFO, "update");
+            let _enter = span.enter();
 
-            let mut lock = state.inner.write().await;
+            let mut lock = self.state.inner.write().await;
 
-            // update the territories
+            // update expires and last updated
+            lock.expires = expires;
+            lock.last_updated = Some(Utc::now());
+
+            // update territories
             lock.territories = territories;
 
-            // update the guild owner data and get the old
+            // update owners with swap for notify
             let mut old_owners = owners.clone();
-            mem::swap(&mut lock.owners, &mut old_owners);
+            mem::swap(&mut old_owners, &mut lock.owners);
 
-            // update the expires so caching works
-            lock.expires = expires + Duration::from_secs(1);
+            old_owners
+        };
 
-            // release the lock
-            drop(lock);
+        // send broadcasts to notify websockets
+        {
+            let span = span!(Level::INFO, "notify");
+            let _enter = span.enter();
 
-            // compare the new and old data and send the changes
             for (tname, new) in owners {
                 let old = old_owners.get(&tname);
 
                 if old != Some(&new) {
-                    bc_send.send(TerrSockMessage::Capture {
+                    self.bc_send.send(TerrSockMessage::Capture {
                         name: tname,
                         old: old.cloned(),
                         new,
                     })?;
                 }
             }
-
-            // wait until new data is available
-            tokio::time::sleep_until(
-                reqend + diff.to_std().unwrap_or(Duration::from_secs(1)) + Duration::from_secs(1),
-            )
-            .await;
         }
+
+        Ok(expires)
+    }
+
+    #[tracing::instrument(skip(self), err(Debug))]
+    async fn query_wynn_terrs(
+        &self,
+    ) -> Result<(HashMap<Arc<str>, WynnTerritory>, Option<DateTime<Utc>>), reqwest::Error> {
+        let req = self
+            .client
+            .get("https://api.wynncraft.com/v3/guild/list/territory")
+            .send()
+            .await?;
+
+        let expires = req
+            .headers()
+            .get("expires")
+            .map(HeaderValue::to_str)
+            .and_then(Result::ok)
+            .map(DateTime::parse_from_rfc2822)
+            .and_then(Result::ok)
+            .map(|d| d.to_utc());
+
+        let data = req.json().await?;
+
+        Ok((data, expires))
     }
 }
 
@@ -187,32 +230,4 @@ struct WynnTerritory {
     guild: Guild,
     acquired: chrono::DateTime<chrono::Utc>,
     location: Region,
-}
-
-async fn extra_data_loader(state: TerritoryState) {
-    loop {
-        let r = extra_data_loader_inner(&state).await;
-
-        if let Err(e) = r {
-            error!("Extra data loader failed: {:?}", e);
-        }
-
-        sleep(Duration::from_secs(60)).await;
-    }
-
-    async fn extra_data_loader_inner(state: &TerritoryState) -> Result<(), reqwest::Error> {
-        let data: HashMap<Arc<str>, ExTerrInfo> = state
-            .client
-            .get("https://gist.githubusercontent.com/Zatzou/14c82f2df0eb4093dfa1d543b78a73a8/raw/d03273fce33c031498c07e21b94f17644c8aae98/terrextra.json")
-            .send()
-            .await?
-            .json()
-            .await?;
-
-        let mut lock = state.extra.write().await;
-
-        *lock = data;
-
-        Ok(())
-    }
 }

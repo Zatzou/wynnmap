@@ -11,9 +11,11 @@ use tower_http::compression::CompressionLayer;
 use tower_http::cors::{self, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::info;
-use trackers::{images::create_image_tracker, territories::create_terr_tracker};
+use trackers::images::create_image_tracker;
 
 use crate::trackers::guilds::GuildTracker;
+use crate::trackers::terr_extra::TerrExtraTracker;
+use crate::trackers::territories::TerritoryTracker;
 
 mod api;
 mod config;
@@ -38,7 +40,8 @@ async fn main() {
 
     let img_state = create_image_tracker(config.clone()).await;
     let guild_state = GuildTracker::with_config(&config).run();
-    let terr_state = create_terr_tracker(config.clone(), guild_state.guilds.clone()).await;
+    let extra_data = TerrExtraTracker::with_config(&config).run();
+    let terr_state = TerritoryTracker::with_config(&config, guild_state.clone(), extra_data).run();
 
     let cors = CorsLayer::new()
         .allow_origin(cors::Any)

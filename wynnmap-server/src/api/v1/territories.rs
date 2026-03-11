@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{
     Json,
     body::Bytes,
@@ -14,7 +16,7 @@ use wynnmap_types::ws::TerrSockMessage;
 
 use crate::state::TerritoryState;
 
-pub(crate) fn router(state: TerritoryState) -> axum::Router {
+pub(crate) fn router(state: Arc<TerritoryState>) -> axum::Router {
     axum::Router::new()
         .route("/list", get(terr_list))
         .route("/guilds", get(guild_list))
@@ -23,32 +25,32 @@ pub(crate) fn router(state: TerritoryState) -> axum::Router {
 }
 
 #[tracing::instrument(skip(state))]
-async fn terr_list(State(state): State<TerritoryState>) -> impl IntoResponse {
+async fn terr_list(State(state): State<Arc<TerritoryState>>) -> impl IntoResponse {
     let read = state.inner.read().await;
-
-    let age = (read.expires - chrono::Utc::now()).num_seconds();
 
     (
         [
             (header::CACHE_CONTROL, String::from("public, max-age=10")),
-            (header::AGE, age.to_string()),
-            (header::EXPIRES, read.expires.to_rfc2822()),
+            (
+                header::EXPIRES,
+                read.expires.map(|d| d.to_rfc2822()).unwrap_or_default(),
+            ),
         ],
         Json(read.territories.clone()),
     )
 }
 
 #[tracing::instrument(skip(state))]
-async fn guild_list(State(state): State<TerritoryState>) -> impl IntoResponse {
+async fn guild_list(State(state): State<Arc<TerritoryState>>) -> impl IntoResponse {
     let read = state.inner.read().await;
-
-    let age = (read.expires - chrono::Utc::now()).num_seconds();
 
     (
         [
             (header::CACHE_CONTROL, String::from("public, max-age=10")),
-            (header::AGE, age.to_string()),
-            (header::EXPIRES, read.expires.to_rfc2822()),
+            (
+                header::EXPIRES,
+                read.expires.map(|d| d.to_rfc2822()).unwrap_or_default(),
+            ),
         ],
         Json(read.owners.clone()),
     )
@@ -56,26 +58,15 @@ async fn guild_list(State(state): State<TerritoryState>) -> impl IntoResponse {
 
 async fn ws_handler(
     ws: WebSocketUpgrade,
-    State(state): State<TerritoryState>,
+    State(state): State<Arc<TerritoryState>>,
 ) -> impl IntoResponse {
     ws.on_upgrade(|s| async {
         handle_socket(s, state).await;
     })
 }
 
-async fn handle_socket(socket: WebSocket, state: TerritoryState) {
+async fn handle_socket(socket: WebSocket, state: Arc<TerritoryState>) {
     let bc_recv = state.bc_recv.resubscribe();
-
-    // socket
-    //     .send(Message::Text(
-    //         serde_json::to_string(&TerrSockMessage::Territory(
-    //             state.inner.read().await.territories.clone(),
-    //         ))
-    //         .unwrap()
-    //         .into(),
-    //     ))
-    //     .await
-    //     .unwrap();
 
     if let Err(e) = handle_socket_inner(socket, bc_recv).await {
         tracing::error!("Error handling socket: {:?}", e);

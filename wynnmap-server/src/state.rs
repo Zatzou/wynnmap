@@ -4,6 +4,7 @@ use std::{
 };
 
 use axum::body::Bytes;
+use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use tokio::sync::{RwLock, broadcast};
 use wynnmap_types::{
@@ -23,32 +24,25 @@ pub(crate) struct ImageState {
     pub map_cache: Arc<RwLock<HashMap<Arc<str>, Bytes>>>,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default)]
 pub(crate) struct GuildState {
     pub guilds: Arc<RwLock<HashMap<Arc<str>, Guild>>>,
 }
 
-#[derive(Clone)]
+#[derive(Debug)]
 pub(crate) struct TerritoryState {
-    // pub config: Arc<Config>,
-    pub client: reqwest::Client,
-
-    // The guild state from the guild tracker
-    pub guilds: Arc<RwLock<HashMap<Arc<str>, Guild>>>,
-
-    /// The final formatted output
     pub inner: Arc<RwLock<TerritoryStateInner>>,
-
-    /// The extra data for territories which is not provided by the wynn api
-    pub extra: Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>>,
 
     pub bc_recv: Arc<broadcast::Receiver<TerrSockMessage>>,
 }
 
+#[derive(Debug, Default)]
 pub(crate) struct TerritoryStateInner {
     pub territories: HashMap<Arc<str>, Territory>,
     pub owners: HashMap<Arc<str>, TerrOwner>,
-    pub expires: chrono::DateTime<chrono::Utc>,
+
+    pub expires: Option<DateTime<Utc>>,
+    pub last_updated: Option<DateTime<Utc>>,
 }
 
 #[derive(Deserialize)]
