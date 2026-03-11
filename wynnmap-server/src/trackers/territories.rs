@@ -2,6 +2,7 @@ use std::{collections::HashMap, mem, sync::Arc, time::Duration};
 
 use axum::http::HeaderValue;
 use chrono::{DateTime, Utc};
+use opentelemetry::global;
 use serde::Deserialize;
 use tokio::{
     sync::{RwLock, broadcast},
@@ -48,6 +49,8 @@ impl TerritoryTracker {
 
         let (bc_send, bc_recv) = broadcast::channel(500);
 
+        let meter = global::meter("wynnmap-server");
+
         Self {
             client,
             guilds: guild_state.guilds.clone(),
@@ -59,6 +62,7 @@ impl TerritoryTracker {
                 inner: Default::default(),
 
                 bc_recv: Arc::new(bc_recv),
+                active_conn: meter.i64_up_down_counter("active-ws-sessions").build(),
             }),
         }
     }

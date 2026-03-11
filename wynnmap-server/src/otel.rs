@@ -1,7 +1,8 @@
-use opentelemetry::{KeyValue, trace::TracerProvider};
+use opentelemetry::{KeyValue, global, trace::TracerProvider};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
     Resource,
+    metrics::SdkMeterProvider,
     trace::{RandomIdGenerator, Sampler, SdkTracerProvider},
 };
 use opentelemetry_semantic_conventions::{SCHEMA_URL, resource::SERVICE_VERSION};
@@ -22,9 +23,12 @@ fn resource() -> Resource {
 }
 
 pub(crate) fn init(conf: &OtelConfig) {
-    let trace_provider = init_trace_provider(&conf);
+    let trace_provider = init_trace_provider(conf);
+    let metrics_provider = init_metrics_provider(conf);
 
-    let tracer = trace_provider.tracer("e");
+    global::set_meter_provider(metrics_provider);
+
+    let tracer = trace_provider.tracer("wynnmap");
 
     tracing_subscriber::registry()
         .with(tracing_subscriber::filter::LevelFilter::from_level(
@@ -47,5 +51,18 @@ fn init_trace_provider(conf: &OtelConfig) -> SdkTracerProvider {
         .with_id_generator(RandomIdGenerator::default())
         .with_resource(resource())
         .with_batch_exporter(exporter)
+        .build()
+}
+
+fn init_metrics_provider(conf: &OtelConfig) -> SdkMeterProvider {
+    let exporter = opentelemetry_otlp::MetricExporter::builder()
+        .with_tonic()
+        .with_endpoint(&*conf.tracing_endpoint)
+        .build()
+        .expect("Failed to initialize otel metrics");
+
+    SdkMeterProvider::builder()
+        .with_resource(resource())
+        .with_periodic_exporter(exporter)
         .build()
 }

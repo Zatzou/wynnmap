@@ -66,11 +66,14 @@ async fn ws_handler(
 }
 
 async fn handle_socket(socket: WebSocket, state: Arc<TerritoryState>) {
+    state.active_conn.add(1, &[]);
     let bc_recv = state.bc_recv.resubscribe();
 
     if let Err(e) = handle_socket_inner(socket, bc_recv).await {
         tracing::error!("Error handling socket: {:?}", e);
     }
+
+    state.active_conn.add(-1, &[]);
 
     async fn handle_socket_inner(
         mut socket: WebSocket,

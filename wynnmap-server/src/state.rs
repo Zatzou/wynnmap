@@ -5,6 +5,7 @@ use std::{
 
 use axum::body::Bytes;
 use chrono::{DateTime, Utc};
+use opentelemetry::metrics::UpDownCounter;
 use serde::Deserialize;
 use tokio::sync::{RwLock, broadcast};
 use wynnmap_types::{
@@ -34,6 +35,7 @@ pub(crate) struct TerritoryState {
     pub inner: Arc<RwLock<TerritoryStateInner>>,
 
     pub bc_recv: Arc<broadcast::Receiver<TerrSockMessage>>,
+    pub active_conn: UpDownCounter<i64>,
 }
 
 #[derive(Debug, Default)]
