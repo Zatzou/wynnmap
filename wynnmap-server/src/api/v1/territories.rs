@@ -22,6 +22,7 @@ pub(crate) fn router(state: TerritoryState) -> axum::Router {
         .with_state(state)
 }
 
+#[tracing::instrument(skip(state))]
 async fn terr_list(State(state): State<TerritoryState>) -> impl IntoResponse {
     let read = state.inner.read().await;
 
@@ -37,6 +38,7 @@ async fn terr_list(State(state): State<TerritoryState>) -> impl IntoResponse {
     )
 }
 
+#[tracing::instrument(skip(state))]
 async fn guild_list(State(state): State<TerritoryState>) -> impl IntoResponse {
     let read = state.inner.read().await;
 

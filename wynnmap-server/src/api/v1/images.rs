@@ -15,10 +15,12 @@ pub(crate) fn router(state: ImageState) -> axum::Router {
         .with_state(state)
 }
 
+#[tracing::instrument(skip(state))]
 async fn maps_json(State(state): State<ImageState>) -> impl IntoResponse {
     Json(state.maps.read().await.clone())
 }
 
+#[tracing::instrument(skip(state))]
 async fn get_image(Path(name): Path<String>, State(state): State<ImageState>) -> impl IntoResponse {
     let (name, ext) = name.split_once('.').unwrap_or((name.as_str(), ""));
 
