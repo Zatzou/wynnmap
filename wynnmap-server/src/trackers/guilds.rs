@@ -1,52 +1,100 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use serde::Deserialize;
-use tokio::sync::RwLock;
-use tracing::error;
+use tracing::{Level, error, span};
 use uuid::Uuid;
 use wynnmap_types::guild::Guild;
 
 use crate::{config::Config, state::GuildState};
 
-/// Set up the guild tracker
-pub(crate) async fn create_guild_tracker(config: Arc<Config>) -> GuildState {
-    let client = reqwest::Client::builder()
-        .user_agent(format!(
-            "{}/{} ({})",
-            env!("CARGO_PKG_NAME"),
-            env!("CARGO_PKG_VERSION"),
-            config.client.ua_contact
-        ))
-        .build()
-        .unwrap();
+pub struct GuildTracker {
+    client: reqwest::Client,
 
-    let state = GuildState {
-        client,
-
-        guilds: Arc::new(RwLock::new(HashMap::new())),
-    };
-
-    tokio::spawn(guild_tracker(state.clone()));
-
-    state
+    state: Arc<GuildState>,
 }
 
-async fn guild_tracker(state: GuildState) {
-    loop {
-        let res = guild_tracker_inner(&state).await;
+impl GuildTracker {
+    pub fn with_config(config: &Config) -> Self {
+        let client = reqwest::Client::builder()
+            .user_agent(format!(
+                "{}/{} ({})",
+                env!("CARGO_PKG_NAME"),
+                env!("CARGO_PKG_VERSION"),
+                config.client.ua_contact
+            ))
+            .build()
+            .unwrap();
 
-        if let Err(e) = res {
-            error!("Guild tracker failed: {}", e);
+        Self {
+            client,
+            state: Default::default(),
         }
-
-        tokio::time::sleep(std::time::Duration::from_secs(60 * 60)).await;
     }
 
-    async fn guild_tracker_inner(
-        state: &GuildState,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        // query the wynn api for a general list of guilds as well as the guild uuids
-        let wynn_guilds: HashMap<Arc<str>, WynnGuild> = state
+    pub fn run(self) -> Arc<GuildState> {
+        let state2 = self.state.clone();
+
+        tokio::spawn(async move {
+            let tracker = self;
+
+            loop {
+                let res = tracker.query_guilds().await;
+
+                let waittime = match res {
+                    Ok(_) => Duration::from_hours(1),
+                    Err(e) => {
+                        error!(error = ?e, "Error occured while querying guilds");
+                        Duration::from_mins(10)
+                    }
+                };
+
+                tokio::time::sleep(waittime).await;
+            }
+        });
+
+        state2
+    }
+
+    #[tracing::instrument(skip(self), err(Debug))]
+    async fn query_guilds(&self) -> Result<(), reqwest::Error> {
+        let wynn_guilds = self.query_wynn_guilds().await?;
+        let wynntils_guilds = self.query_wynntils_guilds().await?;
+
+        {
+            let span = span!(Level::INFO, "update_state");
+            let _enter = span.enter();
+
+            // acquire lock on the state
+            let mut lock = self.state.guilds.write().await;
+
+            // insert the guilds from wynn api
+            for (name, gu) in wynn_guilds {
+                let guild = Guild {
+                    uuid: Some(gu.uuid),
+                    name,
+                    prefix: gu.prefix.clone(),
+                    color: None,
+                };
+
+                lock.insert(gu.prefix, guild);
+            }
+
+            // insert colors from wynntils
+            for guild in wynntils_guilds {
+                if let Some(pfx) = guild.prefix
+                    && let Some(gu) = lock.get_mut(&pfx)
+                {
+                    gu.color = guild.color;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self), err(Debug))]
+    async fn query_wynn_guilds(&self) -> Result<HashMap<Arc<str>, WynnGuild>, reqwest::Error> {
+        let guilds: HashMap<Arc<str>, WynnGuild> = self
             .client
             .get("https://api.wynncraft.com/v3/guild/list/guild")
             .send()
@@ -54,8 +102,12 @@ async fn guild_tracker(state: GuildState) {
             .json()
             .await?;
 
-        // query wynntils for the guild colors of guilds that have one set
-        let wynntils_guilds: Vec<WynntilsGuild> = state
+        Ok(guilds)
+    }
+
+    #[tracing::instrument(skip(self), err(Debug))]
+    async fn query_wynntils_guilds(&self) -> Result<Vec<WynntilsGuild>, reqwest::Error> {
+        let guilds: Vec<WynntilsGuild> = self
             .client
             .get("https://athena.wynntils.com/cache/get/guildList")
             .send()
@@ -63,33 +115,7 @@ async fn guild_tracker(state: GuildState) {
             .json()
             .await?;
 
-        // lock
-        let mut lock = state.guilds.write().await;
-
-        // insert the guilds from wynn's api
-        for (name, gu) in wynn_guilds {
-            let guild = Guild {
-                uuid: Some(gu.uuid),
-                name,
-                prefix: gu.prefix.clone(),
-                color: None,
-            };
-
-            lock.insert(gu.prefix, guild);
-        }
-
-        // get the color info from wynntils also
-        for guild in wynntils_guilds {
-            if let Some(pfx) = guild.prefix
-                && let Some(gu) = lock.get_mut(&pfx)
-            {
-                gu.color = guild.color;
-            }
-        }
-
-        // lock is dropped at the end of the scope
-
-        Ok(())
+        Ok(guilds)
     }
 }
 

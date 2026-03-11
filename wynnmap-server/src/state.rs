@@ -23,10 +23,8 @@ pub(crate) struct ImageState {
     pub map_cache: Arc<RwLock<HashMap<Arc<str>, Bytes>>>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone, Default)]
 pub(crate) struct GuildState {
-    pub client: reqwest::Client,
-
     pub guilds: Arc<RwLock<HashMap<Arc<str>, Guild>>>,
 }
 

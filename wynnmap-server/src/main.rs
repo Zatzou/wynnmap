@@ -13,7 +13,7 @@ use tower_http::services::{ServeDir, ServeFile};
 use tracing::info;
 use trackers::{images::create_image_tracker, territories::create_terr_tracker};
 
-use crate::trackers::guilds::create_guild_tracker;
+use crate::trackers::guilds::GuildTracker;
 
 mod api;
 mod config;
@@ -37,7 +37,7 @@ async fn main() {
     }
 
     let img_state = create_image_tracker(config.clone()).await;
-    let guild_state = create_guild_tracker(config.clone()).await;
+    let guild_state = GuildTracker::with_config(&config).run();
     let terr_state = create_terr_tracker(config.clone(), guild_state.guilds.clone()).await;
 
     let cors = CorsLayer::new()
