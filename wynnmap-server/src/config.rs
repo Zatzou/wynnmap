@@ -30,7 +30,8 @@ pub(crate) struct ImagesConfig {
 
 #[derive(Clone, Deserialize)]
 pub(crate) struct OtelConfig {
-    pub tracing_endpoint: Arc<str>,
+    pub endpoint: Arc<str>,
+    pub env_name: Arc<str>,
 }
 
 pub(crate) async fn load_config() -> Arc<Config> {

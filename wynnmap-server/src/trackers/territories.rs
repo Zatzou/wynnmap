@@ -1,6 +1,5 @@
 use std::{collections::HashMap, mem, sync::Arc, time::Duration};
 
-use axum::http::HeaderValue;
 use chrono::{DateTime, Utc};
 use opentelemetry::global;
 use serde::Deserialize;
@@ -19,10 +18,11 @@ use wynnmap_types::{
 use crate::{
     config::Config,
     state::{ExTerrInfo, GuildState, TerritoryState},
+    trackers::util::{self, ReqResp},
 };
 
 pub struct TerritoryTracker {
-    client: reqwest::Client,
+    client: util::ReqClient,
     guilds: Arc<RwLock<HashMap<Arc<str>, Guild>>>,
     extra: Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>>,
 
@@ -37,15 +37,7 @@ impl TerritoryTracker {
         guild_state: Arc<GuildState>,
         extra_data: Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>>,
     ) -> Self {
-        let client = reqwest::Client::builder()
-            .user_agent(format!(
-                "{}/{} ({})",
-                env!("CARGO_PKG_NAME"),
-                env!("CARGO_PKG_VERSION"),
-                config.client.ua_contact
-            ))
-            .build()
-            .unwrap();
+        let client = util::ReqClient::from_config(config);
 
         let (bc_send, bc_recv) = broadcast::channel(500);
 
@@ -112,7 +104,10 @@ impl TerritoryTracker {
     async fn query_territories(
         &self,
     ) -> Result<Option<DateTime<Utc>>, Box<dyn std::error::Error + Send + Sync>> {
-        let (data, expires) = self.query_wynn_terrs().await?;
+        let ReqResp { data, expires }: ReqResp<HashMap<Arc<str>, WynnTerritory>> = self
+            .client
+            .get("https://api.wynncraft.com/v3/guild/list/territory")
+            .await?;
 
         // add connections and res generation data from the extradata and form the territories
         let territories = {
@@ -202,30 +197,6 @@ impl TerritoryTracker {
         }
 
         Ok(expires)
-    }
-
-    #[tracing::instrument(skip(self), err(Debug))]
-    async fn query_wynn_terrs(
-        &self,
-    ) -> Result<(HashMap<Arc<str>, WynnTerritory>, Option<DateTime<Utc>>), reqwest::Error> {
-        let req = self
-            .client
-            .get("https://api.wynncraft.com/v3/guild/list/territory")
-            .send()
-            .await?;
-
-        let expires = req
-            .headers()
-            .get("expires")
-            .map(HeaderValue::to_str)
-            .and_then(Result::ok)
-            .map(DateTime::parse_from_rfc2822)
-            .and_then(Result::ok)
-            .map(|d| d.to_utc());
-
-        let data = req.json().await?;
-
-        Ok((data, expires))
     }
 }
 

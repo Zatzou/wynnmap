@@ -12,4 +12,5 @@ use_webp = false
 
 # uncomment to enable otel tracing
 # [otel]
-# tracing_endpoint = "grpc://localhost:4317"
+# endpoint = "grpc://localhost:4317"
+# env_name = "dev"

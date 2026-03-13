@@ -3,25 +3,21 @@ use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 use tracing::{Level, error, span};
 
-use crate::{config::Config, state::ExTerrInfo};
+use crate::{
+    config::Config,
+    state::ExTerrInfo,
+    trackers::util::{self, ReqResp},
+};
 
 pub struct TerrExtraTracker {
-    client: reqwest::Client,
+    client: util::ReqClient,
 
     state: Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>>,
 }
 
 impl TerrExtraTracker {
     pub fn with_config(config: &Config) -> Self {
-        let client = reqwest::Client::builder()
-            .user_agent(format!(
-                "{}/{} ({})",
-                env!("CARGO_PKG_NAME"),
-                env!("CARGO_PKG_VERSION"),
-                config.client.ua_contact
-            ))
-            .build()
-            .unwrap();
+        let client = util::ReqClient::from_config(config);
 
         Self {
             client,
@@ -54,8 +50,11 @@ impl TerrExtraTracker {
     }
 
     #[tracing::instrument(skip(self), err(Debug))]
-    async fn query_extra(&self) -> Result<(), reqwest::Error> {
-        let data = self.query_extra_data().await?;
+    async fn query_extra(&self) -> Result<(), util::RequestError> {
+        let ReqResp { data, .. }: ReqResp<HashMap<Arc<str>, ExTerrInfo>> = self
+            .client
+            .get("https://gist.githubusercontent.com/Zatzou/14c82f2df0eb4093dfa1d543b78a73a8/raw/d03273fce33c031498c07e21b94f17644c8aae98/terrextra.json")
+            .await?;
 
         {
             let span = span!(Level::INFO, "update");
@@ -65,18 +64,5 @@ impl TerrExtraTracker {
         }
 
         Ok(())
-    }
-
-    #[tracing::instrument(skip(self), err(Debug))]
-    async fn query_extra_data(&self) -> Result<HashMap<Arc<str>, ExTerrInfo>, reqwest::Error> {
-        let data: HashMap<Arc<str>, ExTerrInfo> = self
-            .client
-            .get("https://gist.githubusercontent.com/Zatzou/14c82f2df0eb4093dfa1d543b78a73a8/raw/d03273fce33c031498c07e21b94f17644c8aae98/terrextra.json")
-            .send()
-            .await?
-            .json()
-            .await?;
-
-        Ok(data)
     }
 }

@@ -5,25 +5,21 @@ use tracing::{Level, error, span};
 use uuid::Uuid;
 use wynnmap_types::guild::Guild;
 
-use crate::{config::Config, state::GuildState};
+use crate::{
+    config::Config,
+    state::GuildState,
+    trackers::util::{self, ReqResp},
+};
 
 pub struct GuildTracker {
-    client: reqwest::Client,
+    client: util::ReqClient,
 
     state: Arc<GuildState>,
 }
 
 impl GuildTracker {
     pub fn with_config(config: &Config) -> Self {
-        let client = reqwest::Client::builder()
-            .user_agent(format!(
-                "{}/{} ({})",
-                env!("CARGO_PKG_NAME"),
-                env!("CARGO_PKG_VERSION"),
-                config.client.ua_contact
-            ))
-            .build()
-            .unwrap();
+        let client = util::ReqClient::from_config(config);
 
         Self {
             client,
@@ -56,9 +52,20 @@ impl GuildTracker {
     }
 
     #[tracing::instrument(skip(self), err(Debug))]
-    async fn query_guilds(&self) -> Result<(), reqwest::Error> {
-        let wynn_guilds = self.query_wynn_guilds().await?;
-        let wynntils_guilds = self.query_wynntils_guilds().await?;
+    async fn query_guilds(&self) -> Result<(), util::RequestError> {
+        let ReqResp {
+            data: wynn_guilds, ..
+        }: ReqResp<HashMap<Arc<str>, WynnGuild>> = self
+            .client
+            .get("https://api.wynncraft.com/v3/guild/list/guild")
+            .await?;
+        let ReqResp {
+            data: wynntils_guilds,
+            ..
+        }: ReqResp<Vec<WynntilsGuild>> = self
+            .client
+            .get("https://athena.wynntils.com/cache/get/guildList")
+            .await?;
 
         {
             let span = span!(Level::INFO, "update_state");
@@ -90,32 +97,6 @@ impl GuildTracker {
         }
 
         Ok(())
-    }
-
-    #[tracing::instrument(skip(self), err(Debug))]
-    async fn query_wynn_guilds(&self) -> Result<HashMap<Arc<str>, WynnGuild>, reqwest::Error> {
-        let guilds: HashMap<Arc<str>, WynnGuild> = self
-            .client
-            .get("https://api.wynncraft.com/v3/guild/list/guild")
-            .send()
-            .await?
-            .json()
-            .await?;
-
-        Ok(guilds)
-    }
-
-    #[tracing::instrument(skip(self), err(Debug))]
-    async fn query_wynntils_guilds(&self) -> Result<Vec<WynntilsGuild>, reqwest::Error> {
-        let guilds: Vec<WynntilsGuild> = self
-            .client
-            .get("https://athena.wynntils.com/cache/get/guildList")
-            .send()
-            .await?
-            .json()
-            .await?;
-
-        Ok(guilds)
     }
 }
 
