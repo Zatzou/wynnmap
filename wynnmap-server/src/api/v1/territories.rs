@@ -14,7 +14,7 @@ use axum::{
 use tokio::select;
 use wynnmap_types::ws::TerrSockMessage;
 
-use crate::state::TerritoryState;
+use crate::{AnyError, state::TerritoryState};
 
 pub(crate) fn router(state: Arc<TerritoryState>) -> axum::Router {
     axum::Router::new()
@@ -78,7 +78,7 @@ async fn handle_socket(socket: WebSocket, state: Arc<TerritoryState>) {
     async fn handle_socket_inner(
         mut socket: WebSocket,
         mut bc_recv: tokio::sync::broadcast::Receiver<TerrSockMessage>,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(), AnyError> {
         loop {
             select! {
                 // respond to received pings and close messages

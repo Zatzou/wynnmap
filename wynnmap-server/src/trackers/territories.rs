@@ -16,6 +16,7 @@ use wynnmap_types::{
 };
 
 use crate::{
+    AnyError,
     config::Config,
     state::{ExTerrInfo, GuildState, TerritoryState},
     trackers::util::{self, ResponseExt},
@@ -101,9 +102,7 @@ impl TerritoryTracker {
     }
 
     #[tracing::instrument(skip(self), err(Debug))]
-    async fn query_territories(
-        &self,
-    ) -> Result<Option<DateTime<Utc>>, Box<dyn std::error::Error + Send + Sync>> {
+    async fn query_territories(&self) -> Result<Option<DateTime<Utc>>, AnyError> {
         let (data, expires) = {
             let span = span!(Level::INFO, "fetch");
             let _enter = span.enter();

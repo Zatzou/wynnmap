@@ -25,6 +25,8 @@ mod otel;
 mod state;
 mod trackers;
 
+type AnyError = Box<dyn std::error::Error + Send + Sync>;
+
 #[tokio::main]
 async fn main() {
     let config = config::load_config().await;

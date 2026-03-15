@@ -4,12 +4,13 @@ use axum::body::Bytes;
 use image::ImageReader;
 use reqwest::StatusCode;
 use serde::Deserialize;
-use tokio::sync::RwLock;
+use tokio::{sync::RwLock, task::JoinHandle};
 use tracing::error;
 use webp::Encoder;
 use wynnmap_types::{Region, maptile::MapTile};
 
 use crate::{
+    AnyError,
     config::Config,
     state::ImageState,
     trackers::util::{self, ResponseExt},
@@ -63,7 +64,7 @@ impl ImageTracker {
         state2
     }
 
-    async fn query_images(self: Arc<Self>) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn query_images(self: Arc<Self>) -> Result<(), AnyError> {
         let tiles: Vec<WynntilsMapTile> = {
             let res = self
                 .client
@@ -99,9 +100,7 @@ impl ImageTracker {
         let mut tasks = Vec::new();
         for tile in tiles.clone() {
             let self2 = self.clone();
-            let task: tokio::task::JoinHandle<
-                Result<Option<(Arc<str>, Bytes)>, Box<dyn std::error::Error + Send + Sync>>,
-            > = tokio::task::spawn(async move {
+            let task: JoinHandle<Result<_, AnyError>> = tokio::task::spawn(async move {
                 let data = self2.download_image(&tile.url, &tile.name).await?;
 
                 if let Some(data) = data {
@@ -194,7 +193,7 @@ impl ImageTracker {
     }
 }
 
-fn encode_image(data: Bytes) -> Result<Bytes, Box<dyn std::error::Error + Send + Sync>> {
+fn encode_image(data: Bytes) -> Result<Bytes, AnyError> {
     let img = ImageReader::new(Cursor::new(data))
         .with_guessed_format()?
         .decode()?;
