@@ -6,18 +6,18 @@ use tracing::{Level, error, span};
 use crate::{
     config::Config,
     state::ExTerrInfo,
-    trackers::util::{self, ReqResp},
+    trackers::util::{self, ResponseExt},
 };
 
 pub struct TerrExtraTracker {
-    client: util::ReqClient,
+    client: reqwest::Client,
 
     state: Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>>,
 }
 
 impl TerrExtraTracker {
     pub fn with_config(config: &Config) -> Self {
-        let client = util::ReqClient::from_config(config);
+        let client = util::reqwest_client_from_conf(config);
 
         Self {
             client,
@@ -51,10 +51,18 @@ impl TerrExtraTracker {
 
     #[tracing::instrument(skip(self), err(Debug))]
     async fn query_extra(&self) -> Result<(), util::RequestError> {
-        let ReqResp { data, .. }: ReqResp<HashMap<Arc<str>, ExTerrInfo>> = self
-            .client
-            .get("https://gist.githubusercontent.com/Zatzou/14c82f2df0eb4093dfa1d543b78a73a8/raw/d03273fce33c031498c07e21b94f17644c8aae98/terrextra.json")
-            .await?;
+        let data: HashMap<Arc<str>, ExTerrInfo> = {
+            let span = span!(Level::INFO, "fetch");
+            let _enter = span.enter();
+
+            let res = self
+                .client
+                .get("https://gist.githubusercontent.com/Zatzou/14c82f2df0eb4093dfa1d543b78a73a8/raw/d03273fce33c031498c07e21b94f17644c8aae98/terrextra.json")
+                .send()
+                .await?;
+
+            res.parse_json().await?
+        };
 
         {
             let span = span!(Level::INFO, "update");

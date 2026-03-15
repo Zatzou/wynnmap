@@ -15,11 +15,9 @@ use wynnmap_types::{
     ws::TerrSockMessage,
 };
 
-use crate::config::Config;
-
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub(crate) struct ImageState {
-    pub config: Arc<Config>,
+    pub use_webp: bool,
 
     pub maps: Arc<RwLock<Vec<MapTile>>>,
     pub map_cache: Arc<RwLock<HashMap<Arc<str>, Bytes>>>,

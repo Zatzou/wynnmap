@@ -11,9 +11,9 @@ use tower_http::compression::CompressionLayer;
 use tower_http::cors::{self, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::info;
-use trackers::images::create_image_tracker;
 
 use crate::trackers::guilds::GuildTracker;
+use crate::trackers::images::ImageTracker;
 use crate::trackers::terr_extra::TerrExtraTracker;
 use crate::trackers::territories::TerritoryTracker;
 
@@ -38,7 +38,7 @@ async fn main() {
         info!("Otel not configured. Using only fmt logging.");
     }
 
-    let img_state = create_image_tracker(config.clone()).await;
+    let img_state = ImageTracker::from_config(config.clone()).run();
     let guild_state = GuildTracker::with_config(&config).run();
     let extra_data = TerrExtraTracker::with_config(&config).run();
     let terr_state = TerritoryTracker::with_config(&config, &guild_state, extra_data).run();

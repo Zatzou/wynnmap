@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{
     Json,
     extract::{Path, State},
@@ -8,7 +10,7 @@ use axum::{
 
 use crate::ImageState;
 
-pub(crate) fn router(state: ImageState) -> axum::Router {
+pub(crate) fn router(state: Arc<ImageState>) -> axum::Router {
     axum::Router::new()
         .route("/maps.json", get(maps_json))
         .route("/{name}", get(get_image))
@@ -16,15 +18,18 @@ pub(crate) fn router(state: ImageState) -> axum::Router {
 }
 
 #[tracing::instrument(skip(state))]
-async fn maps_json(State(state): State<ImageState>) -> impl IntoResponse {
+async fn maps_json(State(state): State<Arc<ImageState>>) -> impl IntoResponse {
     Json(state.maps.read().await.clone())
 }
 
 #[tracing::instrument(skip(state))]
-async fn get_image(Path(name): Path<String>, State(state): State<ImageState>) -> impl IntoResponse {
+async fn get_image(
+    Path(name): Path<String>,
+    State(state): State<Arc<ImageState>>,
+) -> impl IntoResponse {
     let (name, ext) = name.split_once('.').unwrap_or((name.as_str(), ""));
 
-    let (wanted_ext, mime) = if state.config.images.use_webp {
+    let (wanted_ext, mime) = if state.use_webp {
         ("webp", "image/webp")
     } else {
         ("png", "image/png")

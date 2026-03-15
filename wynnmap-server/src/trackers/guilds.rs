@@ -8,18 +8,18 @@ use wynnmap_types::guild::Guild;
 use crate::{
     config::Config,
     state::GuildState,
-    trackers::util::{self, ReqResp},
+    trackers::util::{self, ResponseExt},
 };
 
 pub struct GuildTracker {
-    client: util::ReqClient,
+    client: reqwest::Client,
 
     state: Arc<GuildState>,
 }
 
 impl GuildTracker {
     pub fn with_config(config: &Config) -> Self {
-        let client = util::ReqClient::from_config(config);
+        let client = util::reqwest_client_from_conf(config);
 
         Self {
             client,
@@ -53,19 +53,28 @@ impl GuildTracker {
 
     #[tracing::instrument(skip(self), err(Debug))]
     async fn query_guilds(&self) -> Result<(), util::RequestError> {
-        let ReqResp {
-            data: wynn_guilds, ..
-        }: ReqResp<HashMap<Arc<str>, WynnGuild>> = self
-            .client
-            .get("https://api.wynncraft.com/v3/guild/list/guild")
-            .await?;
-        let ReqResp {
-            data: wynntils_guilds,
-            ..
-        }: ReqResp<Vec<WynntilsGuild>> = self
-            .client
-            .get("https://athena.wynntils.com/cache/get/guildList")
-            .await?;
+        let (wynn_guilds, wynntils_guilds) = {
+            let span = span!(Level::INFO, "fetch");
+            let _enter = span.enter();
+
+            let res = self
+                .client
+                .get("https://api.wynncraft.com/v3/guild/list/guild")
+                .send()
+                .await?;
+
+            let wynn_guilds: HashMap<Arc<str>, WynnGuild> = res.parse_json().await?;
+
+            let res = self
+                .client
+                .get("https://athena.wynntils.com/cache/get/guildList")
+                .send()
+                .await?;
+
+            let wynntils_guilds: Vec<WynntilsGuild> = res.parse_json().await?;
+
+            (wynn_guilds, wynntils_guilds)
+        };
 
         {
             let span = span!(Level::INFO, "update_state");

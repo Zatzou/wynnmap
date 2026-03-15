@@ -2,19 +2,11 @@ use std::fmt::Debug;
 
 use axum::http::HeaderValue;
 use chrono::{DateTime, Utc};
+use reqwest::header::AsHeaderName;
 use serde::de::DeserializeOwned;
-use tracing::{error, info};
+use tracing::error;
 
 use crate::config::Config;
-
-pub struct ReqClient {
-    client: reqwest::Client,
-}
-
-pub struct ReqResp<T> {
-    pub data: T,
-    pub expires: Option<DateTime<Utc>>,
-}
 
 #[derive(Debug, thiserror::Error)]
 pub enum RequestError {
@@ -24,45 +16,44 @@ pub enum RequestError {
     Json(#[from] serde_json::Error),
 }
 
-impl ReqClient {
-    pub fn from_config(config: &Config) -> Self {
-        let client = reqwest::Client::builder()
-            .user_agent(format!(
-                "{}/{} ({})",
-                env!("CARGO_PKG_NAME"),
-                env!("CARGO_PKG_VERSION"),
-                config.client.ua_contact
-            ))
-            .build()
-            .unwrap();
+pub fn reqwest_client_from_conf(config: &Config) -> reqwest::Client {
+    reqwest::Client::builder()
+        .user_agent(format!(
+            "{}/{} ({})",
+            env!("CARGO_PKG_NAME"),
+            env!("CARGO_PKG_VERSION"),
+            config.client.ua_contact
+        ))
+        .build()
+        .unwrap()
+}
 
-        Self { client }
-    }
+pub fn parse_header_datetime(header: Option<&HeaderValue>) -> Option<DateTime<Utc>> {
+    header
+        .map(HeaderValue::to_str)
+        .and_then(Result::ok)
+        .map(DateTime::parse_from_rfc2822)
+        .and_then(Result::ok)
+        .map(|d| d.to_utc())
+}
 
+pub trait ResponseExt {
+    async fn parse_json<T: DeserializeOwned>(self) -> Result<T, RequestError>;
+
+    fn get_header(&self, key: impl AsHeaderName) -> Option<&str>;
+
+    fn expires(&self) -> Option<DateTime<Utc>>;
+}
+
+impl ResponseExt for reqwest::Response {
     #[tracing::instrument(skip(self), err(Debug))]
-    pub async fn get<T: DeserializeOwned, U: AsRef<str> + Debug>(
-        &self,
-        url: U,
-    ) -> Result<ReqResp<T>, RequestError> {
-        let req = self.client.get(url.as_ref()).send().await?;
-
-        info!(status = ?req.status());
-
-        let expires = req
-            .headers()
-            .get("expires")
-            .map(HeaderValue::to_str)
-            .and_then(Result::ok)
-            .map(DateTime::parse_from_rfc2822)
-            .and_then(Result::ok)
-            .map(|d| d.to_utc());
-
-        let body = req.bytes().await?;
+    async fn parse_json<T: DeserializeOwned>(self) -> Result<T, RequestError> {
+        let body = self.bytes().await?;
 
         let data: Result<T, serde_json::Error> = serde_json::from_slice(&body);
 
         match data {
-            Ok(data) => Ok(ReqResp { data, expires }),
+            Ok(data) => Ok(data),
             Err(e) => {
                 let s = String::from_utf8_lossy(&body).into_owned();
 
@@ -71,5 +62,16 @@ impl ReqClient {
                 Err(e.into())
             }
         }
+    }
+
+    fn get_header(&self, key: impl AsHeaderName) -> Option<&str> {
+        self.headers()
+            .get(key)
+            .map(HeaderValue::to_str)
+            .and_then(Result::ok)
+    }
+
+    fn expires(&self) -> Option<DateTime<Utc>> {
+        parse_header_datetime(self.headers().get("expires"))
     }
 }

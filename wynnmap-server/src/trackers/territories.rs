@@ -18,11 +18,11 @@ use wynnmap_types::{
 use crate::{
     config::Config,
     state::{ExTerrInfo, GuildState, TerritoryState},
-    trackers::util::{self, ReqResp},
+    trackers::util::{self, ResponseExt},
 };
 
 pub struct TerritoryTracker {
-    client: util::ReqClient,
+    client: reqwest::Client,
     guilds: Arc<RwLock<HashMap<Arc<str>, Guild>>>,
     extra: Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>>,
 
@@ -37,7 +37,7 @@ impl TerritoryTracker {
         guild_state: &GuildState,
         extra_data: Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>>,
     ) -> Self {
-        let client = util::ReqClient::from_config(config);
+        let client = util::reqwest_client_from_conf(config);
 
         let (bc_send, bc_recv) = broadcast::channel(500);
 
@@ -104,10 +104,21 @@ impl TerritoryTracker {
     async fn query_territories(
         &self,
     ) -> Result<Option<DateTime<Utc>>, Box<dyn std::error::Error + Send + Sync>> {
-        let ReqResp { data, expires }: ReqResp<HashMap<Arc<str>, WynnTerritory>> = self
-            .client
-            .get("https://api.wynncraft.com/v3/guild/list/territory")
-            .await?;
+        let (data, expires) = {
+            let span = span!(Level::INFO, "fetch");
+            let _enter = span.enter();
+
+            let res = self
+                .client
+                .get("https://api.wynncraft.com/v3/guild/list/territory")
+                .send()
+                .await?;
+
+            let expires = res.expires();
+            let data: HashMap<Arc<str>, WynnTerritory> = res.parse_json().await?;
+
+            (data, expires)
+        };
 
         // add connections and res generation data from the extradata and form the territories
         let territories = {
