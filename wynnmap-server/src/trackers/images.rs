@@ -114,7 +114,9 @@ impl ImageTracker {
 
                     if let Some(data) = data {
                         let img = if self2.config.images.use_webp {
-                            tokio::task::spawn_blocking(|| encode_image(data)).await??
+                            tokio::task::spawn_blocking(|| encode_image(data))
+                                .in_current_span()
+                                .await??
                         } else {
                             data
                         };
