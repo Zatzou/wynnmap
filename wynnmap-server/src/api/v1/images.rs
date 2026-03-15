@@ -30,9 +30,7 @@ async fn get_image(Path(name): Path<String>, State(state): State<ImageState>) ->
         ("png", "image/png")
     };
 
-    if ext != wanted_ext {
-        (StatusCode::NOT_FOUND, "Image not found".as_bytes()).into_response()
-    } else {
+    if ext == wanted_ext {
         let map_cache = state.map_cache.read().await;
         if let Some(data) = map_cache.get(name) {
             (
@@ -48,5 +46,7 @@ async fn get_image(Path(name): Path<String>, State(state): State<ImageState>) ->
         } else {
             (StatusCode::NOT_FOUND, "Image not found").into_response()
         }
+    } else {
+        (StatusCode::NOT_FOUND, "Image not found").into_response()
     }
 }

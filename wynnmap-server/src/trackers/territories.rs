@@ -34,7 +34,7 @@ pub struct TerritoryTracker {
 impl TerritoryTracker {
     pub fn with_config(
         config: &Config,
-        guild_state: Arc<GuildState>,
+        guild_state: &GuildState,
         extra_data: Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>>,
     ) -> Self {
         let client = util::ReqClient::from_config(config);

@@ -41,7 +41,7 @@ async fn main() {
     let img_state = create_image_tracker(config.clone()).await;
     let guild_state = GuildTracker::with_config(&config).run();
     let extra_data = TerrExtraTracker::with_config(&config).run();
-    let terr_state = TerritoryTracker::with_config(&config, guild_state.clone(), extra_data).run();
+    let terr_state = TerritoryTracker::with_config(&config, &guild_state, extra_data).run();
 
     let cors = CorsLayer::new()
         .allow_origin(cors::Any)
