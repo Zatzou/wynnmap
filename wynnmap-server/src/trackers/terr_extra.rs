@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use tokio::sync::RwLock;
-use tracing::{Level, error, span};
+use tracing::{Instrument, error, info_span};
 
 use crate::{
     config::Config,
@@ -51,25 +51,17 @@ impl TerrExtraTracker {
 
     #[tracing::instrument(skip(self), err(Debug))]
     async fn query_extra(&self) -> Result<(), util::RequestError> {
-        let data: HashMap<Arc<str>, ExTerrInfo> = {
-            let span = span!(Level::INFO, "fetch");
-            let _enter = span.enter();
-
+        let data: HashMap<Arc<str>, ExTerrInfo> = async {
             let res = self
                 .client
                 .get("https://gist.githubusercontent.com/Zatzou/14c82f2df0eb4093dfa1d543b78a73a8/raw/d03273fce33c031498c07e21b94f17644c8aae98/terrextra.json")
                 .send()
                 .await?;
 
-            res.parse_json().await?
-        };
+            res.parse_json().await
+        }.instrument(info_span!("fetch")).await?;
 
-        {
-            let span = span!(Level::INFO, "update");
-            let _enter = span.enter();
-
-            *self.state.write().await = data;
-        }
+        *self.state.write().await = data;
 
         Ok(())
     }

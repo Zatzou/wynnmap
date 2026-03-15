@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use serde::Deserialize;
-use tracing::{Level, error, span};
+use tracing::{Instrument, error, info_span};
 use uuid::Uuid;
 use wynnmap_types::guild::Guild;
 
@@ -53,10 +53,7 @@ impl GuildTracker {
 
     #[tracing::instrument(skip(self), err(Debug))]
     async fn query_guilds(&self) -> Result<(), util::RequestError> {
-        let (wynn_guilds, wynntils_guilds) = {
-            let span = span!(Level::INFO, "fetch");
-            let _enter = span.enter();
-
+        let (wynn_guilds, wynntils_guilds) = async {
             let res = self
                 .client
                 .get("https://api.wynncraft.com/v3/guild/list/guild")
@@ -73,13 +70,12 @@ impl GuildTracker {
 
             let wynntils_guilds: Vec<WynntilsGuild> = res.parse_json().await?;
 
-            (wynn_guilds, wynntils_guilds)
-        };
+            Ok::<_, util::RequestError>((wynn_guilds, wynntils_guilds))
+        }
+        .instrument(info_span!("fetch"))
+        .await?;
 
-        {
-            let span = span!(Level::INFO, "update_state");
-            let _enter = span.enter();
-
+        async {
             // acquire lock on the state
             let mut lock = self.state.guilds.write().await;
 
@@ -104,6 +100,8 @@ impl GuildTracker {
                 }
             }
         }
+        .instrument(info_span!("update_state"))
+        .await;
 
         Ok(())
     }

@@ -7,7 +7,7 @@ use tokio::{
     sync::{RwLock, broadcast},
     time::Instant,
 };
-use tracing::{Level, error, span};
+use tracing::{Instrument, error, info_span};
 use wynnmap_types::{
     Region,
     guild::Guild,
@@ -103,10 +103,7 @@ impl TerritoryTracker {
 
     #[tracing::instrument(skip(self), err(Debug))]
     async fn query_territories(&self) -> Result<Option<DateTime<Utc>>, AnyError> {
-        let (data, expires) = {
-            let span = span!(Level::INFO, "fetch");
-            let _enter = span.enter();
-
+        let (data, expires) = async {
             let res = self
                 .client
                 .get("https://api.wynncraft.com/v3/guild/list/territory")
@@ -116,14 +113,13 @@ impl TerritoryTracker {
             let expires = res.expires();
             let data: HashMap<Arc<str>, WynnTerritory> = res.parse_json().await?;
 
-            (data, expires)
-        };
+            Ok::<_, util::RequestError>((data, expires))
+        }
+        .instrument(info_span!("fetch"))
+        .await?;
 
         // add connections and res generation data from the extradata and form the territories
         let territories = {
-            let span = span!(Level::INFO, "add_extradata");
-            let _enter = span.enter();
-
             // get the extradata
             let exdata = self.extra.read().await;
 
@@ -145,9 +141,6 @@ impl TerritoryTracker {
 
         // create owner data
         let owners = {
-            let span = span!(Level::INFO, "add_owners");
-            let _enter = span.enter();
-
             let guildlock = self.guilds.read().await;
 
             data.iter()
@@ -169,9 +162,6 @@ impl TerritoryTracker {
 
         // update territory data
         let old_owners = {
-            let span = span!(Level::INFO, "update");
-            let _enter = span.enter();
-
             let mut lock = self.state.inner.write().await;
 
             // update expires and last updated
@@ -189,10 +179,7 @@ impl TerritoryTracker {
         };
 
         // send broadcasts to notify websockets
-        {
-            let span = span!(Level::INFO, "notify");
-            let _enter = span.enter();
-
+        async {
             for (tname, new) in owners {
                 let old = old_owners.get(&tname);
 
@@ -204,7 +191,11 @@ impl TerritoryTracker {
                     })?;
                 }
             }
+
+            Ok::<(), AnyError>(())
         }
+        .instrument(info_span!("notify"))
+        .await?;
 
         Ok(expires)
     }

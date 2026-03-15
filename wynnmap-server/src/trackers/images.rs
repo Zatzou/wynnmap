@@ -5,7 +5,7 @@ use image::ImageReader;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tokio::{sync::RwLock, task::JoinHandle};
-use tracing::error;
+use tracing::{Instrument, error, info_span};
 use webp::Encoder;
 use wynnmap_types::{Region, maptile::MapTile};
 
@@ -64,8 +64,9 @@ impl ImageTracker {
         state2
     }
 
+    #[tracing::instrument(skip(self), err(Debug))]
     async fn query_images(self: Arc<Self>) -> Result<(), AnyError> {
-        let tiles: Vec<WynntilsMapTile> = {
+        let tiles: Vec<WynntilsMapTile> = async {
             let res = self
                 .client
                 .get("https://cdn.wynntils.com/static/Reference/maps.json")
@@ -83,7 +84,7 @@ impl ImageTracker {
                 .await?;
 
             if res.status() == StatusCode::NOT_MODIFIED {
-                return Ok(());
+                return Ok(Vec::new());
             }
 
             if let Some(etag) = res.get_header("etag") {
@@ -93,8 +94,15 @@ impl ImageTracker {
                     .insert(Arc::from("maps.json"), Arc::from(etag));
             }
 
-            res.parse_json().await?
-        };
+            res.parse_json().await
+        }
+        .instrument(info_span!("fetch"))
+        .await?;
+
+        // empty = 304 Not modified
+        if tiles.is_empty() {
+            return Ok(());
+        }
 
         // download and process the tiles
         let mut tasks = Vec::new();
@@ -159,6 +167,7 @@ impl ImageTracker {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self), err(Debug))]
     async fn download_image(&self, url: &str, name: &str) -> Result<Option<Bytes>, reqwest::Error> {
         let res = self
             .client
@@ -193,6 +202,7 @@ impl ImageTracker {
     }
 }
 
+#[tracing::instrument(skip(data), err(Debug))]
 fn encode_image(data: Bytes) -> Result<Bytes, AnyError> {
     let img = ImageReader::new(Cursor::new(data))
         .with_guessed_format()?
