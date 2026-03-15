@@ -115,7 +115,7 @@ impl ImageTracker {
                     if let Some(data) = data {
                         let img = if self2.config.images.use_webp {
                             tokio::task::spawn_blocking(|| encode_image(data))
-                                .in_current_span()
+                                .instrument(info_span!("encode_image"))
                                 .await??
                         } else {
                             data
@@ -207,7 +207,6 @@ impl ImageTracker {
     }
 }
 
-#[tracing::instrument(skip(data), err(Debug))]
 fn encode_image(data: Bytes) -> Result<Bytes, AnyError> {
     let img = ImageReader::new(Cursor::new(data))
         .with_guessed_format()?
