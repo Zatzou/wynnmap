@@ -108,21 +108,24 @@ impl ImageTracker {
         let mut tasks = Vec::new();
         for tile in tiles.clone() {
             let self2 = self.clone();
-            let task: JoinHandle<Result<_, AnyError>> = tokio::task::spawn(async move {
-                let data = self2.download_image(&tile.url, &tile.name).await?;
+            let task: JoinHandle<Result<_, AnyError>> = tokio::task::spawn(
+                async move {
+                    let data = self2.download_image(&tile.url, &tile.name).await?;
 
-                if let Some(data) = data {
-                    let img = if self2.config.images.use_webp {
-                        tokio::task::spawn_blocking(|| encode_image(data)).await??
+                    if let Some(data) = data {
+                        let img = if self2.config.images.use_webp {
+                            tokio::task::spawn_blocking(|| encode_image(data)).await??
+                        } else {
+                            data
+                        };
+
+                        Ok(Some((tile.md5.clone(), img)))
                     } else {
-                        data
-                    };
-
-                    Ok(Some((tile.md5.clone(), img)))
-                } else {
-                    Ok(None)
+                        Ok(None)
+                    }
                 }
-            });
+                .instrument(info_span!("load_image")),
+            );
 
             tasks.push(task);
         }
