@@ -144,14 +144,14 @@ impl TerritoryTracker {
         let owners = {
             let guildlock = self.guilds.read().await;
 
-            data.iter()
+            data.into_iter()
                 .map(|(name, t)| {
-                    let mut guild: Guild = t.guild.clone().into();
+                    let mut guild: Guild = t.guild.into();
 
                     guild.color = guildlock.get(&guild.prefix).and_then(|g| g.color.clone());
 
                     (
-                        name.clone(),
+                        name,
                         TerrOwner {
                             guild,
                             acquired: Some(t.acquired),
@@ -216,14 +216,14 @@ struct WynnGuild {
     pub prefix: Option<Arc<str>>,
 }
 
-impl Into<Guild> for WynnGuild {
-    fn into(self) -> Guild {
+impl From<WynnGuild> for Guild {
+    fn from(value: WynnGuild) -> Self {
         Guild {
-            uuid: self.uuid,
-            name: self
+            uuid: value.uuid,
+            name: value
                 .name
                 .unwrap_or_else(|| "Unknown, Wynn api returned null".into()),
-            prefix: self.prefix.unwrap_or_else(|| "???".into()),
+            prefix: value.prefix.unwrap_or_else(|| "???".into()),
             color: None,
         }
     }

@@ -35,14 +35,24 @@ impl Guild {
     ///
     /// This function falls back to calculate the color if no color is given
     pub fn get_color(&self) -> (u8, u8, u8) {
-        if let Some(color) = &self.color
-            && color.len() == 7
-        {
-            let col = u32::from_str_radix(&color[1..], 16)
-                .unwrap_or(0)
-                .to_ne_bytes();
+        if let Some(col) = &self.color {
+            let col = if let Some(s) = col.strip_prefix("#") {
+                s
+            } else {
+                col
+            };
 
-            (col[2], col[1], col[0])
+            // parse the hex color ignoring any alpha values which are set
+            match col.len() {
+                // handle 6 or 8 digit hex strings ignoring any alpha values
+                6 | 8 => {
+                    let parse = |s| u8::from_str_radix(s, 16).unwrap_or(0);
+
+                    (parse(&col[0..2]), parse(&col[2..4]), parse(&col[4..6]))
+                }
+                // else calculate the color
+                _ => self.calculate_color(),
+            }
         } else {
             self.calculate_color()
         }
@@ -50,13 +60,10 @@ impl Guild {
 
     /// Get the hex color of this guild
     pub fn hex_color(&self) -> String {
-        if let Some(col) = &self.color {
-            col.to_string()
-        } else {
-            let col = self.calculate_color();
+        // reformat the color since wynntils appears to give some odd colors
+        let col = self.get_color();
 
-            format!("#{:02X}{:02X}{:02X}", col.0, col.1, col.2)
-        }
+        format!("#{:02X}{:02X}{:02X}", col.0, col.1, col.2)
     }
 
     /// Calculate the guild color using the wynntils crc32 method
