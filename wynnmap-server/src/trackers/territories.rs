@@ -8,6 +8,7 @@ use tokio::{
     time::Instant,
 };
 use tracing::{Instrument, error, info_span};
+use uuid::Uuid;
 use wynnmap_types::{
     Region,
     guild::Guild,
@@ -145,9 +146,9 @@ impl TerritoryTracker {
 
             data.iter()
                 .map(|(name, t)| {
-                    let mut guild = t.guild.clone();
+                    let mut guild: Guild = t.guild.clone().into();
 
-                    guild.color = guildlock.get(&t.guild.prefix).and_then(|g| g.color.clone());
+                    guild.color = guildlock.get(&guild.prefix).and_then(|g| g.color.clone());
 
                     (
                         name.clone(),
@@ -203,7 +204,27 @@ impl TerritoryTracker {
 
 #[derive(Deserialize)]
 struct WynnTerritory {
-    guild: Guild,
+    guild: WynnGuild,
     acquired: chrono::DateTime<chrono::Utc>,
     location: Region,
+}
+
+#[derive(Deserialize, Clone)]
+struct WynnGuild {
+    pub uuid: Option<Uuid>,
+    pub name: Option<Arc<str>>,
+    pub prefix: Option<Arc<str>>,
+}
+
+impl Into<Guild> for WynnGuild {
+    fn into(self) -> Guild {
+        Guild {
+            uuid: self.uuid,
+            name: self
+                .name
+                .unwrap_or_else(|| "Unknown, Wynn api returned null".into()),
+            prefix: self.prefix.unwrap_or_else(|| "???".into()),
+            color: None,
+        }
+    }
 }
