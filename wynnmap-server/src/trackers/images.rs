@@ -30,12 +30,15 @@ impl ImageTracker {
         let client = util::reqwest_client_from_conf(&config);
 
         Self {
+            state: Arc::new(ImageState {
+                use_webp: config.images.use_webp,
+                ..Default::default()
+            }),
+
             client,
             config,
 
             etag_cache: Default::default(),
-
-            state: Default::default(),
         }
     }
 
