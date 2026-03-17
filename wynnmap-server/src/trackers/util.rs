@@ -46,7 +46,7 @@ pub trait ResponseExt {
 }
 
 impl ResponseExt for reqwest::Response {
-    #[tracing::instrument(skip(self), err(Debug))]
+    #[tracing::instrument(err(Debug))]
     async fn parse_json<T: DeserializeOwned>(self) -> Result<T, RequestError> {
         let body = self.bytes().await?;
 
