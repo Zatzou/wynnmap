@@ -194,13 +194,13 @@ pub fn WynnMap(children: Children) -> impl IntoView {
             "0" => {
                 let oldzoom = zoom.get();
                 // reset the zoom
-                set_zoom.set(1.0);
+                set_zoom.set(0.5);
 
                 // perform zoom compensation
                 // get middle point of the screen
                 let mpos = get_viewport_middle();
                 // calculate the zoom compensation
-                apply_zoom_compensation(mpos, oldzoom, 1.0, position);
+                apply_zoom_compensation(mpos, oldzoom, 0.5, position);
 
                 // do transition
                 set_transitioning.set(true);
@@ -208,7 +208,12 @@ pub fn WynnMap(children: Children) -> impl IntoView {
             // Home - reset position
             "Home" => {
                 let screen_middle = get_viewport_middle();
-                position.set((100.0 + screen_middle.0, 1200.0 + screen_middle.1));
+                let zoom = zoom.get() * 2.0;
+
+                position.set((
+                    (100.0 * zoom + screen_middle.0),
+                    (1200.0 * zoom + screen_middle.1),
+                ));
 
                 set_transitioning.set(true);
             }
@@ -353,16 +358,12 @@ fn calculate_new_zoom(current_zoom: f64, delta: f64) -> f64 {
 /// Calculate the transform that has to be applied such that the zoom appears to be centered around the mouse position
 ///
 /// This is based on the stackoverflow answer here: <https://stackoverflow.com/a/27611642>
-fn calculate_zoom_compensation(
-    position: (f64, f64),
-    current_zoom: f64,
-    new_zoom: f64,
-) -> (f64, f64) {
-    let i = (position.0 / current_zoom, position.1 / current_zoom);
+fn calculate_zoom_compensation(center: (f64, f64), old_zoom: f64, new_zoom: f64) -> (f64, f64) {
+    let i = (center.0 / old_zoom, center.1 / old_zoom);
 
     let n = (i.0 * new_zoom, i.1 * new_zoom);
 
-    (position.0 - n.0, position.1 - n.1)
+    (center.0 - n.0, center.1 - n.1)
 }
 
 /// Helper function to apply the zoom compensation to the current position
