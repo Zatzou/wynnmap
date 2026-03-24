@@ -52,13 +52,20 @@ async fn main() {
     let app = Router::new()
         .nest(
             "/api",
-            Router::new().nest(
-                "/v1",
-                Router::new()
-                    .nest("/images", api::v1::images::router(img_state))
-                    .nest("/terr", api::v1::territories::router(terr_state))
-                    .fallback(api_404),
-            ),
+            Router::new()
+                .nest(
+                    "/v1",
+                    Router::new()
+                        .nest("/images", api::v1::images::router(img_state))
+                        .nest("/terr", api::v1::territories::router(terr_state.clone()))
+                        .fallback(api_404),
+                )
+                .nest(
+                    "/v2",
+                    Router::new()
+                        .nest("/terr", api::v2::territories::router(terr_state))
+                        .fallback(api_404),
+                ),
         )
         .fallback_service(
             ServiceBuilder::new()
