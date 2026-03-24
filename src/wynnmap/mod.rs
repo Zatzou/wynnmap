@@ -192,18 +192,24 @@ pub fn WynnMap(children: Children) -> impl IntoView {
         match e.key().as_str() {
             // 0 key - reset zoom
             "0" => {
+                let oldzoom = zoom.get();
+                // reset the zoom
+                set_zoom.set(1.0);
+
                 // perform zoom compensation
                 // get middle point of the screen
                 let mpos = get_viewport_middle();
                 // calculate the zoom compensation
-                let zcomp = calculate_zoom_compensation(mpos, zoom.get(), 1.0);
-                // apply the zoom compensation
-                position.set((position.get().0 + zcomp.0, position.get().1 + zcomp.1));
-
-                // reset the zoom
-                set_zoom.set(1.0);
+                apply_zoom_compensation(mpos, oldzoom, 1.0, position);
 
                 // do transition
+                set_transitioning.set(true);
+            }
+            // Home - reset position
+            "Home" => {
+                let screen_middle = get_viewport_middle();
+                position.set((100.0 + screen_middle.0, 1200.0 + screen_middle.1));
+
                 set_transitioning.set(true);
             }
             // plus key - zoom in
