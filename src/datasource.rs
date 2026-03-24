@@ -91,6 +91,9 @@ pub fn ws_terr_changes(owners: RwSignal<HashMap<Arc<str>, TerrOwner>>) {
                 TerrSockMessage::Capture { name, old: _, new } => {
                     owners.write().insert(name, new);
                 }
+                TerrSockMessage::LastUpdate { ts: _ } => {
+                    // TODO: implement warning for old data
+                }
             }
         }
     });

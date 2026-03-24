@@ -4,6 +4,7 @@
 
 use std::sync::Arc;
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::terr::TerrOwner;
@@ -19,4 +20,9 @@ pub enum TerrSockMessage {
         old: Option<TerrOwner>,
         new: TerrOwner,
     },
+
+    /// Message giving the user the last timestamp of when the territory tracker has received an update from wynn
+    ///
+    /// This message is used to tell the user if the wynn api is malfunctioning so these malfunctions show up and dont take users by surprise.
+    LastUpdate { ts: DateTime<Utc> },
 }
