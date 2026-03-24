@@ -2,8 +2,10 @@ use std::{
     collections::{HashMap, HashSet},
     ops::Range,
     sync::Arc,
+    time::Duration,
 };
 
+use chrono::{DateTime, Utc};
 use leptos::prelude::*;
 use wynnmap_types::terr::{TerrOwner, Territory};
 
@@ -35,7 +37,7 @@ pub fn WarMap() -> impl IntoView {
 
     move || {
         loader(data, |(terrs, owners)| {
-            warmap_inner(terrs, owners).into_any()
+            warmap_inner(terrs, owners.data, owners.updated).into_any()
         })
     }
 }
@@ -43,6 +45,7 @@ pub fn WarMap() -> impl IntoView {
 fn warmap_inner(
     terrs: HashMap<Arc<str>, Territory>,
     owners: HashMap<Arc<str>, TerrOwner>,
+    updated: DateTime<Utc>,
 ) -> impl IntoView {
     let show_terrs = use_toggle("terrs", true);
     let show_conns = use_toggle("conns", true);
@@ -52,11 +55,32 @@ fn warmap_inner(
 
     let terrs = RwSignal::new(terrs);
     let owners = RwSignal::new(owners);
+    let last_updated = RwSignal::new(updated);
 
-    datasource::ws_terr_changes(owners);
+    datasource::ws_terr_changes(owners, last_updated);
 
     let hovered = RwSignal::new(None);
     let selected = RwSignal::new(None);
+
+    let data_age = RwSignal::new(0);
+
+    let i = set_interval_with_handle(
+        move || {
+            let time = Utc::now()
+                .signed_duration_since(last_updated.get())
+                .num_seconds();
+
+            data_age.set(time);
+        },
+        Duration::from_millis(1000),
+    )
+    .ok();
+
+    on_cleanup(move || {
+        if let Some(i) = i {
+            i.clear();
+        }
+    });
 
     view! {
         <WynnMap>
@@ -87,6 +111,34 @@ fn warmap_inner(
                         owners={owners}
                     />
                 </SideCardHover>
+            })
+        } else {None}}
+
+        // outdated data warning
+        {move || if data_age.get() > 600 {
+            Some(view! {
+                <div class="fixed bottom-4 right-4 bg-neutral-900 text-white rounded-md w-sm p-2">
+                    <h1 class="text-2xl">"Warning: territory data is outdated"</h1>
+                    <p>"Data was last updated " {move || {
+                        let time = data_age.get();
+
+                        let days = time / 86400;
+                        let hours = (time % 86400) / 3600;
+                        let minutes = (time % 3600) / 60;
+                        let seconds = time % 60;
+
+                        if days > 0 {
+                            format!("{days}d {hours}h")
+                        } else if hours > 0 {
+                            format!("{hours}h {minutes}m")
+                        } else if minutes > 0 {
+                            format!("{minutes}m {seconds}s")
+                        } else {
+                            format!("{seconds}s")
+                        }
+                    }} " ago"</p>
+                    <p>"If this issue does not resolve within an hour and Wynn isn't having api issues contact the developer."</p>
+                </div>
             })
         } else {None}}
 

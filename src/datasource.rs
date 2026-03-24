@@ -1,9 +1,11 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
+use chrono::{DateTime, Utc};
 use codee::string::JsonSerdeWasmCodec;
 use leptos::prelude::*;
 use leptos_use::{UseWebSocketReturn, core::ConnectionReadyState, use_websocket};
 use wynnmap_types::{
+    api::v2::RespWrapper,
     maptile::MapTile,
     terr::{TerrOwner, Territory},
     ws::TerrSockMessage,
@@ -36,7 +38,7 @@ pub async fn load_map_tiles() -> Result<Vec<MapTile>, String> {
 
 pub async fn get_terrs() -> Result<HashMap<Arc<str>, Territory>, String> {
     let resp: HashMap<Arc<str>, Territory> =
-        reqwest::get(format!("{}{}", get_url("http"), "/api/v1/terr/list"))
+        reqwest::get(format!("{}{}", get_url("http"), "/api/v2/terr/list"))
             .await
             .map_err(debug_fmt_error)?
             .json()
@@ -46,9 +48,9 @@ pub async fn get_terrs() -> Result<HashMap<Arc<str>, Territory>, String> {
     Ok(resp)
 }
 
-pub async fn get_owners() -> Result<HashMap<Arc<str>, TerrOwner>, String> {
-    let resp: HashMap<Arc<str>, TerrOwner> =
-        reqwest::get(format!("{}{}", get_url("http"), "/api/v1/terr/guilds"))
+pub async fn get_owners() -> Result<RespWrapper<HashMap<Arc<str>, TerrOwner>>, String> {
+    let resp: RespWrapper<HashMap<Arc<str>, TerrOwner>> =
+        reqwest::get(format!("{}{}", get_url("http"), "/api/v2/terr/guilds"))
             .await
             .map_err(debug_fmt_error)?
             .json()
@@ -58,14 +60,17 @@ pub async fn get_owners() -> Result<HashMap<Arc<str>, TerrOwner>, String> {
     Ok(resp)
 }
 
-pub fn ws_terr_changes(owners: RwSignal<HashMap<Arc<str>, TerrOwner>>) {
+pub fn ws_terr_changes(
+    owners: RwSignal<HashMap<Arc<str>, TerrOwner>>,
+    last_updated: RwSignal<DateTime<Utc>>,
+) {
     let UseWebSocketReturn {
         ready_state,
         message,
         open,
         ..
     } = use_websocket::<TerrSockMessage, TerrSockMessage, JsonSerdeWasmCodec>(&format!(
-        "{}/api/v1/terr/guilds/ws",
+        "{}/api/v2/terr/guilds/ws",
         get_url("ws")
     ));
 
@@ -90,9 +95,10 @@ pub fn ws_terr_changes(owners: RwSignal<HashMap<Arc<str>, TerrOwner>>) {
             match msg {
                 TerrSockMessage::Capture { name, old: _, new } => {
                     owners.write().insert(name, new);
+                    last_updated.set(Utc::now());
                 }
-                TerrSockMessage::LastUpdate { ts: _ } => {
-                    // TODO: implement warning for old data
+                TerrSockMessage::LastUpdate { ts } => {
+                    last_updated.set(ts);
                 }
             }
         }

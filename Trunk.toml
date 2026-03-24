@@ -21,6 +21,6 @@ backend = "https://wynnmap.zatzou.com/api/"
 # backend = "http://localhost:8081/api/"
 
 [[proxy]]
-backend = "wss://wynnmap.zatzou.com/api/v1/terr/guilds/ws"
+backend = "wss://wynnmap.zatzou.com/api/v2/terr/guilds/ws"
 # backend = "ws://localhost:8081/api/v1/terr/guilds/ws"
 ws = true
