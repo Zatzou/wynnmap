@@ -296,7 +296,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 class="wynnmap-inner"
                 class:wynnmap-zoomedin={move || zoom.get() > 1.0}
                 class:wynnmap-zoomedout={move || zoom.get() < 0.3}
-                class:wynnmap-transitions={move || transitioning.get()}
+                class:wynnmap-transitions={move || transitioning.get() && !dragging.get()}
                 // disable the transition after it has run
                 on:transitionend=move |_| {set_transitioning.set(false);}
 
