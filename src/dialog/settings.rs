@@ -68,10 +68,12 @@ pub fn settings_dialog() -> impl IntoView {
 #[component]
 fn GeneralSettings() -> impl IntoView {
     let show_non_main = use_toggle("show_non_main_maps", false);
+    let use_transparency = use_toggle("use_transparency", true);
 
     view! {
         <div class="flex-1 flex flex-col p-2 text-lg">
             <Checkbox id="nonmains" checked={show_non_main}>"Show non-main map areas"</Checkbox>
+            <Checkbox id="transparency" checked={use_transparency}>"Enable transparent territories"</Checkbox>
         </div>
     }
 }

@@ -63,6 +63,7 @@ pub fn Territory(
     let show_gtag = use_toggle("terrs_show_guildtag", true);
     let show_res = use_toggle("resico", true);
     let show_timers = use_toggle("timers", true);
+    let use_transparency = use_toggle("use_transparency", true);
 
     let name2 = name.clone();
     let name3 = name.clone();
@@ -75,7 +76,7 @@ pub fn Territory(
             style:width={move || format!("{}px", terr.read().location.width())}
             style:height={move || format!("{}px", terr.read().location.height())}
             style:transform={move || format!("translate3D({}px, {}px, 0)", terr.read().location.left_side(), terr.read().location.top_side())}
-            style:background-color={move || format!("rgba({}, 0.35)", col_rgb())}
+            style:background-color={move || format!("rgba({}, {})", col_rgb(), if use_transparency.get() {0.35} else {0.0})}
             style:border-color={move || format!("rgb({})", col_rgb())}
 
             on:mouseenter=move |_| {
@@ -215,15 +216,15 @@ fn TerrTimer(#[prop(into)] acquired: Signal<chrono::DateTime<chrono::Utc>>) -> i
 
         // times based on treasury
         if time < 3600 {
-            "background-color: oklch(0.723 0.219 149.579 / .6)"
+            "background-color: oklch(0.723 0.219 149.579)"
         } else if time < (3600 * 24) {
-            "background-color: oklch(0.768 0.233 130.85 / .6);"
+            "background-color: oklch(0.768 0.233 130.85);"
         } else if time < (3600 * 24 * 5) {
-            "background-color: oklch(0.795 0.184 86.047 / .6);"
+            "background-color: oklch(0.795 0.184 86.047);"
         } else if time < (3600 * 24 * 12) {
-            "background-color: oklch(0.705 0.213 47.604 / .6);"
+            "background-color: oklch(0.705 0.213 47.604);"
         } else {
-            "background-color: oklch(0.637 0.237 25.331 / .6);"
+            "background-color: oklch(0.637 0.237 25.331);"
         }
     };
 
