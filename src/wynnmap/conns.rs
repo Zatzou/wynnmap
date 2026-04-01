@@ -40,20 +40,18 @@ pub fn create_route_paths(terrs: &HashMap<Arc<str>, Territory>) -> String {
     let mut terr_conns: BTreeSet<((i32, i32), (i32, i32))> = BTreeSet::new();
     for (name, terr) in terrs {
         for conn in &terr.connections {
-            if name < conn {
-                terr_conns.insert((
-                    terr.location.get_midpoint(),
-                    terrs
-                        .get(conn)
-                        .map_or((0, 0), |v| v.location.get_midpoint()),
-                ));
-            } else {
-                terr_conns.insert((
-                    terrs
-                        .get(conn)
-                        .map_or((0, 0), |v| v.location.get_midpoint()),
-                    terr.location.get_midpoint(),
-                ));
+            if let Some(other_terr) = terrs.get(conn) {
+                if name < conn {
+                    terr_conns.insert((
+                        terr.location.get_midpoint(),
+                        other_terr.location.get_midpoint(),
+                    ));
+                } else {
+                    terr_conns.insert((
+                        other_terr.location.get_midpoint(),
+                        terr.location.get_midpoint(),
+                    ));
+                }
             }
         }
     }
