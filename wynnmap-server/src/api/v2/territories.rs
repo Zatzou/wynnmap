@@ -33,7 +33,10 @@ fn resp_headers(
     modified: DateTime<Utc>,
 ) -> [(HeaderName, String); 4] {
     [
-        (header::CACHE_CONTROL, String::from("public, max-age=10")),
+        (
+            header::CACHE_CONTROL,
+            String::from("public, max-age=3600, must-revalidate"),
+        ),
         (header::ETAG, format!("\"{etag}\"")),
         (header::EXPIRES, header_date(expires)),
         (header::LAST_MODIFIED, header_date(modified)),
