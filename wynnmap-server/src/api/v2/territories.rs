@@ -29,20 +29,14 @@ pub(crate) fn router(state: Arc<TerritoryState>) -> axum::Router {
 /// Common headers for responses from these endpoints
 fn resp_headers(
     etag: &Arc<str>,
-    expires: Option<DateTime<Utc>>,
-    updated: Option<DateTime<Utc>>,
+    expires: DateTime<Utc>,
+    modified: DateTime<Utc>,
 ) -> [(HeaderName, String); 4] {
     [
         (header::CACHE_CONTROL, String::from("public, max-age=10")),
         (header::ETAG, etag.to_string()),
-        (
-            header::EXPIRES,
-            expires.map(header_date).unwrap_or_default(),
-        ),
-        (
-            header::LAST_MODIFIED,
-            updated.map(header_date).unwrap_or_default(),
-        ),
+        (header::EXPIRES, header_date(expires)),
+        (header::LAST_MODIFIED, header_date(modified)),
     ]
 }
 
@@ -51,17 +45,17 @@ async fn terr_list(
     State(state): State<Arc<TerritoryState>>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
-    let (territories, etag, updated, expires) = {
+    let (territories, etag, modified, expires) = {
         let lock = state.inner.read().await;
         (
             lock.territories.clone(),
             lock.territories_etag.clone(),
-            lock.last_updated,
+            lock.territories_modified,
             lock.expires,
         )
     };
 
-    let resp_headers = resp_headers(&etag, expires, updated);
+    let resp_headers = resp_headers(&etag, expires, modified);
 
     if check_etag(headers, &etag) {
         (StatusCode::NOT_MODIFIED, resp_headers, Body::empty()).into_response()
@@ -75,17 +69,17 @@ async fn guild_list(
     State(state): State<Arc<TerritoryState>>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
-    let (owners, etag, updated, expires) = {
+    let (owners, etag, modified, expires) = {
         let lock = state.inner.read().await;
         (
             lock.owners.clone(),
             lock.owners_etag.clone(),
-            lock.last_updated,
+            lock.owners_modified,
             lock.expires,
         )
     };
 
-    let resp_headers = resp_headers(&etag, expires, updated);
+    let resp_headers = resp_headers(&etag, expires, modified);
 
     if check_etag(headers, &etag) {
         (StatusCode::NOT_MODIFIED, resp_headers, Body::empty()).into_response()
@@ -94,7 +88,7 @@ async fn guild_list(
             resp_headers,
             Json(RespWrapper {
                 data: owners,
-                updated: updated.unwrap_or_default(),
+                updated: modified,
             }),
         )
             .into_response()
@@ -156,7 +150,7 @@ async fn handle_socket(socket: WebSocket, state: Arc<TerritoryState>) {
                 }
                 // send the last updated timestamp every 30 seconds
                 _ = tokio::time::sleep(std::time::Duration::from_secs(30)) => {
-                    let ts = { state.inner.read().await.last_updated }.unwrap_or_default();
+                    let ts = { state.inner.read().await.last_updated };
                     socket.send(Message::Text(serde_json::to_string(&TerrSockMessage::LastUpdate { ts })?.into())).await?;
                 }
             }

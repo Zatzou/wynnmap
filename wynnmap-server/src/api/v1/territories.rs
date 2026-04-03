@@ -31,10 +31,7 @@ async fn terr_list(State(state): State<Arc<TerritoryState>>) -> impl IntoRespons
     (
         [
             (header::CACHE_CONTROL, String::from("public, max-age=10")),
-            (
-                header::EXPIRES,
-                read.expires.map(header_date).unwrap_or_default(),
-            ),
+            (header::EXPIRES, header_date(read.expires)),
         ],
         Json(read.territories.clone()),
     )
@@ -47,10 +44,7 @@ async fn guild_list(State(state): State<Arc<TerritoryState>>) -> impl IntoRespon
     (
         [
             (header::CACHE_CONTROL, String::from("public, max-age=10")),
-            (
-                header::EXPIRES,
-                read.expires.map(header_date).unwrap_or_default(),
-            ),
+            (header::EXPIRES, header_date(read.expires)),
         ],
         Json(read.owners.clone()),
     )

@@ -171,41 +171,53 @@ impl TerritoryTracker {
             let mut lock = self.state.inner.write().await;
 
             // update expires and last updated
-            lock.expires = expires;
-            lock.last_updated = Some(Utc::now());
+            lock.expires = expires.unwrap_or_default();
+            lock.last_updated = Utc::now();
 
             // update territories
-            lock.territories = territories;
+            if lock.territories != territories {
+                lock.territories = territories;
+                lock.territories_modified = Utc::now();
+            }
 
             // update etag values
             lock.territories_etag = terr_etag;
             lock.owners_etag = owner_etag;
 
             // update owners with swap for notify
-            let mut old_owners = owners.clone();
-            mem::swap(&mut old_owners, &mut lock.owners);
+            if lock.owners != owners {
+                let mut old_owners = owners.clone();
+                mem::swap(&mut old_owners, &mut lock.owners);
 
-            old_owners
+                lock.owners_modified = Utc::now();
+
+                // return old owners for notifications
+                Some(old_owners)
+            } else {
+                None
+            }
         };
 
         // send broadcasts to notify websockets
-        async {
-            for (tname, new) in owners {
-                let old = old_owners.get(&tname);
+        if let Some(old_owners) = old_owners {
+            async {
+                for (tname, new) in owners {
+                    let old = old_owners.get(&tname);
 
-                if old != Some(&new) {
-                    self.bc_send.send(TerrSockMessage::Capture {
-                        name: tname,
-                        old: old.cloned(),
-                        new,
-                    })?;
+                    if old != Some(&new) {
+                        self.bc_send.send(TerrSockMessage::Capture {
+                            name: tname,
+                            old: old.cloned(),
+                            new,
+                        })?;
+                    }
                 }
-            }
 
-            Ok::<(), AnyError>(())
+                Ok::<(), AnyError>(())
+            }
+            .instrument(info_span!("notify"))
+            .await?;
         }
-        .instrument(info_span!("notify"))
-        .await?;
 
         Ok(expires)
     }
