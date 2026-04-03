@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 axum = { version = "0.8", features = ["ws"] }
+base64 = "0.22"
 chrono = { version = "0.4", features = ["serde"] }
 crc32fast = "1"
 etag = "4"
@@ -23,6 +24,7 @@ opentelemetry_sdk = { version = "0.31", features = ["tokio"] }
 reqwest = { version = "0.13", features = ["json"] }
 serde = { version = "1", features = ["derive", "rc"] }
 serde_json = "1"
+sha2 = "0.11"
 thiserror = "2"
 tokio = { version = "1", features = ["rt-multi-thread", "fs", "sync"] }
 toml = "1"

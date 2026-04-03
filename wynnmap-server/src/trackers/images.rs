@@ -12,6 +12,7 @@ use wynnmap_types::{Region, maptile::MapTile};
 use crate::{
     AnyError,
     config::Config,
+    etag::{sha224_etag, sha224_etag_json},
     state::ImageState,
     trackers::util::{self, ResponseExt},
 };
@@ -160,14 +161,19 @@ impl ImageTracker {
         // add the images to the cache
         for task in tasks {
             if let Some((name, img)) = task.await?? {
-                maps_cache.insert(name, img);
+                let etag = sha224_etag(&img);
+                maps_cache.insert(name, (etag, img));
             }
         }
 
         let mut maps = self.state.maps.write().await;
+        let mut maps_etag = self.state.maps_etag.write().await;
 
         // remove old images from the cache
         maps_cache.retain(|k, _| tiles.iter().any(|d| d.md5 == *k));
+
+        // calculate the new etag
+        *maps_etag = sha224_etag_json(&tiles);
 
         // replace the cache with the new data
         *maps = tiles;

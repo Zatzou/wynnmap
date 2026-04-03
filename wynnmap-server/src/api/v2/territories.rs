@@ -2,18 +2,21 @@ use std::sync::Arc;
 
 use axum::{
     Json,
+    body::Body,
     extract::{
         State, WebSocketUpgrade,
         ws::{Message, WebSocket},
     },
-    http::header,
+    http::{HeaderMap, HeaderName, header},
     response::IntoResponse,
     routing::get,
 };
+use chrono::{DateTime, Utc};
+use reqwest::StatusCode;
 use tokio::select;
 use wynnmap_types::{api::v2::RespWrapper, ws::TerrSockMessage};
 
-use crate::{AnyError, header_date, state::TerritoryState};
+use crate::{AnyError, etag::check_etag, header_date, state::TerritoryState};
 
 pub(crate) fn router(state: Arc<TerritoryState>) -> axum::Router {
     axum::Router::new()
@@ -23,53 +26,79 @@ pub(crate) fn router(state: Arc<TerritoryState>) -> axum::Router {
         .with_state(state)
 }
 
-#[tracing::instrument(skip(state))]
-async fn terr_list(State(state): State<Arc<TerritoryState>>) -> impl IntoResponse {
-    let (territories, updated, expires) = {
-        let lock = state.inner.read().await;
-        (lock.territories.clone(), lock.last_updated, lock.expires)
-    };
-
-    (
-        [
-            (header::CACHE_CONTROL, String::from("public, max-age=10")),
-            (
-                header::EXPIRES,
-                expires.map(header_date).unwrap_or_default(),
-            ),
-            (
-                header::LAST_MODIFIED,
-                updated.map(header_date).unwrap_or_default(),
-            ),
-        ],
-        Json(territories),
-    )
+/// Common headers for responses from these endpoints
+fn resp_headers(
+    etag: &Arc<str>,
+    expires: Option<DateTime<Utc>>,
+    updated: Option<DateTime<Utc>>,
+) -> [(HeaderName, String); 4] {
+    [
+        (header::CACHE_CONTROL, String::from("public, max-age=10")),
+        (header::ETAG, etag.to_string()),
+        (
+            header::EXPIRES,
+            expires.map(header_date).unwrap_or_default(),
+        ),
+        (
+            header::LAST_MODIFIED,
+            updated.map(header_date).unwrap_or_default(),
+        ),
+    ]
 }
 
-#[tracing::instrument(skip(state))]
-async fn guild_list(State(state): State<Arc<TerritoryState>>) -> impl IntoResponse {
-    let (owners, updated, expires) = {
+#[tracing::instrument(skip(state, headers))]
+async fn terr_list(
+    State(state): State<Arc<TerritoryState>>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    let (territories, etag, updated, expires) = {
         let lock = state.inner.read().await;
-        (lock.owners.clone(), lock.last_updated, lock.expires)
+        (
+            lock.territories.clone(),
+            lock.territories_etag.clone(),
+            lock.last_updated,
+            lock.expires,
+        )
     };
 
-    (
-        [
-            (header::CACHE_CONTROL, String::from("public, max-age=10")),
-            (
-                header::EXPIRES,
-                expires.map(header_date).unwrap_or_default(),
-            ),
-            (
-                header::LAST_MODIFIED,
-                updated.map(header_date).unwrap_or_default(),
-            ),
-        ],
-        Json(RespWrapper {
-            data: owners,
-            updated: updated.unwrap_or_default(),
-        }),
-    )
+    let resp_headers = resp_headers(&etag, expires, updated);
+
+    if check_etag(headers, &etag) {
+        (StatusCode::NOT_MODIFIED, resp_headers, Body::empty()).into_response()
+    } else {
+        (resp_headers, Json(territories)).into_response()
+    }
+}
+
+#[tracing::instrument(skip(state, headers))]
+async fn guild_list(
+    State(state): State<Arc<TerritoryState>>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    let (owners, etag, updated, expires) = {
+        let lock = state.inner.read().await;
+        (
+            lock.owners.clone(),
+            lock.owners_etag.clone(),
+            lock.last_updated,
+            lock.expires,
+        )
+    };
+
+    let resp_headers = resp_headers(&etag, expires, updated);
+
+    if check_etag(headers, &etag) {
+        (StatusCode::NOT_MODIFIED, resp_headers, Body::empty()).into_response()
+    } else {
+        (
+            resp_headers,
+            Json(RespWrapper {
+                data: owners,
+                updated: updated.unwrap_or_default(),
+            }),
+        )
+            .into_response()
+    }
 }
 
 async fn ws_handler(

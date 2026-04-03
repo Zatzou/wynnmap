@@ -20,7 +20,8 @@ pub(crate) struct ImageState {
     pub use_webp: bool,
 
     pub maps: Arc<RwLock<Vec<MapTile>>>,
-    pub map_cache: Arc<RwLock<BTreeMap<Arc<str>, Bytes>>>,
+    pub maps_etag: Arc<RwLock<Arc<str>>>,
+    pub map_cache: Arc<RwLock<BTreeMap<Arc<str>, (Arc<str>, Bytes)>>>,
 }
 
 #[derive(Debug, Default)]

@@ -19,6 +19,7 @@ use wynnmap_types::{
 use crate::{
     AnyError,
     config::Config,
+    etag::sha224_etag_json,
     state::{ExTerrInfo, GuildState, TerritoryState},
     trackers::util::{self, ResponseExt},
 };
@@ -161,6 +162,10 @@ impl TerritoryTracker {
                 .collect::<BTreeMap<_, _>>()
         };
 
+        // calculate etags
+        let terr_etag = sha224_etag_json(&territories);
+        let owner_etag = sha224_etag_json(&owners);
+
         // update territory data
         let old_owners = {
             let mut lock = self.state.inner.write().await;
@@ -171,6 +176,10 @@ impl TerritoryTracker {
 
             // update territories
             lock.territories = territories;
+
+            // update etag values
+            lock.territories_etag = terr_etag;
+            lock.owners_etag = owner_etag;
 
             // update owners with swap for notify
             let mut old_owners = owners.clone();

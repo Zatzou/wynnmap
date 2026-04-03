@@ -81,7 +81,6 @@ async fn main() {
         .layer(
             ServiceBuilder::new()
                 .layer(cors)
-                .layer(middleware::from_fn(etag::etag_middleware))
                 .layer(CompressionLayer::new()),
         );
 

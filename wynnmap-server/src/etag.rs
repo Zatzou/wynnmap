@@ -1,35 +1,34 @@
-use axum::body::Body;
-use axum::http::header;
-use axum::{extract::Request, middleware::Next, response::Response};
-use etag::EntityTag;
-use reqwest::StatusCode;
+use std::sync::Arc;
 
-pub(crate) async fn etag_middleware(req: Request, next: Next) -> Response<Body> {
-    let if_none_match_header = req.headers().get(header::IF_NONE_MATCH).cloned();
-    let res = next.run(req).await;
-    let (mut parts, body) = res.into_parts();
+use axum::http::{HeaderMap, header};
+use base64::Engine;
+use base64::prelude::BASE64_STANDARD;
+use etag::EntityTag;
+use serde::Serialize;
+use sha2::{Digest, Sha224};
+
+pub fn check_etag(headers: HeaderMap, val: impl AsRef<str>) -> bool {
+    let if_none_match_header = headers.get(header::IF_NONE_MATCH);
 
     if let Some(if_none_match) = if_none_match_header
-        && let Some(etag) = parts.headers.get(header::ETAG)
-        && let (Ok(if_none_match), Ok(etag)) = (
-            if_none_match
-                .to_str()
-                .unwrap_or_default()
-                .parse::<EntityTag>(),
-            etag.to_str().unwrap_or_default().parse(),
-        )
-        && if_none_match.weak_eq(&etag)
+        && let Ok(Ok(if_none_match)) = if_none_match.to_str().map(|s| s.parse::<EntityTag>())
     {
-        parts.status = StatusCode::NOT_MODIFIED;
-        parts.headers.remove(header::CONTENT_LENGTH);
-        parts.headers.remove(header::CONTENT_TYPE);
-        parts.headers.remove(header::CONTENT_ENCODING);
-        parts.headers.remove(header::TRANSFER_ENCODING);
-        parts.headers.remove(header::LAST_MODIFIED);
-        parts.headers.remove(header::ETAG);
-
-        return Response::from_parts(parts, Body::empty());
+        if_none_match.strong_eq(&EntityTag::new(false, val.as_ref()))
+    } else {
+        false
     }
+}
 
-    Response::from_parts(parts, body)
+/// generate a sha224 hash and encode it in base64 for etag use
+pub fn sha224_etag(data: impl AsRef<[u8]>) -> Arc<str> {
+    let hash = Sha224::digest(data);
+
+    BASE64_STANDARD.encode(hash.0).into()
+}
+
+/// generate a sha224 hash from the json serialized form and encode it in base64 for etag use
+pub fn sha224_etag_json(data: &impl Serialize) -> Arc<str> {
+    let json = serde_json::to_vec(data).unwrap();
+
+    sha224_etag(json)
 }
