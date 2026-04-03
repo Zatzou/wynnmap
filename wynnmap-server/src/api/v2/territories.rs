@@ -42,7 +42,7 @@ async fn terr_list(State(state): State<Arc<TerritoryState>>) -> impl IntoRespons
                 updated.map(header_date).unwrap_or_default(),
             ),
         ],
-        Json(territories.clone()),
+        Json(territories),
     )
 }
 

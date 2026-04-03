@@ -19,7 +19,12 @@ pub(crate) fn router(state: Arc<ImageState>) -> axum::Router {
 
 #[tracing::instrument(skip(state))]
 async fn maps_json(State(state): State<Arc<ImageState>>) -> impl IntoResponse {
-    Json(state.maps.read().await.clone())
+    let maps = { state.maps.read().await.clone() };
+
+    (
+        [(header::CACHE_CONTROL, String::from("public, max-age=3600"))],
+        Json(maps),
+    )
 }
 
 #[tracing::instrument(skip(state))]
@@ -36,8 +41,12 @@ async fn get_image(
     };
 
     if ext == wanted_ext {
-        let map_cache = state.map_cache.read().await;
-        if let Some(data) = map_cache.get(name) {
+        let data = {
+            let map_cache = state.map_cache.read().await;
+            map_cache.get(name).cloned()
+        };
+
+        if let Some(data) = data {
             (
                 StatusCode::OK,
                 [
@@ -45,7 +54,7 @@ async fn get_image(
                     (header::ETAG, &format!("\"{name}\"")),
                     (header::CACHE_CONTROL, "public, max-age=86400"),
                 ],
-                data.clone(),
+                data,
             )
                 .into_response()
         } else {
