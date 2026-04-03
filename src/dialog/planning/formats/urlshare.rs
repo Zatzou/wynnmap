@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::BTreeMap, sync::Arc};
 
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use bitcode::{Decode, Encode};
@@ -20,9 +20,9 @@ pub enum ShareUrlData {
 
 impl ShareUrlData {
     pub fn from_data(
-        terrs: &HashMap<Arc<str>, Territory>,
+        terrs: &BTreeMap<Arc<str>, Territory>,
         guilds: &[ArcRwSignal<Guild>],
-        owned: &HashMap<Arc<str>, ArcRwSignal<Guild>>,
+        owned: &BTreeMap<Arc<str>, ArcRwSignal<Guild>>,
     ) -> Self {
         let mut newguilds: Vec<V1Guild> = Vec::new();
 
@@ -69,10 +69,10 @@ impl ShareUrlData {
     /// Turn the url share back into the planning mode data
     pub fn into_data(
         self,
-        terrs: &HashMap<Arc<str>, Territory>,
+        terrs: &BTreeMap<Arc<str>, Territory>,
     ) -> (
         Vec<ArcRwSignal<Guild>>,
-        HashMap<Arc<str>, ArcRwSignal<Guild>>,
+        BTreeMap<Arc<str>, ArcRwSignal<Guild>>,
     ) {
         let Self::V1 {
             terrhash: _,
@@ -91,7 +91,7 @@ impl ShareUrlData {
         // sort the terr names
         terrnames.sort();
 
-        let mut terrs2 = HashMap::new();
+        let mut terrs2 = BTreeMap::new();
 
         for (name, idx) in terrnames.into_iter().zip(territories) {
             let guild = guilds2
@@ -124,7 +124,7 @@ impl ShareUrlData {
         URL_SAFE_NO_PAD.encode(zstd)
     }
 
-    pub fn verify_terrhash(&self, terrs: &HashMap<Arc<str>, Territory>) -> bool {
+    pub fn verify_terrhash(&self, terrs: &BTreeMap<Arc<str>, Territory>) -> bool {
         let mut terrnames = terrs.keys().map(Clone::clone).collect::<Vec<_>>();
 
         // sort the terr names

@@ -1,11 +1,14 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{BTreeMap, HashMap},
+    sync::Arc,
+};
 
 use leptos::prelude::*;
 use wynnmap_types::terr::TerrOwner;
 
 #[component]
 pub fn Gleaderboard(
-    #[prop(into)] owners: Signal<HashMap<Arc<str>, TerrOwner>>,
+    #[prop(into)] owners: Signal<BTreeMap<Arc<str>, TerrOwner>>,
     class: &'static str,
 ) -> impl IntoView {
     let guild_leaderboard = move || {

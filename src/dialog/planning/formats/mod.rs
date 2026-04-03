@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::BTreeMap, sync::Arc};
 
 use leptos::prelude::ArcRwSignal;
 use thiserror::Error;
@@ -11,14 +11,14 @@ pub mod wynnmap;
 /// The internal representation of the planning mode data variables
 pub struct PlanningModeData {
     pub guilds: Vec<ArcRwSignal<Guild>>,
-    pub owned_territories: HashMap<Arc<str>, ArcRwSignal<Guild>>,
+    pub owned_territories: BTreeMap<Arc<str>, ArcRwSignal<Guild>>,
 }
 
 pub trait DataConvert {
     fn from_data(
-        terrs: &HashMap<Arc<str>, Territory>,
+        terrs: &BTreeMap<Arc<str>, Territory>,
         guilds: &[ArcRwSignal<Guild>],
-        owned: &HashMap<Arc<str>, ArcRwSignal<Guild>>,
+        owned: &BTreeMap<Arc<str>, ArcRwSignal<Guild>>,
     ) -> Self;
 
     fn to_data(self) -> PlanningModeData;

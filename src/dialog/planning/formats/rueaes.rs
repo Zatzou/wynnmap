@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, HashSet},
     sync::Arc,
 };
 
@@ -33,9 +33,9 @@ pub struct RueaES {
 
 impl DataConvert for RueaES {
     fn from_data(
-        terrs: &HashMap<Arc<str>, Territory>,
+        terrs: &BTreeMap<Arc<str>, Territory>,
         guilds: &[ArcRwSignal<Guild>],
-        owned: &HashMap<Arc<str>, ArcRwSignal<Guild>>,
+        owned: &BTreeMap<Arc<str>, ArcRwSignal<Guild>>,
     ) -> Self {
         let guilds2 = guilds
             .iter()
@@ -93,7 +93,7 @@ impl DataConvert for RueaES {
         }
 
         // then convert the territories
-        let mut terrs = HashMap::new();
+        let mut terrs = BTreeMap::new();
 
         for terr in &self.territories {
             let guildref = guilds

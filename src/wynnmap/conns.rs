@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeSet, HashMap},
+    collections::{BTreeMap, BTreeSet},
     fmt::Write,
     sync::Arc,
 };
@@ -8,7 +8,7 @@ use leptos::prelude::*;
 use wynnmap_types::terr::Territory;
 
 #[component]
-pub fn Connections(#[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>) -> impl IntoView {
+pub fn Connections(#[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>) -> impl IntoView {
     let conn_path = move || create_route_paths(&terrs.read());
 
     view! {
@@ -36,7 +36,7 @@ pub fn Connections(#[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>) ->
     }
 }
 
-pub fn create_route_paths(terrs: &HashMap<Arc<str>, Territory>) -> String {
+pub fn create_route_paths(terrs: &BTreeMap<Arc<str>, Territory>) -> String {
     let mut terr_conns: BTreeSet<((i32, i32), (i32, i32))> = BTreeSet::new();
     for (name, terr) in terrs {
         for conn in &terr.connections {

@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet},
     sync::Arc,
 };
 
@@ -20,12 +20,12 @@ pub(crate) struct ImageState {
     pub use_webp: bool,
 
     pub maps: Arc<RwLock<Vec<MapTile>>>,
-    pub map_cache: Arc<RwLock<HashMap<Arc<str>, Bytes>>>,
+    pub map_cache: Arc<RwLock<BTreeMap<Arc<str>, Bytes>>>,
 }
 
 #[derive(Debug, Default)]
 pub(crate) struct GuildState {
-    pub guilds: Arc<RwLock<HashMap<Arc<str>, Guild>>>,
+    pub guilds: Arc<RwLock<BTreeMap<Arc<str>, Guild>>>,
 }
 
 #[derive(Debug)]
@@ -38,8 +38,10 @@ pub(crate) struct TerritoryState {
 
 #[derive(Debug, Default)]
 pub(crate) struct TerritoryStateInner {
-    pub territories: HashMap<Arc<str>, Territory>,
-    pub owners: HashMap<Arc<str>, TerrOwner>,
+    pub territories: BTreeMap<Arc<str>, Territory>,
+    pub territories_etag: Arc<str>,
+    pub owners: BTreeMap<Arc<str>, TerrOwner>,
+    pub owners_etag: Arc<str>,
 
     pub expires: Option<DateTime<Utc>>,
     pub last_updated: Option<DateTime<Utc>>,
@@ -49,5 +51,5 @@ pub(crate) struct TerritoryStateInner {
 pub(crate) struct ExTerrInfo {
     pub resources: Resources,
     #[serde(alias = "Trading Routes")]
-    pub connections: HashSet<Arc<str>>,
+    pub connections: BTreeSet<Arc<str>>,
 }

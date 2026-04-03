@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::BTreeMap, sync::Arc};
 
 use leptos::{leptos_dom::logging::console_log, prelude::*};
 use leptos_router::hooks::use_location;
@@ -30,7 +30,7 @@ pub fn PlanningMap() -> impl IntoView {
     move || loader(terrs, |terrs| planningmap_inner(terrs).into_any())
 }
 
-fn planningmap_inner(terrs: HashMap<Arc<str>, Territory>) -> impl IntoView {
+fn planningmap_inner(terrs: BTreeMap<Arc<str>, Territory>) -> impl IntoView {
     let show_guild_leaderboard = use_toggle("gleaderboard", true);
 
     let location = use_location();
@@ -80,7 +80,7 @@ fn planningmap_inner(terrs: HashMap<Arc<str>, Territory>) -> impl IntoView {
 
     let guilds: RwSignal<Vec<ArcRwSignal<Guild>>> =
         RwSignal::new(vec![ArcRwSignal::new(Guild::default())]);
-    let owned: RwSignal<HashMap<Arc<str>, ArcRwSignal<Guild>>> = RwSignal::new(HashMap::new());
+    let owned: RwSignal<BTreeMap<Arc<str>, ArcRwSignal<Guild>>> = RwSignal::new(BTreeMap::new());
 
     // apply the share string when territories have loaded
     Effect::new(move || {
@@ -109,7 +109,7 @@ fn planningmap_inner(terrs: HashMap<Arc<str>, Territory>) -> impl IntoView {
     });
 
     let mapowneds = Memo::new(move |_| {
-        let mut owners = HashMap::new();
+        let mut owners = BTreeMap::new();
 
         for (terr, _) in &*terrs.read() {
             if let Some(own) = owned.read().get(terr) {
@@ -242,7 +242,7 @@ fn planningmap_inner(terrs: HashMap<Arc<str>, Territory>) -> impl IntoView {
 #[component]
 pub fn GuildSelect(
     terr_name: Signal<Arc<str>>,
-    terr_owners: RwSignal<HashMap<Arc<str>, ArcRwSignal<Guild>>>,
+    terr_owners: RwSignal<BTreeMap<Arc<str>, ArcRwSignal<Guild>>>,
     #[prop(into)] guilds: RwSignal<Vec<ArcRwSignal<Guild>>>,
 ) -> impl IntoView {
     // find the index of the current owner if any otherwise default to none

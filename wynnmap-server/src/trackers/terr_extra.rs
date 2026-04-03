@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 use tokio::sync::RwLock;
 use tracing::{Instrument, error, info_span};
@@ -12,7 +12,7 @@ use crate::{
 pub struct TerrExtraTracker {
     client: reqwest::Client,
 
-    state: Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>>,
+    state: Arc<RwLock<BTreeMap<Arc<str>, ExTerrInfo>>>,
 }
 
 impl TerrExtraTracker {
@@ -25,7 +25,7 @@ impl TerrExtraTracker {
         }
     }
 
-    pub fn run(self) -> Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>> {
+    pub fn run(self) -> Arc<RwLock<BTreeMap<Arc<str>, ExTerrInfo>>> {
         let state2 = self.state.clone();
 
         tokio::spawn(async move {
@@ -51,7 +51,7 @@ impl TerrExtraTracker {
 
     #[tracing::instrument(skip(self), err(Debug))]
     async fn query_extra(&self) -> Result<(), util::RequestError> {
-        let data: HashMap<Arc<str>, ExTerrInfo> = async {
+        let data: BTreeMap<Arc<str>, ExTerrInfo> = async {
             let res = self
                 .client
                 .get("https://gist.githubusercontent.com/Zatzou/14c82f2df0eb4093dfa1d543b78a73a8/raw/d03273fce33c031498c07e21b94f17644c8aae98/terrextra.json")

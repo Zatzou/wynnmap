@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::BTreeMap, sync::Arc};
 
 use leptos::prelude::{ArcRwSignal, GetUntracked};
 use serde::{Deserialize, Serialize};
@@ -11,15 +11,15 @@ use crate::dialog::planning::formats::{DataConvert, FileConvert, PlanningModeDat
 pub enum WynnmapData {
     V1 {
         guilds: Vec<V1Guild>,
-        territories: HashMap<String, V1Territory>,
+        territories: BTreeMap<String, V1Territory>,
     },
 }
 
 impl DataConvert for WynnmapData {
     fn from_data(
-        terrs: &HashMap<Arc<str>, Territory>,
+        terrs: &BTreeMap<Arc<str>, Territory>,
         guilds: &[ArcRwSignal<Guild>],
-        owned: &HashMap<Arc<str>, ArcRwSignal<Guild>>,
+        owned: &BTreeMap<Arc<str>, ArcRwSignal<Guild>>,
     ) -> Self {
         let mut newguilds = Vec::new();
 
@@ -27,7 +27,7 @@ impl DataConvert for WynnmapData {
             newguilds.push(guild.get_untracked().into());
         }
 
-        let mut newterrs = HashMap::new();
+        let mut newterrs = BTreeMap::new();
 
         for terr in terrs {
             let t = V1Territory {
@@ -64,7 +64,7 @@ impl DataConvert for WynnmapData {
             guilds2.push(ArcRwSignal::new(guild.into()));
         }
 
-        let mut terrs2 = HashMap::new();
+        let mut terrs2 = BTreeMap::new();
 
         // TODO: load the entire territories from the file once that is implemented
         for (name, terr) in territories {

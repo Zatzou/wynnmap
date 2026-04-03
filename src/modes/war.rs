@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet},
     ops::Range,
     sync::Arc,
     time::Duration,
@@ -43,8 +43,8 @@ pub fn WarMap() -> impl IntoView {
 }
 
 fn warmap_inner(
-    terrs: HashMap<Arc<str>, Territory>,
-    owners: HashMap<Arc<str>, TerrOwner>,
+    terrs: BTreeMap<Arc<str>, Territory>,
+    owners: BTreeMap<Arc<str>, TerrOwner>,
     updated: DateTime<Utc>,
 ) -> impl IntoView {
     let show_terrs = use_toggle("terrs", true);
@@ -206,8 +206,8 @@ fn warmap_inner(
 #[component]
 fn TerrStats(
     #[prop(into)] name: Signal<Arc<str>>,
-    #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
-    #[prop(into)] owners: Signal<HashMap<Arc<str>, TerrOwner>>,
+    #[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>,
+    #[prop(into)] owners: Signal<BTreeMap<Arc<str>, TerrOwner>>,
 ) -> impl IntoView {
     let owner = move || owners.read().get(&name.get()).cloned().unwrap_or_default();
 
@@ -223,8 +223,8 @@ fn TerrStats(
 #[component]
 fn TerrCalc(
     #[prop(into)] name: Signal<Arc<str>>,
-    #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
-    #[prop(into)] owners: Signal<HashMap<Arc<str>, TerrOwner>>,
+    #[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>,
+    #[prop(into)] owners: Signal<BTreeMap<Arc<str>, TerrOwner>>,
 ) -> impl IntoView {
     let guild = Memo::new(move |_| {
         owners
@@ -237,7 +237,7 @@ fn TerrCalc(
         terrs
             .read()
             .get(&name.get())
-            .map_or_else(HashSet::new, |e| e.connections.clone())
+            .map_or_else(BTreeSet::new, |e| e.connections.clone())
     });
     let ext_names =
         Memo::new(move |_| wynnmap_types::terr::find_externals(&name.read(), &terrs.read()));

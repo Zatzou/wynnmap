@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 use chrono::{DateTime, Utc};
 use codee::string::JsonSerdeWasmCodec;
@@ -36,8 +36,8 @@ pub async fn load_map_tiles() -> Result<Vec<MapTile>, String> {
     Ok(tiles)
 }
 
-pub async fn get_terrs() -> Result<HashMap<Arc<str>, Territory>, String> {
-    let resp: HashMap<Arc<str>, Territory> =
+pub async fn get_terrs() -> Result<BTreeMap<Arc<str>, Territory>, String> {
+    let resp: BTreeMap<Arc<str>, Territory> =
         reqwest::get(format!("{}{}", get_url("http"), "/api/v2/terr/list"))
             .await
             .map_err(debug_fmt_error)?
@@ -48,8 +48,8 @@ pub async fn get_terrs() -> Result<HashMap<Arc<str>, Territory>, String> {
     Ok(resp)
 }
 
-pub async fn get_owners() -> Result<RespWrapper<HashMap<Arc<str>, TerrOwner>>, String> {
-    let resp: RespWrapper<HashMap<Arc<str>, TerrOwner>> =
+pub async fn get_owners() -> Result<RespWrapper<BTreeMap<Arc<str>, TerrOwner>>, String> {
+    let resp: RespWrapper<BTreeMap<Arc<str>, TerrOwner>> =
         reqwest::get(format!("{}{}", get_url("http"), "/api/v2/terr/guilds"))
             .await
             .map_err(debug_fmt_error)?
@@ -61,7 +61,7 @@ pub async fn get_owners() -> Result<RespWrapper<HashMap<Arc<str>, TerrOwner>>, S
 }
 
 pub fn ws_terr_changes(
-    owners: RwSignal<HashMap<Arc<str>, TerrOwner>>,
+    owners: RwSignal<BTreeMap<Arc<str>, TerrOwner>>,
     last_updated: RwSignal<DateTime<Utc>>,
 ) {
     let UseWebSocketReturn {

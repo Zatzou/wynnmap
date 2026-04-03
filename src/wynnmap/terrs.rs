@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::BTreeMap,
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -12,8 +12,8 @@ use crate::settings::use_toggle;
 
 #[component]
 pub fn TerrView(
-    #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
-    #[prop(into)] owners: Signal<HashMap<Arc<str>, TerrOwner>>,
+    #[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>,
+    #[prop(into)] owners: Signal<BTreeMap<Arc<str>, TerrOwner>>,
     #[prop(optional)] hovered: RwSignal<Option<Arc<str>>>,
     #[prop(optional)] selected: RwSignal<Option<Arc<str>>>,
     #[prop(optional)] hide_timers: bool,

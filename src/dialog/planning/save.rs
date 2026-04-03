@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf, sync::Arc};
+use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
 
 use leptos::prelude::*;
 use web_sys::{
@@ -41,9 +41,9 @@ impl FileFormat {
 }
 
 pub fn save_dialog(
-    terrs: Signal<HashMap<Arc<str>, Territory>>,
+    terrs: Signal<BTreeMap<Arc<str>, Territory>>,
     guilds: RwSignal<Vec<ArcRwSignal<Guild>>>,
-    owned: RwSignal<HashMap<Arc<str>, ArcRwSignal<Guild>>>,
+    owned: RwSignal<BTreeMap<Arc<str>, ArcRwSignal<Guild>>>,
 ) -> impl IntoView {
     let filename = RwSignal::new(String::new());
     let fileformat = RwSignal::new(FileFormat::Wynnmap);

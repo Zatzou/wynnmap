@@ -1,4 +1,4 @@
-use std::{collections::HashMap, mem, sync::Arc, time::Duration};
+use std::{collections::BTreeMap, mem, sync::Arc, time::Duration};
 
 use chrono::{DateTime, Utc};
 use opentelemetry::global;
@@ -25,8 +25,8 @@ use crate::{
 
 pub struct TerritoryTracker {
     client: reqwest::Client,
-    guilds: Arc<RwLock<HashMap<Arc<str>, Guild>>>,
-    extra: Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>>,
+    guilds: Arc<RwLock<BTreeMap<Arc<str>, Guild>>>,
+    extra: Arc<RwLock<BTreeMap<Arc<str>, ExTerrInfo>>>,
 
     bc_send: broadcast::Sender<TerrSockMessage>,
 
@@ -37,7 +37,7 @@ impl TerritoryTracker {
     pub fn with_config(
         config: &Config,
         guild_state: &GuildState,
-        extra_data: Arc<RwLock<HashMap<Arc<str>, ExTerrInfo>>>,
+        extra_data: Arc<RwLock<BTreeMap<Arc<str>, ExTerrInfo>>>,
     ) -> Self {
         let client = util::reqwest_client_from_conf(config);
 
@@ -112,7 +112,7 @@ impl TerritoryTracker {
                 .await?;
 
             let expires = res.expires();
-            let data: HashMap<Arc<str>, WynnTerritory> = res.parse_json().await?;
+            let data: BTreeMap<Arc<str>, WynnTerritory> = res.parse_json().await?;
 
             Ok::<_, util::RequestError>((data, expires))
         }
@@ -137,7 +137,7 @@ impl TerritoryTracker {
                         },
                     )
                 })
-                .collect::<HashMap<_, _>>()
+                .collect::<BTreeMap<_, _>>()
         };
 
         // create owner data
@@ -158,7 +158,7 @@ impl TerritoryTracker {
                         },
                     )
                 })
-                .collect::<HashMap<_, _>>()
+                .collect::<BTreeMap<_, _>>()
         };
 
         // update territory data

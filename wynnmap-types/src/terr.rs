@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet},
     sync::Arc,
 };
 
@@ -13,7 +13,7 @@ pub struct Territory {
     /// The location of this territory on the map
     pub location: Region,
     /// Names of the territories which connect to this one
-    pub connections: HashSet<Arc<str>>,
+    pub connections: BTreeSet<Arc<str>>,
     /// The resources that this territory generates
     pub generates: Resources,
 }
@@ -90,9 +90,9 @@ impl Resources {
 /// An external is a territory which is within 3 connections of the given territory.
 pub fn find_externals(
     name: &Arc<str>,
-    territories: &HashMap<Arc<str>, Territory>,
-) -> HashSet<Arc<str>> {
-    let mut externals = HashSet::new();
+    territories: &BTreeMap<Arc<str>, Territory>,
+) -> BTreeSet<Arc<str>> {
+    let mut externals = BTreeSet::new();
 
     externals.insert(name.clone());
 

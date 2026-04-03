@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 use leptos::prelude::*;
 use wynnmap_types::{
@@ -10,7 +10,7 @@ use wynnmap_types::{
 #[component]
 pub fn TerrInfo(
     #[prop(into)] name: Signal<Arc<str>>,
-    #[prop(into)] terrs: Signal<HashMap<Arc<str>, Territory>>,
+    #[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>,
 ) -> impl IntoView {
     view! {
         <div class="p-2">
