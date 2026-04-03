@@ -6,7 +6,7 @@ use std::{
 };
 
 use chrono::{DateTime, Utc};
-use leptos::prelude::*;
+use leptos::{prelude::*, task::spawn_local};
 use wynnmap_types::terr::{TerrOwner, Territory};
 
 use crate::{
@@ -64,7 +64,7 @@ fn warmap_inner(
 
     let data_age = RwSignal::new(0);
 
-    let i = set_interval_with_handle(
+    let last_update_warn = set_interval_with_handle(
         move || {
             let time = Utc::now()
                 .signed_duration_since(last_updated.get())
@@ -76,8 +76,24 @@ fn warmap_inner(
     )
     .ok();
 
+    // Update the territory data every 10 minutes to ensure the map stays up to date
+    let terr_data_updater = set_interval_with_handle(
+        move || {
+            spawn_local(async move {
+                if let Ok(data) = datasource::get_terrs().await {
+                    terrs.set(data);
+                }
+            });
+        },
+        Duration::from_mins(10),
+    )
+    .ok();
+
     on_cleanup(move || {
-        if let Some(i) = i {
+        if let Some(i) = last_update_warn {
+            i.clear();
+        }
+        if let Some(i) = terr_data_updater {
             i.clear();
         }
     });

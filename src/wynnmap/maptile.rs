@@ -1,10 +1,12 @@
-use leptos::prelude::*;
+use std::time::Duration;
+
+use leptos::{prelude::*, task::spawn_local};
 use wynnmap_types::maptile::MapTile;
 
 use crate::{components::loader::loader, datasource, settings::use_toggle};
 
 #[derive(Clone)]
-pub struct DefaultMapTilesCtx(pub RwSignal<Vec<MapTile>>);
+pub struct DefaultMapTilesCtx(pub ReadSignal<Vec<MapTile>>);
 
 #[component]
 pub fn MapTile(tile: Signal<MapTile>) -> impl IntoView {
@@ -65,7 +67,26 @@ pub fn ProvideDefaultMapTiles(children: ChildrenFn) -> impl IntoView {
         loader(tiles, |tiles| {
             let tiles = RwSignal::new(tiles);
 
-            provide_context(DefaultMapTilesCtx(tiles));
+            // Update the map tiles every hour to ensure they stay up to date
+            let map_tile_updater = set_interval_with_handle(
+                move || {
+                    spawn_local(async move {
+                        if let Ok(data) = datasource::load_map_tiles().await {
+                            tiles.set(data);
+                        }
+                    });
+                },
+                Duration::from_hours(1),
+            )
+            .ok();
+
+            on_cleanup(move || {
+                if let Some(i) = map_tile_updater {
+                    i.clear();
+                }
+            });
+
+            provide_context(DefaultMapTilesCtx(tiles.read_only()));
 
             view! {{children()}}.into_any()
         })
