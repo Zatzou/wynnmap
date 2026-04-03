@@ -35,7 +35,7 @@ fn resp_headers(
     [
         (
             header::CACHE_CONTROL,
-            String::from("public, max-age=3600, must-revalidate"),
+            String::from("public, max-age=10, immutable, must-revalidate"),
         ),
         (header::ETAG, format!("\"{etag}\"")),
         (header::EXPIRES, header_date(expires)),

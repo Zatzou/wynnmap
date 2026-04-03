@@ -25,7 +25,7 @@ async fn maps_json(State(state): State<Arc<ImageState>>, headers: HeaderMap) -> 
     let resp_headers = [
         (
             header::CACHE_CONTROL,
-            "public, max-age=3600, must-revalidate",
+            "public, max-age=600, must-revalidate",
         ),
         (header::ETAG, &format!("\"{etag}\"")),
     ];
@@ -63,7 +63,7 @@ async fn get_image(
             let resp_headers = [
                 (header::CONTENT_TYPE, mime),
                 (header::ETAG, &format!("\"{name}\"")),
-                (header::CACHE_CONTROL, "public, max-age=86400"),
+                (header::CACHE_CONTROL, "public, max-age=86400, immutable"),
             ];
 
             if check_etag(headers, etag) {
