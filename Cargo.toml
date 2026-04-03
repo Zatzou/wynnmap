@@ -12,8 +12,8 @@ chrono = { version = "0.4", features = ["serde"] }
 codee = { version = "0.3", features = ["json_serde_wasm"] }
 console_error_panic_hook = "0.1"
 crc32fast = "1"
-gloo-file = "0.3"
-gloo-storage = "0.3"
+gloo-file = "0.4"
+gloo-storage = "0.4"
 leptos = { version = "0.8", features = ["csr"] }
 leptos-use = { version = "0.18", default-features = false, features = [
     "use_websocket",
