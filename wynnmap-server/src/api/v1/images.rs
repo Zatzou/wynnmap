@@ -23,8 +23,8 @@ async fn maps_json(State(state): State<Arc<ImageState>>, headers: HeaderMap) -> 
     let etag = { state.maps_etag.read().await.clone() };
 
     let resp_headers = [
-        (header::CACHE_CONTROL, String::from("public, max-age=60")),
-        (header::ETAG, etag.to_string()),
+        (header::CACHE_CONTROL, "public, max-age=60"),
+        (header::ETAG, &format!("\"{etag}\"")),
     ];
 
     if check_etag(headers, etag) {

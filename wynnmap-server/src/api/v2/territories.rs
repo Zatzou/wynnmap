@@ -34,7 +34,7 @@ fn resp_headers(
 ) -> [(HeaderName, String); 4] {
     [
         (header::CACHE_CONTROL, String::from("public, max-age=10")),
-        (header::ETAG, etag.to_string()),
+        (header::ETAG, format!("\"{etag}\"")),
         (header::EXPIRES, header_date(expires)),
         (header::LAST_MODIFIED, header_date(modified)),
     ]
