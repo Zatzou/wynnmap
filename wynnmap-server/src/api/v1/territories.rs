@@ -14,7 +14,7 @@ use axum::{
 use tokio::select;
 use wynnmap_types::ws::TerrSockMessage;
 
-use crate::{AnyError, state::TerritoryState};
+use crate::{AnyError, header_date, state::TerritoryState};
 
 pub(crate) fn router(state: Arc<TerritoryState>) -> axum::Router {
     axum::Router::new()
@@ -33,7 +33,7 @@ async fn terr_list(State(state): State<Arc<TerritoryState>>) -> impl IntoRespons
             (header::CACHE_CONTROL, String::from("public, max-age=10")),
             (
                 header::EXPIRES,
-                read.expires.map(|d| d.to_rfc2822()).unwrap_or_default(),
+                read.expires.map(header_date).unwrap_or_default(),
             ),
         ],
         Json(read.territories.clone()),
@@ -49,7 +49,7 @@ async fn guild_list(State(state): State<Arc<TerritoryState>>) -> impl IntoRespon
             (header::CACHE_CONTROL, String::from("public, max-age=10")),
             (
                 header::EXPIRES,
-                read.expires.map(|d| d.to_rfc2822()).unwrap_or_default(),
+                read.expires.map(header_date).unwrap_or_default(),
             ),
         ],
         Json(read.owners.clone()),
