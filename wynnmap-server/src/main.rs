@@ -50,7 +50,7 @@ async fn main() {
         .allow_methods([Method::GET]);
 
     let app = Router::new()
-        .nest(
+        .nest_service(
             "/api",
             Router::new()
                 .nest(
@@ -65,7 +65,8 @@ async fn main() {
                     Router::new()
                         .nest("/terr", api::v2::territories::router(terr_state))
                         .fallback(api_404),
-                ),
+                )
+                .fallback(api_404),
         )
         .fallback_service(
             ServiceBuilder::new()

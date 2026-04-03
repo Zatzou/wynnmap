@@ -25,25 +25,9 @@ pub(crate) fn router(state: Arc<TerritoryState>) -> axum::Router {
 
 #[tracing::instrument(skip(state))]
 async fn terr_list(State(state): State<Arc<TerritoryState>>) -> impl IntoResponse {
-    let read = state.inner.read().await;
-
-    (
-        [
-            (header::CACHE_CONTROL, String::from("public, max-age=10")),
-            (
-                header::EXPIRES,
-                read.expires.map(|d| d.to_rfc2822()).unwrap_or_default(),
-            ),
-        ],
-        Json(read.territories.clone()),
-    )
-}
-
-#[tracing::instrument(skip(state))]
-async fn guild_list(State(state): State<Arc<TerritoryState>>) -> impl IntoResponse {
-    let (owners, updated, expires) = {
-        let s = state.inner.read().await;
-        (s.owners.clone(), s.last_updated, s.expires)
+    let (territories, updated, expires) = {
+        let lock = state.inner.read().await;
+        (lock.territories.clone(), lock.last_updated, lock.expires)
     };
 
     (
@@ -52,6 +36,33 @@ async fn guild_list(State(state): State<Arc<TerritoryState>>) -> impl IntoRespon
             (
                 header::EXPIRES,
                 expires.map(|d| d.to_rfc2822()).unwrap_or_default(),
+            ),
+            (
+                header::LAST_MODIFIED,
+                updated.map(|d| d.to_rfc2822()).unwrap_or_default(),
+            ),
+        ],
+        Json(territories.clone()),
+    )
+}
+
+#[tracing::instrument(skip(state))]
+async fn guild_list(State(state): State<Arc<TerritoryState>>) -> impl IntoResponse {
+    let (owners, updated, expires) = {
+        let lock = state.inner.read().await;
+        (lock.owners.clone(), lock.last_updated, lock.expires)
+    };
+
+    (
+        [
+            (header::CACHE_CONTROL, String::from("public, max-age=10")),
+            (
+                header::EXPIRES,
+                expires.map(|d| d.to_rfc2822()).unwrap_or_default(),
+            ),
+            (
+                header::LAST_MODIFIED,
+                updated.map(|d| d.to_rfc2822()).unwrap_or_default(),
             ),
         ],
         Json(RespWrapper {
