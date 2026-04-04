@@ -155,7 +155,7 @@ impl TerritoryTracker {
                         name,
                         TerrOwner {
                             guild,
-                            acquired: Some(t.acquired),
+                            acquired: Some(t.acquired.unwrap_or_default()),
                         },
                     )
                 })
@@ -222,7 +222,7 @@ impl TerritoryTracker {
 #[derive(Deserialize)]
 struct WynnTerritory {
     guild: WynnGuild,
-    acquired: chrono::DateTime<chrono::Utc>,
+    acquired: Option<chrono::DateTime<chrono::Utc>>,
     location: Region,
 }
 
