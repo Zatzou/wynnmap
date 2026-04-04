@@ -43,8 +43,6 @@ pub(crate) struct TerritoryStateInner {
     pub territories_etag: Arc<str>,
     pub territories_modified: DateTime<Utc>,
     pub owners: BTreeMap<Arc<str>, TerrOwner>,
-    pub owners_etag: Arc<str>,
-    pub owners_modified: DateTime<Utc>,
 
     pub expires: DateTime<Utc>,
     pub last_updated: DateTime<Utc>,

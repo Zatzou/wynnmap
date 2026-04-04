@@ -7,11 +7,10 @@ use axum::{
         State, WebSocketUpgrade,
         ws::{Message, WebSocket},
     },
-    http::{HeaderMap, HeaderName, header},
+    http::{HeaderMap, header},
     response::IntoResponse,
     routing::get,
 };
-use chrono::{DateTime, Utc};
 use reqwest::StatusCode;
 use tokio::select;
 use wynnmap_types::{api::v2::RespWrapper, ws::TerrSockMessage};
@@ -24,23 +23,6 @@ pub(crate) fn router(state: Arc<TerritoryState>) -> axum::Router {
         .route("/guilds", get(guild_list))
         .route("/guilds/ws", get(ws_handler))
         .with_state(state)
-}
-
-/// Common headers for responses from these endpoints
-fn resp_headers(
-    etag: &Arc<str>,
-    expires: DateTime<Utc>,
-    modified: DateTime<Utc>,
-) -> [(HeaderName, String); 4] {
-    [
-        (
-            header::CACHE_CONTROL,
-            String::from("public, max-age=10, immutable, must-revalidate"),
-        ),
-        (header::ETAG, format!("\"{etag}\"")),
-        (header::EXPIRES, header_date(expires)),
-        (header::LAST_MODIFIED, header_date(modified)),
-    ]
 }
 
 #[tracing::instrument(skip(state, headers))]
@@ -58,7 +40,15 @@ async fn terr_list(
         )
     };
 
-    let resp_headers = resp_headers(&etag, expires, modified);
+    let resp_headers = [
+        (
+            header::CACHE_CONTROL,
+            String::from("public, max-age=10, immutable, must-revalidate"),
+        ),
+        (header::ETAG, format!("\"{etag}\"")),
+        (header::EXPIRES, header_date(expires)),
+        (header::LAST_MODIFIED, header_date(modified)),
+    ];
 
     if check_etag(headers, &etag) {
         (StatusCode::NOT_MODIFIED, resp_headers, Body::empty()).into_response()
@@ -67,36 +57,29 @@ async fn terr_list(
     }
 }
 
-#[tracing::instrument(skip(state, headers))]
-async fn guild_list(
-    State(state): State<Arc<TerritoryState>>,
-    headers: HeaderMap,
-) -> impl IntoResponse {
-    let (owners, etag, modified, expires, updated) = {
+#[tracing::instrument(skip(state))]
+async fn guild_list(State(state): State<Arc<TerritoryState>>) -> impl IntoResponse {
+    let (owners, expires, updated) = {
         let lock = state.inner.read().await;
-        (
-            lock.owners.clone(),
-            lock.owners_etag.clone(),
-            lock.owners_modified,
-            lock.expires,
-            lock.last_updated,
-        )
+        (lock.owners.clone(), lock.expires, lock.last_updated)
     };
 
-    let resp_headers = resp_headers(&etag, expires, modified);
-
-    if check_etag(headers, &etag) {
-        (StatusCode::NOT_MODIFIED, resp_headers, Body::empty()).into_response()
-    } else {
+    let resp_headers = [
         (
-            resp_headers,
-            Json(RespWrapper {
-                data: owners,
-                updated,
-            }),
-        )
-            .into_response()
-    }
+            header::CACHE_CONTROL,
+            String::from("public, max-age=10, immutable, must-revalidate"),
+        ),
+        (header::EXPIRES, header_date(expires)),
+        (header::LAST_MODIFIED, header_date(updated)),
+    ];
+
+    (
+        resp_headers,
+        Json(RespWrapper {
+            data: owners,
+            updated,
+        }),
+    )
 }
 
 async fn ws_handler(

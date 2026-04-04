@@ -164,7 +164,6 @@ impl TerritoryTracker {
 
         // calculate etags
         let terr_etag = sha224_etag_json(&territories);
-        let owner_etag = sha224_etag_json(&owners);
 
         // update territory data
         let old_owners = {
@@ -182,14 +181,11 @@ impl TerritoryTracker {
 
             // update etag values
             lock.territories_etag = terr_etag;
-            lock.owners_etag = owner_etag;
 
             // update owners with swap for notify
             if lock.owners != owners {
                 let mut old_owners = owners.clone();
                 mem::swap(&mut old_owners, &mut lock.owners);
-
-                lock.owners_modified = Utc::now();
 
                 // return old owners for notifications
                 Some(old_owners)
