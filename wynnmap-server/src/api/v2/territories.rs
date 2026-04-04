@@ -72,13 +72,14 @@ async fn guild_list(
     State(state): State<Arc<TerritoryState>>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
-    let (owners, etag, modified, expires) = {
+    let (owners, etag, modified, expires, updated) = {
         let lock = state.inner.read().await;
         (
             lock.owners.clone(),
             lock.owners_etag.clone(),
             lock.owners_modified,
             lock.expires,
+            lock.last_updated,
         )
     };
 
@@ -91,7 +92,7 @@ async fn guild_list(
             resp_headers,
             Json(RespWrapper {
                 data: owners,
-                updated: modified,
+                updated,
             }),
         )
             .into_response()
