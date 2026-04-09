@@ -54,7 +54,7 @@ impl TerrExtraTracker {
         let data: BTreeMap<Arc<str>, ExTerrInfo> = async {
             let res = self
                 .client
-                .get("https://gist.githubusercontent.com/Zatzou/14c82f2df0eb4093dfa1d543b78a73a8/raw/d03273fce33c031498c07e21b94f17644c8aae98/terrextra.json")
+                .get("https://gist.githubusercontent.com/Zatzou/14c82f2df0eb4093dfa1d543b78a73a8/raw/terrextra.json")
                 .send()
                 .await?;
 
