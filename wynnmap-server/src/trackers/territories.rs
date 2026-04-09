@@ -222,7 +222,7 @@ impl TerritoryTracker {
 #[derive(Deserialize)]
 struct WynnTerritory {
     guild: WynnGuild,
-    acquired: Option<chrono::DateTime<chrono::Utc>>,
+    acquired: Option<DateTime<Utc>>,
     location: Region,
 }
 
@@ -237,11 +237,9 @@ impl From<WynnGuild> for Guild {
     fn from(value: WynnGuild) -> Self {
         Guild {
             uuid: value.uuid,
-            name: value
-                .name
-                .unwrap_or_else(|| "Unknown, Wynn api returned null".into()),
-            prefix: value.prefix.unwrap_or_else(|| "???".into()),
-            color: None,
+            name: value.name.unwrap_or_else(|| "Nobody".into()),
+            prefix: value.prefix.unwrap_or_else(|| "None".into()),
+            color: Some("#FFFFFF".into()),
         }
     }
 }
