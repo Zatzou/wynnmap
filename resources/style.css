@@ -27,58 +27,6 @@ html::before {
     z-index: -1;
 }
 
-.guildterr {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    border: 2px solid;
-    border-radius: 2px;
-    contain: layout;
-}
-
-.guildterr .attacktmr {
-    position: absolute;
-    width: calc(100% + 6px);
-    height: calc(100% + 6px);
-    z-index: -1;
-
-    border: 4px dashed transparent;
-
-}
-
-@keyframes attackdelay {
-    0% {
-        border-color: oklch(0.577 0.245 27.325);
-    }
-
-    25% {
-        border-color: oklch(0.646 0.222 41.116);
-    }
-
-    50% {
-        border-color: oklch(0.769 0.188 70.08);
-    }
-
-    75% {
-        border-color: oklch(0.852 0.199 91.936);
-    }
-
-    100% {
-        border-color: oklch(0.841 0.238 128.85);
-    }
-}
-
-@keyframes flash {
-    0% {
-        border-color: oklch(0.577 0.245 27.325);
-    }
-
-    100% {
-        border-color: transparent;
-    }
-}
-
 .icon-emerald {
     background-position: 0 -20px;
 }
@@ -106,16 +54,16 @@ html::before {
     image-rendering: pixelated;
 }
 
-.wynnmap-container [class^="icon-"] {
-    image-rendering: smooth;
-}
-
-.wynnmap-zoomedin [class^="icon-"] {
-    image-rendering: pixelated;
-}
-
 @media (hover: none) {
     .terrinfo-hoverbox {
         display: none;
     }
+}
+
+.contain-paint {
+    contain: paint;
+}
+
+.contain-layout-size {
+    contain: layout size;
 }

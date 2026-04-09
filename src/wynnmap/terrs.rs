@@ -72,7 +72,7 @@ pub fn Territory(
     let lastpos2 = lastpos.clone();
 
     view! {
-        <div class="wynnmap-item guildterr"
+        <div class="wynnmap-item guildterr contain-layout-size"
             style:width={move || format!("{}px", terr.read().location.width())}
             style:height={move || format!("{}px", terr.read().location.height())}
             style:transform={move || format!("translate3D({}px, {}px, 0)", terr.read().location.left_side(), terr.read().location.top_side())}
@@ -133,7 +133,7 @@ fn ResIcons(terr: Signal<Resources>) -> impl IntoView {
     let res2 = move || terr.read().has_double_res();
 
     view! {
-        <div class="flex pb-1 wynnmap-hide-zoomedout h-[24px]" >
+        <div class="flex pb-1 wynnmap-hide-zoomedout h-[24px] contain-paint" >
             // emeralds
             <ResIcon icon="emerald" show={Signal::derive(move || res().0)} />
 
@@ -229,7 +229,7 @@ fn TerrTimer(#[prop(into)] acquired: Signal<chrono::DateTime<chrono::Utc>>) -> i
     };
 
     view! {
-        <h4 class="px-2 rounded-2xl text-sm text-center whitespace-nowrap" style={move || color}>{timestr}</h4>
+        <h4 class="px-2 rounded-2xl text-sm text-center whitespace-nowrap contain-paint" style={move || color}>{timestr}</h4>
     }
 }
 
