@@ -14,12 +14,15 @@ console_error_panic_hook = "0.1"
 crc32fast = "1"
 gloo-file = "0.4"
 gloo-storage = "0.4"
+gloo-net = { version = "0.7", default-features = false, features = [
+    "http",
+    "json",
+] }
 leptos = { version = "0.8", features = ["csr"] }
 leptos-use = { version = "0.18", default-features = false, features = [
     "use_websocket",
 ] }
 leptos_router = "0.8"
-reqwest = { version = "0.13", features = ["json"] }
 serde = { version = "1", features = ["derive", "rc"] }
 serde_json = "1"
 uuid = "1"

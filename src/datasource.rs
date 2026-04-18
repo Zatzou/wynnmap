@@ -2,6 +2,7 @@ use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 use chrono::{DateTime, Utc};
 use codee::string::JsonSerdeWasmCodec;
+use gloo_net::http::Request;
 use leptos::prelude::*;
 use leptos_use::{UseWebSocketReturn, core::ConnectionReadyState, use_websocket};
 use wynnmap_types::{
@@ -27,9 +28,14 @@ pub fn get_url(protocol: &str) -> String {
 }
 
 pub async fn load_map_tiles() -> Result<Vec<MapTile>, String> {
-    let r = reqwest::get(format!("{}{}", get_url("http"), "/api/v1/images/maps.json"))
-        .await
-        .map_err(debug_fmt_error)?;
+    let r = Request::get(&format!(
+        "{}{}",
+        get_url("http"),
+        "/api/v1/images/maps.json"
+    ))
+    .send()
+    .await
+    .map_err(debug_fmt_error)?;
 
     let tiles: Vec<MapTile> = r.json().await.map_err(debug_fmt_error)?;
 
@@ -38,7 +44,8 @@ pub async fn load_map_tiles() -> Result<Vec<MapTile>, String> {
 
 pub async fn get_terrs() -> Result<BTreeMap<Arc<str>, Territory>, String> {
     let resp: BTreeMap<Arc<str>, Territory> =
-        reqwest::get(format!("{}{}", get_url("http"), "/api/v2/terr/list"))
+        Request::get(&format!("{}{}", get_url("http"), "/api/v2/terr/list"))
+            .send()
             .await
             .map_err(debug_fmt_error)?
             .json()
@@ -50,7 +57,8 @@ pub async fn get_terrs() -> Result<BTreeMap<Arc<str>, Territory>, String> {
 
 pub async fn get_owners() -> Result<RespWrapper<BTreeMap<Arc<str>, TerrOwner>>, String> {
     let resp: RespWrapper<BTreeMap<Arc<str>, TerrOwner>> =
-        reqwest::get(format!("{}{}", get_url("http"), "/api/v2/terr/guilds"))
+        Request::get(&format!("{}{}", get_url("http"), "/api/v2/terr/guilds"))
+            .send()
             .await
             .map_err(debug_fmt_error)?
             .json()
@@ -69,7 +77,7 @@ pub fn ws_terr_changes(
         message,
         open,
         ..
-    } = use_websocket::<TerrSockMessage, TerrSockMessage, JsonSerdeWasmCodec>(&format!(
+    } = use_websocket::<(), TerrSockMessage, JsonSerdeWasmCodec>(&format!(
         "{}/api/v2/terr/guilds/ws",
         get_url("ws")
     ));
