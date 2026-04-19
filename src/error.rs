@@ -1,12 +1,4 @@
-use std::fmt::Debug;
-
 use leptos::prelude::*;
-
-use crate::components::sidebar::Sidebar;
-
-pub fn debug_fmt_error<T: Debug>(err: T) -> String {
-    format!("{err:?}")
-}
 
 #[component]
 pub fn ErrorBox(#[prop(into)] title: String, children: Children) -> impl IntoView {
@@ -22,7 +14,5 @@ pub fn ErrorBox(#[prop(into)] title: String, children: Children) -> impl IntoVie
                 {children()}
             </div>
         </div>
-
-        <Sidebar />
     }
 }

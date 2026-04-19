@@ -12,8 +12,6 @@ use wynnmap_types::{
     ws::TerrSockMessage,
 };
 
-use crate::error::debug_fmt_error;
-
 pub async fn load_map_tiles() -> Result<Vec<MapTile>, gloo_net::Error> {
     let r = Request::get("/api/v1/images/maps.json").send().await?;
 
@@ -22,26 +20,22 @@ pub async fn load_map_tiles() -> Result<Vec<MapTile>, gloo_net::Error> {
     Ok(tiles)
 }
 
-pub async fn get_terrs() -> Result<BTreeMap<Arc<str>, Territory>, String> {
+pub async fn get_terrs() -> Result<BTreeMap<Arc<str>, Territory>, gloo_net::Error> {
     let resp: BTreeMap<Arc<str>, Territory> = Request::get("/api/v2/terr/list")
         .send()
-        .await
-        .map_err(debug_fmt_error)?
+        .await?
         .json()
-        .await
-        .map_err(debug_fmt_error)?;
+        .await?;
 
     Ok(resp)
 }
 
-pub async fn get_owners() -> Result<RespWrapper<BTreeMap<Arc<str>, TerrOwner>>, String> {
+pub async fn get_owners() -> Result<RespWrapper<BTreeMap<Arc<str>, TerrOwner>>, gloo_net::Error> {
     let resp: RespWrapper<BTreeMap<Arc<str>, TerrOwner>> = Request::get("/api/v2/terr/guilds")
         .send()
-        .await
-        .map_err(debug_fmt_error)?
+        .await?
         .json()
-        .await
-        .map_err(debug_fmt_error)?;
+        .await?;
 
     Ok(resp)
 }

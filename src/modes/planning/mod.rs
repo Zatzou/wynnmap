@@ -1,16 +1,12 @@
 use std::{collections::BTreeMap, sync::Arc};
 
-use leptos::{leptos_dom::logging::console_log, prelude::*};
+use leptos::{leptos_dom::logging::console_log, prelude::*, task::spawn_local};
 use leptos_router::hooks::use_location;
-use wynnmap_types::{
-    guild::Guild,
-    terr::{TerrOwner, Territory},
-};
+use wynnmap_types::{guild::Guild, terr::TerrOwner};
 
 use crate::{
     components::{
         gleaderboard::Gleaderboard,
-        loader::loader,
         sidebar::Sidebar,
         sidecard::{
             SideCard, SideCardHover,
@@ -18,19 +14,13 @@ use crate::{
         },
     },
     datasource,
-    dialog::{self, Dialogs},
+    dialog::{self, Dialogs, info::info_dialog},
     settings::use_toggle,
     wynnmap::{WynnMap, conns::Connections, maptile::DefaultMapTiles, terrs::TerrView},
 };
 
 #[component]
 pub fn PlanningMap() -> impl IntoView {
-    let terrs = LocalResource::new(async move || datasource::get_terrs().await);
-
-    move || loader(terrs, |terrs| planningmap_inner(terrs).into_any())
-}
-
-fn planningmap_inner(terrs: BTreeMap<Arc<str>, Territory>) -> impl IntoView {
     let dialogs = use_context::<Dialogs>().expect("Dialogs context not found");
     let show_guild_leaderboard = use_toggle("gleaderboard", true);
 
@@ -77,7 +67,28 @@ fn planningmap_inner(terrs: BTreeMap<Arc<str>, Territory>) -> impl IntoView {
 
     let show_conns = use_toggle("conns", true);
 
-    let terrs = RwSignal::new(terrs);
+    let terrs = RwSignal::new(BTreeMap::new());
+
+    let load_terrs = move |terrs: RwSignal<_>| async move {
+        match datasource::get_terrs().await {
+            Ok(data) => terrs.set(data),
+            Err(err) => {
+                if !dialogs.contains("err_maptiles") {
+                    dialogs.add("err_maptiles", move || {
+                        info_dialog(
+                            String::from("Failed to load territory data"),
+                            view! {
+                                <p>"An error occured while loading api data"</p>
+                                <pre class="p-2 bg-neutral-800 rounded my-1">{format!("{err:?}")}</pre>
+                            },
+                        )
+                    });
+                }
+            }
+        }
+    };
+
+    spawn_local(load_terrs(terrs));
 
     let guilds: RwSignal<Vec<ArcRwSignal<Guild>>> =
         RwSignal::new(vec![ArcRwSignal::new(Guild::default())]);

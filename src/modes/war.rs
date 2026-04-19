@@ -5,7 +5,7 @@ use std::{
     time::Duration,
 };
 
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use leptos::{prelude::*, task::spawn_local};
 use wynnmap_types::terr::{TerrOwner, Territory};
 
@@ -14,7 +14,6 @@ use crate::{
         checkbox::Checkbox,
         gleaderboard::Gleaderboard,
         incrementor::Incrementor,
-        loader::loader,
         sidebar::Sidebar,
         sidecard::{
             SideCard, SideCardHover,
@@ -22,40 +21,69 @@ use crate::{
         },
     },
     datasource,
+    dialog::{Dialogs, info::info_dialog},
     settings::use_toggle,
     wynnmap::{WynnMap, conns::Connections, maptile::DefaultMapTiles, terrs::TerrView},
 };
 
 #[component]
 pub fn WarMap() -> impl IntoView {
-    let data: LocalResource<Result<_, String>> = LocalResource::new(async move || {
-        let terrs = datasource::get_terrs().await?;
-        let owners = datasource::get_owners().await?;
+    let dialogs = use_context::<Dialogs>().expect("Dialogs context not found");
 
-        Ok((terrs, owners))
-    });
-
-    move || {
-        loader(data, |(terrs, owners)| {
-            warmap_inner(terrs, owners.data, owners.updated).into_any()
-        })
-    }
-}
-
-fn warmap_inner(
-    terrs: BTreeMap<Arc<str>, Territory>,
-    owners: BTreeMap<Arc<str>, TerrOwner>,
-    updated: DateTime<Utc>,
-) -> impl IntoView {
     let show_terrs = use_toggle("terrs", true);
     let show_conns = use_toggle("conns", true);
     let show_res = use_toggle("resico", true);
     let show_timers = use_toggle("timers", true);
     let show_guild_leaderboard = use_toggle("gleaderboard", true);
 
-    let terrs = RwSignal::new(terrs);
-    let owners = RwSignal::new(owners);
-    let last_updated = RwSignal::new(updated);
+    let terrs = RwSignal::new(BTreeMap::new());
+    let owners = RwSignal::new(BTreeMap::new());
+    let last_updated = RwSignal::new(Utc::now());
+
+    let load_terrs = move |terrs: RwSignal<_>| async move {
+        match datasource::get_terrs().await {
+            Ok(data) => terrs.set(data),
+            Err(err) => {
+                if !dialogs.contains("err_maptiles") {
+                    dialogs.add("err_maptiles", move || {
+                        info_dialog(
+                            String::from("Failed to load territory data"),
+                            view! {
+                                <p>"An error occured while loading api data"</p>
+                                <pre class="p-2 bg-neutral-800 rounded my-1">{format!("{err:?}")}</pre>
+                            },
+                        )
+                    });
+                }
+            }
+        }
+    };
+
+    spawn_local(load_terrs(terrs));
+
+    let load_owners = move |owners: RwSignal<_>| async move {
+        match datasource::get_owners().await {
+            Ok(data) => {
+                owners.set(data.data);
+                last_updated.set(data.updated);
+            }
+            Err(err) => {
+                if !dialogs.contains("err_maptiles") {
+                    dialogs.add("err_maptiles", move || {
+                        info_dialog(
+                            String::from("Failed to load territory data"),
+                            view! {
+                                <p>"An error occured while loading api data"</p>
+                                <pre class="p-2 bg-neutral-800 rounded my-1">{format!("{err:?}")}</pre>
+                            },
+                        )
+                    });
+                }
+            }
+        }
+    };
+
+    spawn_local(load_owners(owners));
 
     datasource::ws_terr_changes(owners, last_updated);
 
@@ -79,11 +107,7 @@ fn warmap_inner(
     // Update the territory data every 10 minutes to ensure the map stays up to date
     let terr_data_updater = set_interval_with_handle(
         move || {
-            spawn_local(async move {
-                if let Ok(data) = datasource::get_terrs().await {
-                    terrs.set(data);
-                }
-            });
+            spawn_local(load_terrs(terrs));
         },
         Duration::from_mins(10),
     )
