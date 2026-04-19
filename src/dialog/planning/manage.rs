@@ -2,12 +2,13 @@ use leptos::prelude::*;
 use wynnmap_types::guild::Guild;
 
 use crate::dialog::{
-    DialogCloseButton,
+    DialogCloseButton, Dialogs,
     planning::{add::add_guild, edit::edit_guild},
-    show_dialog,
 };
 
 pub fn manage_guilds(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>) -> impl IntoView {
+    let dialogs = use_context::<Dialogs>().expect("Dialogs context not found");
+
     view! {
         <div class="bg-neutral-900 md:rounded-xl text-white w-screen max-w-3xl h-dvh md:max-h-150 flex flex-col">
             <div>
@@ -22,11 +23,8 @@ pub fn manage_guilds(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>) -> impl IntoView
 
             <div class="p-2">
                 <button class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" on:click={
-                    let owner = Owner::new();
                     move |_| {
-                        owner.with(move || {
-                            show_dialog(move || add_guild(guilds));
-                        });
+                        dialogs.add("add_guild", move || add_guild(guilds));
                     }
                 }>
                     "Add guild"
@@ -75,13 +73,10 @@ pub fn manage_guilds(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>) -> impl IntoView
                                             // edit button
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"
                                                 on:click={
-                                                    let owner = Owner::new();
                                                     let idx = idx.get();
                                                     move |_| {
                                                         if idx != 0 {
-                                                            owner.with(move || {
-                                                                show_dialog(move || edit_guild(guilds, idx));
-                                                            });
+                                                            dialogs.add("edit_guild", move || edit_guild(guilds, idx));
                                                         }
                                                     }
                                                 }

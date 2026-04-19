@@ -18,7 +18,7 @@ use crate::{
         },
     },
     datasource,
-    dialog::{self, show_dialog},
+    dialog::{self, Dialogs},
     settings::use_toggle,
     wynnmap::{WynnMap, conns::Connections, maptile::DefaultMapTiles, terrs::TerrView},
 };
@@ -31,6 +31,7 @@ pub fn PlanningMap() -> impl IntoView {
 }
 
 fn planningmap_inner(terrs: BTreeMap<Arc<str>, Territory>) -> impl IntoView {
+    let dialogs = use_context::<Dialogs>().expect("Dialogs context not found");
     let show_guild_leaderboard = use_toggle("gleaderboard", true);
 
     let location = use_location();
@@ -54,8 +55,8 @@ fn planningmap_inner(terrs: BTreeMap<Arc<str>, Territory>) -> impl IntoView {
             match data {
                 Ok(data) => Some(data),
                 Err(err) => {
-                    show_dialog(move || {
-                        dialog::info::info(
+                    dialogs.add("info", move || {
+                        dialog::info::info_dialog(
                             String::from("Failed to read share URL"),
                             view! {
                                 <pre>{format!("{err}")}</pre>
@@ -96,14 +97,14 @@ fn planningmap_inner(terrs: BTreeMap<Arc<str>, Territory>) -> impl IntoView {
                 // ensure that the sharedata is only decoded once
                 let _ = window().location().set_hash("");
             } else {
-                show_dialog(move || {
-                    dialog::info::info(
+                dialogs.add("info", move || {
+                    dialog::info::info_dialog(
                         String::from("Territory hash mismatch"),
                         view! {
                             <p>"Territories have changed since the creation of this share URL. This URL can no longer be decoded."</p>
                         },
                     )
-                });
+                })
             }
         }
     });
@@ -181,7 +182,7 @@ fn planningmap_inner(terrs: BTreeMap<Arc<str>, Territory>) -> impl IntoView {
                     let owner = Owner::new();
                     move |_| {
                         owner.with(move || {
-                            show_dialog(move || dialog::planning::manage_guilds(guilds));
+                            dialogs.add("manage_guilds", move || dialog::planning::manage_guilds(guilds))
                         });
                     }
                 }>
@@ -192,7 +193,7 @@ fn planningmap_inner(terrs: BTreeMap<Arc<str>, Territory>) -> impl IntoView {
                     let owner = Owner::new();
                     move |_| {
                         owner.with(move || {
-                            show_dialog(move || dialog::planning::save_dialog(terrs.into(), guilds, owned));
+                            dialogs.add("save", move || dialog::planning::save_dialog(terrs.into(), guilds, owned))
                         });
                     }
                 }>

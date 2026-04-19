@@ -3,7 +3,7 @@ use std::sync::Arc;
 use leptos::prelude::*;
 use wynnmap_types::guild::Guild;
 
-use crate::dialog::{DialogCloseButton, Dialogs, close_dialog, planning::GuildFields};
+use crate::dialog::{DialogCloseButton, Dialogs, planning::GuildFields};
 
 pub(super) fn edit_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>, n: usize) -> impl IntoView {
     let guild = guilds.read_untracked().get(n).cloned().unwrap_or_default();
@@ -34,7 +34,7 @@ pub(super) fn edit_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>, n: usize) ->
                 </DialogCloseButton>
 
                 <button class="p-2 m-2 border-neutral-600 border rounded-md hover:bg-neutral-700" on:click={
-                    let Dialogs(dialogs) = use_context::<Dialogs>().expect("Dialogs context not found");
+                    let dialogs = use_context::<Dialogs>().expect("Dialogs context not found");
                     move |_| {
                         // TODO: validate inputs
                         guilds.update(|guilds| {
@@ -47,7 +47,7 @@ pub(super) fn edit_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>, n: usize) ->
                             }
                         });
 
-                        close_dialog(dialogs);
+                        dialogs.close();
                     }
                 }>
                     "Save"

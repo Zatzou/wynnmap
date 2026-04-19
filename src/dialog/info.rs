@@ -1,13 +1,13 @@
 use leptos::prelude::*;
 
-use crate::dialog::{DialogCloseButton, Dialogs, close_dialog};
+use crate::dialog::{DialogCloseButton, Dialogs};
 
 /// Simple info dialog
-pub fn info(title: String, children: impl IntoView) -> impl IntoView {
-    let Dialogs(dialogs) = use_context::<Dialogs>().expect("Dialogs context not found");
+pub fn info_dialog(title: String, children: impl IntoView) -> impl IntoView {
+    let dialogs = use_context::<Dialogs>().expect("Dialogs context not found");
 
     let close = move |_| {
-        close_dialog(dialogs);
+        dialogs.close();
     };
 
     view! {

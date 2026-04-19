@@ -1,12 +1,13 @@
 use leptos::prelude::*;
 
-use crate::dialog::{self, show_dialog};
+use crate::dialog::{self, Dialogs};
 
 #[derive(Clone)]
 pub struct ShowSidebar(pub RwSignal<bool>);
 
 #[component]
 pub fn Sidebar(#[prop(optional)] children: Option<Children>) -> impl IntoView {
+    let dialogs = use_context::<Dialogs>().expect("Dialogs context not found");
     let show_sidebar = use_context::<ShowSidebar>().unwrap().0;
 
     view! {
@@ -39,11 +40,8 @@ pub fn Sidebar(#[prop(optional)] children: Option<Children>) -> impl IntoView {
             <div class="mt-auto">
                 <hr class="border-neutral-600" />
                 <div class="cursor-pointer p-2 flex gap-2 items-center" on:click={
-                    let owner = Owner::new();
                     move |_| {
-                        owner.with(move || {
-                            show_dialog(dialog::settings::settings_dialog);
-                        });
+                        dialogs.add("settings", dialog::settings::settings_dialog)
                     }
                 }>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">

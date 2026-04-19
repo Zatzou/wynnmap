@@ -14,13 +14,10 @@ use wynnmap_types::{
 
 use crate::error::debug_fmt_error;
 
-pub async fn load_map_tiles() -> Result<Vec<MapTile>, String> {
-    let r = Request::get("/api/v1/images/maps.json")
-        .send()
-        .await
-        .map_err(debug_fmt_error)?;
+pub async fn load_map_tiles() -> Result<Vec<MapTile>, gloo_net::Error> {
+    let r = Request::get("/api/v1/images/maps.json").send().await?;
 
-    let tiles: Vec<MapTile> = r.json().await.map_err(debug_fmt_error)?;
+    let tiles: Vec<MapTile> = r.json().await?;
 
     Ok(tiles)
 }

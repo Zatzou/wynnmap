@@ -3,7 +3,11 @@ use std::time::Duration;
 use leptos::{prelude::*, task::spawn_local};
 use wynnmap_types::maptile::MapTile;
 
-use crate::{datasource, settings::use_toggle};
+use crate::{
+    datasource,
+    dialog::{Dialogs, info::info_dialog},
+    settings::use_toggle,
+};
 
 #[component]
 pub fn MapTile(tile: Signal<MapTile>) -> impl IntoView {
@@ -50,11 +54,25 @@ pub fn MapTiles(#[prop(into)] tiles: Signal<Vec<MapTile>>) -> impl IntoView {
 /// A component that displays the default map tiles fetched from the server.
 #[component]
 pub fn DefaultMapTiles() -> impl IntoView {
+    let dialogs = use_context::<Dialogs>().expect("Dialogs context not found");
     let tiles = RwSignal::new(Vec::new());
 
     let load_tiles = move |tiles: RwSignal<_>| async move {
-        if let Ok(data) = datasource::load_map_tiles().await {
-            tiles.set(data);
+        match datasource::load_map_tiles().await {
+            Ok(data) => tiles.set(data),
+            Err(err) => {
+                if !dialogs.contains("err_maptiles") {
+                    dialogs.add("err_maptiles", move || {
+                        info_dialog(
+                            String::from("Failed to load map tiles"),
+                            view! {
+                                <p>"An error occured while loading api data"</p>
+                                <pre class="p-2 bg-neutral-800 rounded my-1">{format!("{err:?}")}</pre>
+                            },
+                        )
+                    });
+                }
+            }
         }
     };
 
