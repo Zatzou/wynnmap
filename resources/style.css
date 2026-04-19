@@ -27,7 +27,7 @@ html::before {
     z-index: -1;
 }
 
-.icon-emerald {
+.icon-emeralds {
     background-position: 0 -20px;
 }
 
@@ -39,7 +39,7 @@ html::before {
     background-position: -20px 0;
 }
 
-.icon-ores {
+.icon-ore {
     background-position: -40px 0;
 }
 

@@ -135,7 +135,7 @@ fn ResIcons(terr: Signal<Resources>) -> impl IntoView {
     view! {
         <div class="flex pb-1 wynnmap-hide-zoomedout h-[24px] contain-paint" >
             // emeralds
-            <ResIcon icon="emerald" show={Signal::derive(move || res().0)} />
+            <ResIcon icon="emeralds" show={Signal::derive(move || res().0)} />
 
             // crops
             <ResIcon icon="crops" show={Signal::derive(move || res().1)} />
@@ -146,8 +146,8 @@ fn ResIcons(terr: Signal<Resources>) -> impl IntoView {
             <ResIcon icon="fish" show={Signal::derive(move || res2().1)} />
 
             // ores
-            <ResIcon icon="ores" show={Signal::derive(move || res().3)} />
-            <ResIcon icon="ores" show={Signal::derive(move || res2().2)} />
+            <ResIcon icon="ore" show={Signal::derive(move || res().3)} />
+            <ResIcon icon="ore" show={Signal::derive(move || res2().2)} />
 
             // wood
             <ResIcon icon="wood" show={Signal::derive(move || res().4)} />

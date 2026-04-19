@@ -16,44 +16,31 @@ pub fn TerrInfo(
         <div class="p-2">
             <h1 class="text-2xl">{name}</h1>
 
-            {move ||
-                terrs.read().get(&*name.read()).cloned().map(|terr| {
-                    view! {
-                        <div class="p-2">
-                            <Show when={move || terr.generates.has_emeralds()}>
+            <div class="p-2">
+                {move ||
+                    terrs.read().get(&*name.read()).cloned().map(|terr| {
+                        let g = terr.generates;
+
+                        let materials = [
+                            (g.emeralds, "emeralds"),
+                            (g.ore, "ore"),
+                            (g.wood, "wood"),
+                            (g.fish, "fish"),
+                            (g.crops, "crops")
+                        ];
+
+                        materials.into_iter()
+                            .filter(|(n, _)| *n > 0)
+                            .map(|(n, name)| view! {
                                 <div class="flex gap-1 items-center">
-                                    <div class="icon-emerald"></div>
-                                    <p>"+"{terr.generates.emeralds}" emeralds per hour"</p>
+                                    <div class={move || format!("icon-{name}")}></div>
+                                    <p>"+"{n}" "{name}" per hour"</p>
                                 </div>
-                            </Show>
-                            <Show when={move || terr.generates.has_ore()}>
-                                <div class="flex gap-1 items-center">
-                                    <div class="icon-ores"></div>
-                                    <p>"+"{terr.generates.ore}" ore per hour"</p>
-                                </div>
-                            </Show>
-                            <Show when={move || terr.generates.has_wood()}>
-                                <div class="flex gap-1 items-center">
-                                    <div class="icon-wood"></div>
-                                    <p>"+"{terr.generates.wood}" wood per hour"</p>
-                                </div>
-                            </Show>
-                            <Show when={move || terr.generates.has_fish()}>
-                                <div class="flex gap-1 items-center">
-                                    <div class="icon-fish"></div>
-                                    <p>"+"{terr.generates.fish}" fish per hour"</p>
-                                </div>
-                            </Show>
-                            <Show when={move || terr.generates.has_crops()}>
-                                <div class="flex gap-1 items-center">
-                                    <div class="icon-crops"></div>
-                                    <p>"+"{terr.generates.crops}" crops per hour"</p>
-                                </div>
-                            </Show>
-                        </div>
-                    }
-                })
-            }
+                            })
+                            .collect::<Vec<_>>()
+                    })
+                }
+            </div>
         </div>
     }
 }
@@ -94,7 +81,7 @@ pub fn GuildInfo(#[prop(into)] owner: Signal<TerrOwner>) -> impl IntoView {
 
             time.set(t);
         },
-        Duration::from_millis(1000),
+        Duration::from_secs(1),
     )
     .ok();
 
@@ -104,52 +91,7 @@ pub fn GuildInfo(#[prop(into)] owner: Signal<TerrOwner>) -> impl IntoView {
         }
     });
 
-    let timestr = move |time: i64| {
-        let days = time / 86400;
-        let hours = (time % 86400) / 3600;
-        let minutes = (time % 3600) / 60;
-        let seconds = time % 60;
-
-        if days > 0 {
-            format!("{days}d {hours}h {minutes}m {seconds}s")
-        } else if hours > 0 {
-            format!("{hours}h {minutes}m {seconds}s")
-        } else if minutes > 0 {
-            format!("{minutes}m {seconds}s")
-        } else {
-            format!("{seconds}s")
-        }
-    };
-
-    let treas_col = move |time: i64| {
-        // times based on treasury
-        if time < 3600 {
-            "oklch(0.723 0.219 149.579)"
-        } else if time < (3600 * 24) {
-            "oklch(0.768 0.233 130.85)"
-        } else if time < (3600 * 24 * 5) {
-            "oklch(0.795 0.184 86.047)"
-        } else if time < (3600 * 24 * 12) {
-            "oklch(0.705 0.213 47.604)"
-        } else {
-            "oklch(0.637 0.237 25.331)"
-        }
-    };
-
-    let treas_text = move |time: i64| {
-        // times based on treasury
-        if time < 3600 {
-            "Very Low"
-        } else if time < (3600 * 24) {
-            "Low"
-        } else if time < (3600 * 24 * 5) {
-            "Medium"
-        } else if time < (3600 * 24 * 12) {
-            "High"
-        } else {
-            "Very High"
-        }
-    };
+    let treas_tier = move |time: i64| TreasTier::from_time(time);
 
     view! {
         <div class="p-2">
@@ -160,10 +102,67 @@ pub fn GuildInfo(#[prop(into)] owner: Signal<TerrOwner>) -> impl IntoView {
 
             {move || time.get().map(|time| view! {
                 <div class="p-2">
-                    <h2>"Time held: "{move || timestr(time)}</h2>
-                    <h2>"Treasury: "<span style:color=move || treas_col(time)>{move || treas_text(time)}</span></h2>
+                    <h2>"Time held: "{move || format_time(time)}</h2>
+                    <h2>"Treasury: "<span style:color=move || treas_tier(time).color()>{move || treas_tier(time).name()}</span></h2>
                 </div>
             })}
         </div>
+    }
+}
+
+fn format_time(time: i64) -> String {
+    let days = time / 86400;
+    let hours = (time % 86400) / 3600;
+    let minutes = (time % 3600) / 60;
+    let seconds = time % 60;
+
+    if days > 0 {
+        format!("{days}d {hours}h {minutes}m {seconds}s")
+    } else if hours > 0 {
+        format!("{hours}h {minutes}m {seconds}s")
+    } else if minutes > 0 {
+        format!("{minutes}m {seconds}s")
+    } else {
+        format!("{seconds}s")
+    }
+}
+
+enum TreasTier {
+    VHigh,
+    High,
+    Medium,
+    Low,
+    VLow,
+}
+
+impl TreasTier {
+    fn from_time(time: i64) -> Self {
+        match time {
+            t if t < 3600 => Self::VLow,
+            t if t < (3600 * 24) => Self::Low,
+            t if t < (3600 * 24 * 5) => Self::Medium,
+            t if t < (3600 * 24 * 12) => Self::High,
+            _ => Self::VHigh,
+        }
+    }
+
+    const fn name(&self) -> &'static str {
+        match self {
+            TreasTier::VHigh => "Very High",
+            TreasTier::High => "High",
+            TreasTier::Medium => "Medium",
+            TreasTier::Low => "Low",
+            TreasTier::VLow => "Very Low",
+        }
+    }
+
+    const fn color(&self) -> &'static str {
+        match self {
+            TreasTier::VHigh => "oklch(0.637 0.237 25.331)",
+            TreasTier::High => "oklch(0.705 0.213 47.604)",
+            TreasTier::Medium => "oklch(0.795 0.184 86.047)",
+            TreasTier::Low => "oklch(0.768 0.233 130.85)",
+            TreasTier::VLow => "oklch(0.723 0.219 149.579)",
+        }
     }
 }
