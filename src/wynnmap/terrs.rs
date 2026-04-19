@@ -129,39 +129,31 @@ pub fn Territory(
 
 #[component]
 fn ResIcons(terr: Signal<Resources>) -> impl IntoView {
-    let res = move || terr.read().has_res();
-    let res2 = move || terr.read().has_double_res();
-
     view! {
         <div class="flex pb-1 wynnmap-hide-zoomedout h-[24px] contain-paint" >
-            // emeralds
-            <ResIcon icon="emeralds" show={Signal::derive(move || res().0)} />
+            {move || {
+                let t = terr.read();
 
-            // crops
-            <ResIcon icon="crops" show={Signal::derive(move || res().1)} />
-            <ResIcon icon="crops" show={Signal::derive(move || res2().0)} />
+                [
+                    (t.has_emeralds(), "emeralds"),
 
-            // fish
-            <ResIcon icon="fish" show={Signal::derive(move || res().2)} />
-            <ResIcon icon="fish" show={Signal::derive(move || res2().1)} />
+                    (t.has_crops(), "crops"),
+                    (t.has_double_crops(), "crops"),
 
-            // ores
-            <ResIcon icon="ore" show={Signal::derive(move || res().3)} />
-            <ResIcon icon="ore" show={Signal::derive(move || res2().2)} />
+                    (t.has_fish(), "fish"),
+                    (t.has_double_fish(), "fish"),
 
-            // wood
-            <ResIcon icon="wood" show={Signal::derive(move || res().4)} />
-            <ResIcon icon="wood" show={Signal::derive(move || res2().3)} />
+                    (t.has_ore(), "ore"),
+                    (t.has_double_ore(), "ore"),
+
+                    (t.has_wood(), "wood"),
+                    (t.has_double_wood(), "wood")
+                ].into_iter()
+                    .filter(|(b, _)| *b)
+                    .map(|(_, n)| view! { <div class={move || format!("icon-{n}")} /> })
+                    .collect::<Vec<_>>()
+            }}
         </div>
-    }
-}
-
-#[component]
-fn ResIcon(#[prop(into)] icon: Signal<String>, #[prop(into)] show: Signal<bool>) -> impl IntoView {
-    view! {
-        <Show when={move || show.get()}>
-            <div class={move || format!("icon-{}", icon.get())} />
-        </Show>
     }
 }
 
@@ -182,7 +174,7 @@ fn TerrTimer(#[prop(into)] acquired: Signal<chrono::DateTime<chrono::Utc>>) -> i
 
             set_time.set(time);
         },
-        Duration::from_millis(1000),
+        Duration::from_secs(1),
     )
     .ok();
 
