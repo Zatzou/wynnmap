@@ -3,10 +3,7 @@ use std::time::Duration;
 use leptos::{prelude::*, task::spawn_local};
 use wynnmap_types::maptile::MapTile;
 
-use crate::{components::loader::loader, datasource, settings::use_toggle};
-
-#[derive(Clone)]
-pub struct DefaultMapTilesCtx(pub ReadSignal<Vec<MapTile>>);
+use crate::{datasource, settings::use_toggle};
 
 #[component]
 pub fn MapTile(tile: Signal<MapTile>) -> impl IntoView {
@@ -28,7 +25,7 @@ pub fn MapTile(tile: Signal<MapTile>) -> impl IntoView {
 }
 
 #[component]
-pub fn MapTiles(tiles: Signal<Vec<MapTile>>) -> impl IntoView {
+pub fn MapTiles(#[prop(into)] tiles: Signal<Vec<MapTile>>) -> impl IntoView {
     let show_non_main = use_toggle("show_non_main_maps", false);
 
     view! {
@@ -53,42 +50,30 @@ pub fn MapTiles(tiles: Signal<Vec<MapTile>>) -> impl IntoView {
 /// A component that displays the default map tiles fetched from the server.
 #[component]
 pub fn DefaultMapTiles() -> impl IntoView {
-    let DefaultMapTilesCtx(tiles) = use_context().expect("Default maptiles context not found");
+    let tiles = RwSignal::new(Vec::new());
 
-    view! { <MapTiles tiles={tiles.into()} /> }
-}
+    let load_tiles = move |tiles: RwSignal<_>| async move {
+        if let Ok(data) = datasource::load_map_tiles().await {
+            tiles.set(data);
+        }
+    };
 
-/// Provide the default maptiles
-#[component]
-pub fn ProvideDefaultMapTiles(children: ChildrenFn) -> impl IntoView {
-    let tiles = LocalResource::new(async move || datasource::load_map_tiles().await);
+    spawn_local(load_tiles(tiles));
 
-    move || {
-        loader(tiles, |tiles| {
-            let tiles = RwSignal::new(tiles);
+    // Update the map tiles every hour to ensure they stay up to date
+    let map_tile_updater = set_interval_with_handle(
+        move || {
+            spawn_local(load_tiles(tiles));
+        },
+        Duration::from_hours(1),
+    )
+    .ok();
 
-            // Update the map tiles every hour to ensure they stay up to date
-            let map_tile_updater = set_interval_with_handle(
-                move || {
-                    spawn_local(async move {
-                        if let Ok(data) = datasource::load_map_tiles().await {
-                            tiles.set(data);
-                        }
-                    });
-                },
-                Duration::from_hours(1),
-            )
-            .ok();
+    on_cleanup(move || {
+        if let Some(i) = map_tile_updater {
+            i.clear();
+        }
+    });
 
-            on_cleanup(move || {
-                if let Some(i) = map_tile_updater {
-                    i.clear();
-                }
-            });
-
-            provide_context(DefaultMapTilesCtx(tiles.read_only()));
-
-            view! {{children()}}.into_any()
-        })
-    }
+    view! { <MapTiles tiles={tiles} /> }
 }
