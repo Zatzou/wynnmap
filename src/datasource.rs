@@ -14,28 +14,11 @@ use wynnmap_types::{
 
 use crate::error::debug_fmt_error;
 
-/// Get the api url to be used for fetching data. This by default uses the current window location
-/// to determine the host and whether or not encryption is used.
-///
-/// # Arguments
-/// - `protocol` - The protocol to use for the url. This should be either `"http"` or `"ws"`.
-pub fn get_url(protocol: &str) -> String {
-    let window = leptos::leptos_dom::helpers::window().location();
-    let host = window.host().unwrap();
-    let proto = window.protocol().is_ok_and(|p| p == "https:");
-
-    format!("{protocol}{}://{host}", if proto { "s" } else { "" })
-}
-
 pub async fn load_map_tiles() -> Result<Vec<MapTile>, String> {
-    let r = Request::get(&format!(
-        "{}{}",
-        get_url("http"),
-        "/api/v1/images/maps.json"
-    ))
-    .send()
-    .await
-    .map_err(debug_fmt_error)?;
+    let r = Request::get("/api/v1/images/maps.json")
+        .send()
+        .await
+        .map_err(debug_fmt_error)?;
 
     let tiles: Vec<MapTile> = r.json().await.map_err(debug_fmt_error)?;
 
@@ -43,27 +26,25 @@ pub async fn load_map_tiles() -> Result<Vec<MapTile>, String> {
 }
 
 pub async fn get_terrs() -> Result<BTreeMap<Arc<str>, Territory>, String> {
-    let resp: BTreeMap<Arc<str>, Territory> =
-        Request::get(&format!("{}{}", get_url("http"), "/api/v2/terr/list"))
-            .send()
-            .await
-            .map_err(debug_fmt_error)?
-            .json()
-            .await
-            .map_err(debug_fmt_error)?;
+    let resp: BTreeMap<Arc<str>, Territory> = Request::get("/api/v2/terr/list")
+        .send()
+        .await
+        .map_err(debug_fmt_error)?
+        .json()
+        .await
+        .map_err(debug_fmt_error)?;
 
     Ok(resp)
 }
 
 pub async fn get_owners() -> Result<RespWrapper<BTreeMap<Arc<str>, TerrOwner>>, String> {
-    let resp: RespWrapper<BTreeMap<Arc<str>, TerrOwner>> =
-        Request::get(&format!("{}{}", get_url("http"), "/api/v2/terr/guilds"))
-            .send()
-            .await
-            .map_err(debug_fmt_error)?
-            .json()
-            .await
-            .map_err(debug_fmt_error)?;
+    let resp: RespWrapper<BTreeMap<Arc<str>, TerrOwner>> = Request::get("/api/v2/terr/guilds")
+        .send()
+        .await
+        .map_err(debug_fmt_error)?
+        .json()
+        .await
+        .map_err(debug_fmt_error)?;
 
     Ok(resp)
 }
@@ -77,10 +58,7 @@ pub fn ws_terr_changes(
         message,
         open,
         ..
-    } = use_websocket::<(), TerrSockMessage, JsonSerdeWasmCodec>(&format!(
-        "{}/api/v2/terr/guilds/ws",
-        get_url("ws")
-    ));
+    } = use_websocket::<(), TerrSockMessage, JsonSerdeWasmCodec>("/api/v2/terr/guilds/ws");
 
     Effect::new(move || {
         if ready_state.get() == ConnectionReadyState::Closed {

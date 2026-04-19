@@ -42,5 +42,5 @@ lz4_flex = "0.13"
 
 [profile.release]
 lto = true
-opt-level = "s"
-strip = "debuginfo"
+opt-level = "z"
+strip = true
