@@ -19,9 +19,9 @@ pub fn WynnMap(children: Children) -> impl IntoView {
     let is_gecko = user_agent.contains("Gecko/") && !user_agent.contains("like Gecko");
 
     // is the map being dragged currently
-    let (dragging, set_dragging) = signal(false);
+    let dragging = RwSignal::new(false);
     // is the map being moved currently
-    let (moving, set_moving) = signal(false);
+    let moving = RwSignal::new(false);
 
     // position of the map
     let screen_middle = get_viewport_middle();
@@ -29,10 +29,10 @@ pub fn WynnMap(children: Children) -> impl IntoView {
     let position = RwSignal::new((100.0 + screen_middle.0, 1200.0 + screen_middle.1));
 
     // the current zoom level
-    let (zoom, set_zoom) = signal(0.5);
+    let zoom = RwSignal::new(0.5);
 
     // are we currently transitioning? transitions can occur from zooming
-    let (transitioning, set_transitioning) = signal(false);
+    let transitioning = RwSignal::new(false);
 
     // mouse position stored for zoom compensation
     let mousepos = Arc::new(Mutex::new((0, 0)));
@@ -59,15 +59,15 @@ pub fn WynnMap(children: Children) -> impl IntoView {
     // detect when a mouse drag starts
     let dragstart = move |e: MouseEvent| {
         e.prevent_default();
-        set_dragging.set(true);
-        set_moving.set(true);
+        dragging.set(true);
+        moving.set(true);
     };
 
     // detect when a mouse drag ends
     let dragend = move |e: MouseEvent| {
         e.prevent_default();
-        set_dragging.set(false);
-        set_moving.set(false);
+        dragging.set(false);
+        moving.set(false);
     };
 
     // detect zooming using a mouse wheel
@@ -75,7 +75,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
         e.prevent_default();
 
         // enable the transition when zooming with the mousewheel
-        set_transitioning.set(true);
+        transitioning.set(true);
 
         // get the mouse position
         let mpos1 = mousepos2.lock().unwrap();
@@ -83,13 +83,12 @@ pub fn WynnMap(children: Children) -> impl IntoView {
         drop(mpos1);
 
         // calculate the new zoom level
-        let zoom = zoom.get();
+        let old_zoom = zoom.get();
+        let new_zoom = calculate_new_zoom(old_zoom, -e.delta_y() / 300.0);
 
-        let newzoom = calculate_new_zoom(zoom, -e.delta_y() / 300.0);
+        zoom.set(new_zoom);
 
-        set_zoom.set(newzoom);
-
-        apply_zoom_compensation(mpos, zoom, newzoom, position);
+        apply_zoom_compensation(mpos, old_zoom, new_zoom, position);
     };
 
     // touch positions stored for touch events
@@ -104,9 +103,9 @@ pub fn WynnMap(children: Children) -> impl IntoView {
         *tpos = get_touch_positions(&e.touches());
 
         if tpos.is_empty() {
-            set_moving.set(false);
+            moving.set(false);
         } else {
-            set_moving.set(true);
+            moving.set(true);
         }
     };
 
@@ -144,7 +143,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
             // zoom
             2 => {
                 // disable will-change to prevent flickering
-                set_moving.set(false);
+                moving.set(false);
 
                 // get the touch positions
                 let touch1 = tl.get(0).unwrap();
@@ -168,17 +167,17 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 let delta = dist - opos;
 
                 // calculate the new zoom level
-                let zoom = zoom.get();
-                let newzoom = calculate_new_zoom(zoom, delta / 300.0);
+                let old_zoom = zoom.get();
+                let new_zoom = calculate_new_zoom(old_zoom, delta / 300.0);
 
-                set_zoom.set(newzoom);
+                zoom.set(new_zoom);
 
                 let mpos = (
                     f64::from(npos.0.0 + npos.1.0) / 2.0,
                     f64::from(npos.0.1 + npos.1.1) / 2.0,
                 );
 
-                apply_zoom_compensation(mpos, zoom, newzoom, position);
+                apply_zoom_compensation(mpos, old_zoom, new_zoom, position);
             }
             _ => {}
         }
@@ -194,7 +193,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
             "0" => {
                 let oldzoom = zoom.get();
                 // reset the zoom
-                set_zoom.set(0.5);
+                zoom.set(0.5);
 
                 // perform zoom compensation
                 // get middle point of the screen
@@ -203,7 +202,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 apply_zoom_compensation(mpos, oldzoom, 0.5, position);
 
                 // do transition
-                set_transitioning.set(true);
+                transitioning.set(true);
             }
             // Home - reset position
             "Home" => {
@@ -215,7 +214,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                     (1200.0 * zoom + screen_middle.1),
                 ));
 
-                set_transitioning.set(true);
+                transitioning.set(true);
             }
             // plus key - zoom in
             "+" => {
@@ -223,7 +222,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
 
                 // calculate the new zoom level
                 let newzoom = calculate_new_zoom(oldzoom, 0.3);
-                set_zoom.set(newzoom);
+                zoom.set(newzoom);
 
                 // get middle point of the screen
                 let mpos = get_viewport_middle();
@@ -231,7 +230,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 apply_zoom_compensation(mpos, oldzoom, newzoom, position);
 
                 // do transition
-                set_transitioning.set(true);
+                transitioning.set(true);
             }
             // minus key - zoom out
             "-" => {
@@ -239,7 +238,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
 
                 // calculate the new zoom level
                 let newzoom = calculate_new_zoom(oldzoom, -0.3);
-                set_zoom.set(newzoom);
+                zoom.set(newzoom);
 
                 // get middle point of the screen
                 let mpos = get_viewport_middle();
@@ -247,7 +246,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 apply_zoom_compensation(mpos, oldzoom, newzoom, position);
 
                 // do transition
-                set_transitioning.set(true);
+                transitioning.set(true);
             }
             // ArrowUp - move up
             "ArrowUp" => {
@@ -255,7 +254,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                     *p = (p.0, p.1 + 100.0 / zoom.get());
                 });
 
-                set_transitioning.set(true);
+                transitioning.set(true);
             }
             // ArrowDown - move down
             "ArrowDown" => {
@@ -263,7 +262,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                     *p = (p.0, p.1 - 100.0 / zoom.get());
                 });
 
-                set_transitioning.set(true);
+                transitioning.set(true);
             }
             // ArrowLeft - move left
             "ArrowLeft" => {
@@ -271,7 +270,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                     *p = (p.0 + 100.0 / zoom.get(), p.1);
                 });
 
-                set_transitioning.set(true);
+                transitioning.set(true);
             }
             // ArrowRight - move right
             "ArrowRight" => {
@@ -279,7 +278,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                     *p = (p.0 - 100.0 / zoom.get(), p.1);
                 });
 
-                set_transitioning.set(true);
+                transitioning.set(true);
             }
             // do nothing on unknown keys
             _ => {}
@@ -309,7 +308,7 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 class:wynnmap-zoomedout={move || zoom.get() < 0.3}
                 class:wynnmap-transitions={move || transitioning.get() && !dragging.get()}
                 // disable the transition after it has run
-                on:transitionend=move |_| {set_transitioning.set(false);}
+                on:transitionend=move |_| {transitioning.set(false);}
 
                 // will-change:transform if using gecko (according to user agent) or you're currently holding down (moving.get())
                 style:will-change=move || {if is_gecko || moving.get() {"transform"} else {""}}

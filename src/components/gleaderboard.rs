@@ -25,7 +25,7 @@ pub fn Gleaderboard(
         // alphabetically sort the guilds
         leaderboard.sort_by(|a, b| a.0.name.cmp(&b.0.name));
         // sort by the number of territories while keeping the alphabetical order for any ties
-        leaderboard.sort_by(|a, b| b.1.cmp(&a.1));
+        leaderboard.sort_by_key(|b| std::cmp::Reverse(b.1));
 
         leaderboard
     };

@@ -34,7 +34,7 @@ pub fn MapTiles(#[prop(into)] tiles: Signal<Vec<MapTile>>) -> impl IntoView {
                 tiles.get()
                     .into_iter()
                     .filter(|tile| {
-                        if tile.name.contains("Main") || tile.name.contains("Realm of Light") {
+                        if tile.name.starts_with("Main") || tile.name.starts_with("Realm of Light") {
                             true
                         } else {
                             show_non_main.get()

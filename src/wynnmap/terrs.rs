@@ -267,7 +267,7 @@ fn AttackBorder(#[prop(into)] acquired: Signal<chrono::DateTime<chrono::Utc>>) -
                 move || {
                     set_time.set(600_000);
                 },
-                Duration::from_millis(1000),
+                Duration::from_secs(1),
             )
             .ok();
 

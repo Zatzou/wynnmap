@@ -111,7 +111,7 @@ fn planningmap_inner(terrs: BTreeMap<Arc<str>, Territory>) -> impl IntoView {
     let mapowneds = Memo::new(move |_| {
         let mut owners = BTreeMap::new();
 
-        for (terr, _) in &*terrs.read() {
+        for terr in (*terrs.read()).keys() {
             if let Some(own) = owned.read().get(terr) {
                 let own = own.get();
                 owners.insert(
@@ -263,12 +263,12 @@ pub fn GuildSelect(
     };
 
     let onselect = move |sel: String| {
-        if let Ok(idx) = sel.parse::<usize>() {
-            if let Some(guild) = guilds.read().get(idx) {
-                terr_owners.update(|o| {
-                    o.insert(terr_name.get(), guild.clone());
-                });
-            }
+        if let Ok(idx) = sel.parse::<usize>()
+            && let Some(guild) = guilds.read().get(idx)
+        {
+            terr_owners.update(|o| {
+                o.insert(terr_name.get(), guild.clone());
+            });
         }
     };
 

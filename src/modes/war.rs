@@ -304,35 +304,7 @@ fn TerrCalc(
         x
     });
 
-    let def_name = move || {
-        let def_num = def_num.get();
-        if def_num >= 41 {
-            "Very High"
-        } else if def_num >= 23 {
-            "High"
-        } else if def_num >= 11 {
-            "Medium"
-        } else if def_num >= -2 {
-            "Low"
-        } else {
-            "Very Low"
-        }
-    };
-
-    let def_col = move || {
-        let def_num = def_num.get();
-        if def_num >= 41 {
-            "oklch(0.637 0.237 25.331)"
-        } else if def_num >= 23 {
-            "oklch(0.705 0.213 47.604)"
-        } else if def_num >= 11 {
-            "oklch(0.795 0.184 86.047)"
-        } else if def_num >= -2 {
-            "oklch(0.768 0.233 130.85)"
-        } else {
-            "oklch(0.723 0.219 149.579)"
-        }
-    };
+    let def_tier = move || DefTier::from_defnum(def_num.get());
 
     view! {
         <hr class="border-neutral-600" />
@@ -356,7 +328,7 @@ fn TerrCalc(
                         <Incrementor value={health} max=11 />
                     </div>
                     <div class="flex justify-between">
-                        <h2>"Defense: "{move || DEFENSES[defense.get()] * 100.0}"%"</h2>
+                        <h2>"Defense: "{move || (DEFENSES[defense.get()] * 100.0).trunc()}"%"</h2>
                         <Incrementor value={defense} max=11 />
                     </div>
                     <div class="flex justify-between">
@@ -397,8 +369,49 @@ fn TerrCalc(
 
                 fmt_num(health / (1.0 - def))
             }}</h2>
-            <h2>"Defense: "<span style:color=move || def_col()>{move || def_name()}</span></h2>
+            <h2>"Defense: "<span style:color=move || def_tier().color()>{move || def_tier().name()}</span></h2>
         </div>
+    }
+}
+
+#[derive(Clone, Copy)]
+enum DefTier {
+    VHigh,
+    High,
+    Medium,
+    Low,
+    VLow,
+}
+
+impl DefTier {
+    fn from_defnum(num: i32) -> Self {
+        match num {
+            41.. => Self::VHigh,
+            23.. => Self::High,
+            11.. => Self::Medium,
+            -2.. => Self::Low,
+            _ => Self::VLow,
+        }
+    }
+
+    const fn name(&self) -> &'static str {
+        match self {
+            DefTier::VHigh => "Very High",
+            DefTier::High => "High",
+            DefTier::Medium => "Medium",
+            DefTier::Low => "Low",
+            DefTier::VLow => "Very Low",
+        }
+    }
+
+    const fn color(&self) -> &'static str {
+        match self {
+            DefTier::VHigh => "oklch(0.637 0.237 25.331)",
+            DefTier::High => "oklch(0.705 0.213 47.604)",
+            DefTier::Medium => "oklch(0.795 0.184 86.047)",
+            DefTier::Low => "oklch(0.768 0.233 130.85)",
+            DefTier::VLow => "oklch(0.723 0.219 149.579)",
+        }
     }
 }
 

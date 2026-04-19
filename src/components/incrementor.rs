@@ -19,8 +19,16 @@ where
         + Sync
         + 'static,
 {
-    let increment = move |_| value.update(|v| *v = (*v + 1.into()).min(max.get()));
-    let decrement = move |_| value.update(|v| *v = (*v - 1.into()).max(min.get()));
+    let increment = move |_| {
+        if *value.read() != *max.read() {
+            value.update(|v| *v = (*v + 1.into()).min(max.get()))
+        }
+    };
+    let decrement = move |_| {
+        if *value.read() != *min.read() {
+            value.update(|v| *v = (*v - 1.into()).max(min.get()))
+        }
+    };
 
     view! {
         <div class="items-center">
