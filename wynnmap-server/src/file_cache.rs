@@ -13,7 +13,13 @@ pub(crate) async fn file_cache_control(req: Request, next: Next) -> Response<Bod
             .and_then(|h| h.to_str().ok())
     {
         match ct {
-            "text/html" | "image/png" => {
+            "text/html" => {
+                parts.headers.insert(
+                    header::CACHE_CONTROL,
+                    header::HeaderValue::from_static("public, max-age=60, must-revalidate"),
+                );
+            }
+            "image/webp" | "image/png" => {
                 parts.headers.insert(
                     header::CACHE_CONTROL,
                     header::HeaderValue::from_static("public, max-age=3600"),
