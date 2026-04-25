@@ -15,15 +15,10 @@ pub fn MapTile(tile: Signal<MapTile>) -> impl IntoView {
         <img
             src=tile.get().url
             class="wynnmap-tile"
-            style:width=move || format!("{}px", tile.read().location.width() + 1)
-            style:height=move || format!("{}px", tile.read().location.height() + 1)
-            style:transform=move || {
-                format!(
-                    "translate3D({}px, {}px, 0)",
-                    tile.read().location.left_side(),
-                    tile.read().location.top_side(),
-                )
-            }
+            style:width=move || format!("{}px", tile.read().location.width())
+            style:height=move || format!("{}px", tile.read().location.height())
+            style:top=move || format!("{}px", tile.read().location.top_side())
+            style:left=move || format!("{}px", tile.read().location.left_side())
         />
     }
 }

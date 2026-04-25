@@ -22,6 +22,7 @@ use crate::{
     },
     datasource,
     dialog::{Dialogs, info::info_dialog},
+    sectimer::SecondTimer,
     settings::use_toggle,
     wynnmap::{WynnMap, conns::Connections, maptile::DefaultMapTiles, terrs::TerrView},
 };
@@ -90,19 +91,12 @@ pub fn WarMap() -> impl IntoView {
     let hovered = RwSignal::new(None);
     let selected = RwSignal::new(None);
 
-    let data_age = RwSignal::new(0);
-
-    let last_update_warn = set_interval_with_handle(
-        move || {
-            let time = Utc::now()
-                .signed_duration_since(last_updated.get())
-                .num_seconds();
-
-            data_age.set(time);
-        },
-        Duration::from_millis(1000),
-    )
-    .ok();
+    let SecondTimer(now) = expect_context();
+    let data_age = Memo::new(move |_| {
+        now.read()
+            .signed_duration_since(last_updated.read())
+            .num_seconds()
+    });
 
     // Update the territory data every 10 minutes to ensure the map stays up to date
     let terr_data_updater = set_interval_with_handle(
@@ -114,9 +108,6 @@ pub fn WarMap() -> impl IntoView {
     .ok();
 
     on_cleanup(move || {
-        if let Some(i) = last_update_warn {
-            i.clear();
-        }
         if let Some(i) = terr_data_updater {
             i.clear();
         }
@@ -418,7 +409,7 @@ impl DefTier {
         }
     }
 
-    const fn name(&self) -> &'static str {
+    const fn name(self) -> &'static str {
         match self {
             DefTier::VHigh => "Very High",
             DefTier::High => "High",
@@ -428,7 +419,7 @@ impl DefTier {
         }
     }
 
-    const fn color(&self) -> &'static str {
+    const fn color(self) -> &'static str {
         match self {
             DefTier::VHigh => "oklch(0.637 0.237 25.331)",
             DefTier::High => "oklch(0.705 0.213 47.604)",

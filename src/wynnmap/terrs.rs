@@ -8,7 +8,7 @@ use leptos::prelude::*;
 use web_sys::PointerEvent;
 use wynnmap_types::terr::{Resources, TerrOwner, Territory};
 
-use crate::settings::use_toggle;
+use crate::{sectimer::SecondTimer, settings::use_toggle};
 
 #[component]
 pub fn TerrView(
@@ -65,22 +65,23 @@ pub fn Territory(
     let show_timers = use_toggle("timers", true);
     let use_transparency = use_toggle("use_transparency", true);
 
-    let name2 = name.clone();
-    let name3 = name.clone();
-
     let lastpos = Arc::new(Mutex::new((0, 0)));
     let lastpos2 = lastpos.clone();
 
     view! {
         <div class="wynnmap-item guildterr contain-layout-size"
-            style:width={move || format!("{}px", terr.read().location.width())}
-            style:height={move || format!("{}px", terr.read().location.height())}
-            style:transform={move || format!("translate3D({}px, {}px, 0)", terr.read().location.left_side(), terr.read().location.top_side())}
-            style:background-color={move || format!("rgba({}, {})", col_rgb(), if use_transparency.get() {0.35} else {0.0})}
-            style:border-color={move || format!("rgb({})", col_rgb())}
+            style:width=move || format!("{}px", terr.read().location.width())
+            style:height=move || format!("{}px", terr.read().location.height())
+            style:top=move || format!("{}px", terr.read().location.top_side())
+            style:left=move || format!("{}px", terr.read().location.left_side())
+            style:background-color=move || format!("rgba({}, {})", col_rgb(), if use_transparency.get() {0.35} else {0.0})
+            style:border-color=move || format!("rgb({})", col_rgb())
 
-            on:mouseenter=move |_| {
-                hovered.set(Some(name2.clone()));
+            on:mouseenter={
+                let name = name.clone();
+                move |_| {
+                    hovered.set(Some(name.clone()));
+                }
             }
             on:mouseleave=move |_| {
                 hovered.set(None);
@@ -90,13 +91,16 @@ pub fn Territory(
                 let mut lastpos = lastpos.lock().unwrap();
                 *lastpos = (e.client_x(), e.client_y());
             }
-            on:pointerup=move |e: PointerEvent| {
-                let lastpos = lastpos2.lock().unwrap();
-                let (x, y) = *lastpos;
-                drop(lastpos);
+            on:pointerup={
+                let name = name.clone();
+                move |e: PointerEvent| {
+                    let lastpos = lastpos2.lock().unwrap();
+                    let (x, y) = *lastpos;
+                    drop(lastpos);
 
-                if e.client_x().abs_diff(x) < 5 && e.client_y().abs_diff(y) < 5 {
-                    selected.set(Some(name3.clone()));
+                    if e.client_x().abs_diff(x) < 5 && e.client_y().abs_diff(y) < 5 {
+                        selected.set(Some(name.clone()));
+                    }
                 }
             }
         >
@@ -159,29 +163,12 @@ fn ResIcons(terr: Signal<Resources>) -> impl IntoView {
 
 #[component]
 fn TerrTimer(#[prop(into)] acquired: Signal<chrono::DateTime<chrono::Utc>>) -> impl IntoView {
-    let now = chrono::Utc::now();
-    let time = now
-        .signed_duration_since(acquired.read_untracked())
-        .num_seconds();
+    let SecondTimer(now) = expect_context::<SecondTimer>();
 
-    let (time, set_time) = signal(time);
-
-    let i = set_interval_with_handle(
-        move || {
-            let now = chrono::Utc::now();
-
-            let time = now.signed_duration_since(acquired.read()).num_seconds();
-
-            set_time.set(time);
-        },
-        Duration::from_secs(1),
-    )
-    .ok();
-
-    on_cleanup(move || {
-        if let Some(i) = i {
-            i.clear();
-        }
+    let time = Memo::new(move |_| {
+        now.read()
+            .signed_duration_since(acquired.read())
+            .num_seconds()
     });
 
     let timestr = move || {

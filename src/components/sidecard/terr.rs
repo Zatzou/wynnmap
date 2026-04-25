@@ -1,10 +1,12 @@
-use std::{collections::BTreeMap, sync::Arc, time::Duration};
+use std::{collections::BTreeMap, sync::Arc};
 
 use leptos::prelude::*;
 use wynnmap_types::{
     guild::Guild,
     terr::{TerrOwner, Territory},
 };
+
+use crate::sectimer::SecondTimer;
 
 // Displays the name of the territory and the resources it produces.
 #[component]
@@ -61,34 +63,13 @@ pub fn GuildName(guild: Signal<Guild>) -> impl IntoView {
 // Displays the guild name, tag and how long the territory has been owned. Also displays the treasury.
 #[component]
 pub fn GuildInfo(#[prop(into)] owner: Signal<TerrOwner>) -> impl IntoView {
-    let now = chrono::Utc::now();
+    let SecondTimer(now) = expect_context::<SecondTimer>();
 
-    let time = RwSignal::new(
+    let time = Memo::new(move |_| {
         owner
-            .read_untracked()
+            .read()
             .acquired
-            .map(|acq| now.signed_duration_since(acq).num_seconds()),
-    );
-
-    let i = set_interval_with_handle(
-        move || {
-            let now = chrono::Utc::now();
-
-            let t = owner
-                .read_untracked()
-                .acquired
-                .map(|acq| now.signed_duration_since(acq).num_seconds());
-
-            time.set(t);
-        },
-        Duration::from_secs(1),
-    )
-    .ok();
-
-    on_cleanup(move || {
-        if let Some(i) = i {
-            i.clear();
-        }
+            .map(|acq| now.read().signed_duration_since(acq).num_seconds())
     });
 
     let treas_tier = move |time: i64| TreasTier::from_time(time);

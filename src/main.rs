@@ -9,12 +9,15 @@ use modes::{planning::PlanningMap, war::WarMap};
 use notfound::NotFound;
 use settings::provide_settings;
 
+use crate::sectimer::provide_second_timer;
+
 mod components;
 mod datasource;
 mod dialog;
 mod error;
 mod modes;
 mod notfound;
+mod sectimer;
 mod settings;
 mod wynnmap;
 
@@ -28,6 +31,7 @@ fn main() {
 pub fn App() -> impl IntoView {
     provide_settings();
     provide_dialogs();
+    provide_second_timer();
 
     provide_context(ShowSidebar(RwSignal::new(false)));
 

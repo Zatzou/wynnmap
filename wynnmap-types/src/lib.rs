@@ -51,11 +51,11 @@ impl Region {
     }
 
     pub const fn width(&self) -> u32 {
-        self.start[0].abs_diff(self.end[0])
+        self.start[0].abs_diff(self.end[0]) + 1
     }
 
     pub const fn height(&self) -> u32 {
-        self.start[1].abs_diff(self.end[1])
+        self.start[1].abs_diff(self.end[1]) + 1
     }
 
     /// calculate midpoint on x (horizontal scale)

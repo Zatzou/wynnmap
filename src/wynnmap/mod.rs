@@ -36,24 +36,26 @@ pub fn WynnMap(children: Children) -> impl IntoView {
 
     // mouse position stored for zoom compensation
     let mousepos = Arc::new(Mutex::new((0, 0)));
-    let mousepos2 = mousepos.clone();
 
     // mouse position and drag events
-    let ondrag = move |e: MouseEvent| {
-        e.prevent_default();
+    let ondrag = {
+        let mousepos = mousepos.clone();
+        move |e: MouseEvent| {
+            e.prevent_default();
 
-        // if we are dragging move the map
-        if dragging.get() {
-            let pos = position.get();
+            // if we are dragging move the map
+            if dragging.get() {
+                let pos = position.get();
 
-            position.set((
-                pos.0 + f64::from(e.movement_x()),
-                pos.1 + f64::from(e.movement_y()),
-            ));
+                position.set((
+                    pos.0 + f64::from(e.movement_x()),
+                    pos.1 + f64::from(e.movement_y()),
+                ));
+            }
+
+            let mut mpos = mousepos.lock().unwrap();
+            *mpos = (e.client_x(), e.client_y());
         }
-
-        let mut mpos = mousepos.lock().unwrap();
-        *mpos = (e.client_x(), e.client_y());
     };
 
     // detect when a mouse drag starts
@@ -71,120 +73,129 @@ pub fn WynnMap(children: Children) -> impl IntoView {
     };
 
     // detect zooming using a mouse wheel
-    let zoomchange = move |e: WheelEvent| {
-        e.prevent_default();
+    let zoomchange = {
+        let mousepos = mousepos.clone();
+        move |e: WheelEvent| {
+            e.prevent_default();
 
-        // enable the transition when zooming with the mousewheel
-        transitioning.set(true);
+            // enable the transition when zooming with the mousewheel
+            transitioning.set(true);
 
-        // get the mouse position
-        let mpos1 = mousepos2.lock().unwrap();
-        let mpos = (f64::from(mpos1.0), f64::from(mpos1.1));
-        drop(mpos1);
+            // get the mouse position
+            let mpos1 = mousepos.lock().unwrap();
+            let mpos = (f64::from(mpos1.0), f64::from(mpos1.1));
+            drop(mpos1);
 
-        // calculate the new zoom level
-        let old_zoom = zoom.get();
-        let new_zoom = calculate_new_zoom(old_zoom, -e.delta_y() / 300.0);
+            // calculate the new zoom level
+            let old_zoom = zoom.get();
+            let new_zoom = calculate_new_zoom(old_zoom, -e.delta_y() / 300.0);
 
-        zoom.set(new_zoom);
+            zoom.set(new_zoom);
 
-        apply_zoom_compensation(mpos, old_zoom, new_zoom, position);
+            apply_zoom_compensation(mpos, old_zoom, new_zoom, position);
+        }
     };
 
     // touch positions stored for touch events
     let tpos = Arc::new(Mutex::new(Vec::new()));
-    let tpos2 = tpos.clone();
 
     // detect when a touch starts and update the active touches
-    let touchstart = move |e: TouchEvent| {
-        e.prevent_default();
+    let touchstart = {
+        let tpos = tpos.clone();
+        move |e: TouchEvent| {
+            e.prevent_default();
 
-        let mut tpos = tpos.lock().unwrap();
-        *tpos = get_touch_positions(&e.touches());
+            let mut tpos = tpos.lock().unwrap();
+            *tpos = get_touch_positions(&e.touches());
 
-        if tpos.is_empty() {
-            moving.set(false);
-        } else {
-            moving.set(true);
+            if tpos.is_empty() {
+                moving.set(false);
+            } else {
+                moving.set(true);
+            }
         }
     };
 
     // handle the touch events for dragging and zooming
-    let ontouchdrag = move |e: TouchEvent| {
-        e.prevent_default();
+    let ontouchdrag = {
+        let tpos = tpos.clone();
+        move |e: TouchEvent| {
+            e.prevent_default();
 
-        // get the touch positions
-        let tl = e.touches();
-        let mut tpos = tpos2.lock().unwrap();
+            // get the touch positions
+            let tl = e.touches();
+            let mut tpos = tpos.lock().unwrap();
 
-        // if the touch positions are different from the stored touch positions update the stored touch positions
-        if tl.length() as usize != tpos.len() {
+            // if the touch positions are different from the stored touch positions update the stored touch positions
+            if tl.length() as usize != tpos.len() {
+                *tpos = get_touch_positions(&tl);
+                return;
+            }
+
+            // match the number of touches to determine if it's a drag or zoom
+            match tpos.len() {
+                // drag
+                1 => {
+                    // current position
+                    let pos = position.get();
+
+                    // new delta
+                    let touch = tl.get(0).unwrap();
+                    let npos = (touch.client_x(), touch.client_y());
+
+                    // update the position
+                    position.set((
+                        pos.0 + f64::from(npos.0 - tpos[0].0),
+                        pos.1 + f64::from(npos.1 - tpos[0].1),
+                    ));
+                }
+                // zoom
+                2 => {
+                    // disable will-change to prevent flickering
+                    moving.set(false);
+
+                    // get the touch positions
+                    let touch1 = tl.get(0).unwrap();
+                    let touch2 = tl.get(1).unwrap();
+
+                    let npos = (
+                        (touch1.client_x(), touch1.client_y()),
+                        (touch2.client_x(), touch2.client_y()),
+                    );
+
+                    // calculate the distance between the touches
+                    let dist =
+                        f64::from((npos.0.0 - npos.1.0).pow(2) + (npos.0.1 - npos.1.1).pow(2))
+                            .sqrt();
+
+                    // calculate the distance between the touches before the zoom
+                    let opos =
+                        f64::from((tpos[0].0 - tpos[1].0).pow(2) + (tpos[0].1 - tpos[1].1).pow(2))
+                            .sqrt();
+
+                    // calculate the delta
+                    let delta = dist - opos;
+
+                    // calculate the new zoom level
+                    let old_zoom = zoom.get();
+                    let new_zoom = calculate_new_zoom(old_zoom, delta / 300.0);
+
+                    zoom.set(new_zoom);
+
+                    let mpos = (
+                        f64::from(npos.0.0 + npos.1.0) / 2.0,
+                        f64::from(npos.0.1 + npos.1.1) / 2.0,
+                    );
+
+                    apply_zoom_compensation(mpos, old_zoom, new_zoom, position);
+                }
+                _ => {}
+            }
+
+            // update the touch positions after the event
+            // this ensures that we can calculate deltas correctly
             *tpos = get_touch_positions(&tl);
-            return;
         }
-
-        // match the number of touches to determine if it's a drag or zoom
-        match tpos.len() {
-            // drag
-            1 => {
-                // current position
-                let pos = position.get();
-
-                // new delta
-                let touch = tl.get(0).unwrap();
-                let npos = (touch.client_x(), touch.client_y());
-
-                // update the position
-                position.set((
-                    pos.0 + f64::from(npos.0 - tpos[0].0),
-                    pos.1 + f64::from(npos.1 - tpos[0].1),
-                ));
-            }
-            // zoom
-            2 => {
-                // disable will-change to prevent flickering
-                moving.set(false);
-
-                // get the touch positions
-                let touch1 = tl.get(0).unwrap();
-                let touch2 = tl.get(1).unwrap();
-
-                let npos = (
-                    (touch1.client_x(), touch1.client_y()),
-                    (touch2.client_x(), touch2.client_y()),
-                );
-
-                // calculate the distance between the touches
-                let dist =
-                    f64::from((npos.0.0 - npos.1.0).pow(2) + (npos.0.1 - npos.1.1).pow(2)).sqrt();
-
-                // calculate the distance between the touches before the zoom
-                let opos =
-                    f64::from((tpos[0].0 - tpos[1].0).pow(2) + (tpos[0].1 - tpos[1].1).pow(2))
-                        .sqrt();
-
-                // calculate the delta
-                let delta = dist - opos;
-
-                // calculate the new zoom level
-                let old_zoom = zoom.get();
-                let new_zoom = calculate_new_zoom(old_zoom, delta / 300.0);
-
-                zoom.set(new_zoom);
-
-                let mpos = (
-                    f64::from(npos.0.0 + npos.1.0) / 2.0,
-                    f64::from(npos.0.1 + npos.1.1) / 2.0,
-                );
-
-                apply_zoom_compensation(mpos, old_zoom, new_zoom, position);
-            }
-            _ => {}
-        }
-
-        // update the touch positions after the event
-        // this ensures that we can calculate deltas correctly
-        *tpos = get_touch_positions(&tl);
     };
 
     let onkeydown = move |e: KeyboardEvent| {
