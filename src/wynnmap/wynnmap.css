@@ -1,12 +1,17 @@
 .wynnmap-container {
+    width: 100vw;
+    height: 100vh;
+    touch-action: none;
     overflow: hidden;
     backface-visibility: hidden;
     contain: strict;
 }
 
 .wynnmap-inner {
+    position: relative;
     transform-origin: 0 0;
     backface-visibility: hidden;
+    contain: size layout;
 }
 
 .wynnmap-transitions {
@@ -24,14 +29,25 @@
 .wynnmap-tile {
     position: fixed;
     max-width: unset;
+    pointer-events: none;
+    backface-visibility: hidden;
     contain: strict;
+    content-visibility: auto;
     /* reduce chromium/webkit pixel gaps */
     /* still visible at high zooms but greatly reduced */
     mix-blend-mode: plus-lighter;
 }
 
+.connpath {
+    position: fixed;
+    pointer-events: none;
+    backface-visibility: hidden;
+    contain: strict;
+}
+
 .wynnmap-item {
     position: fixed;
+    backface-visibility: hidden;
 }
 
 .wynnmap-container [class^="icon-"] {
@@ -43,12 +59,29 @@
 }
 
 .guildterr {
+    background-color: rgb(var(--guild-col) / 0.35);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    border: 2px solid;
+    border: 2px solid rgb(var(--guild-col));
     border-radius: 2px;
+}
+
+.guildterr-notrans {
+    background-color: rgb(var(--guild-col));
+}
+
+.guildterr .guildtag {
+    font-size: var(--tsize);
+    line-height: var(--tsize);
+    -webkit-text-stroke: black 4px;
+    paint-order: stroke;
+    font-optical-sizing: auto;
+}
+
+.guildterr h4 {
+    background-color: oklch(var(--bg-col));
 }
 
 .guildterr .attacktmr {

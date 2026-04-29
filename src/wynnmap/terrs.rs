@@ -19,7 +19,7 @@ pub fn TerrView(
     #[prop(optional)] hide_timers: bool,
 ) -> impl IntoView {
     view! {
-        <div>
+        <div class="wynnmap-items">
             <For
                 each=move || terrs.get().into_iter()
                 key=move |(k, _)| k.clone()
@@ -56,7 +56,7 @@ pub fn Territory(
 ) -> impl IntoView {
     let col_rgb = move || {
         let col = owner.read().guild.get_color();
-        format!("{}, {}, {}", col.0, col.1, col.2)
+        format!("{} {} {}", col.0, col.1, col.2)
     };
 
     // toggles for showing territory parts
@@ -68,14 +68,16 @@ pub fn Territory(
     let lastpos = Arc::new(Mutex::new((0, 0)));
     let lastpos2 = lastpos.clone();
 
+    let namesize = Memo::new(move |_| (terr.read().location.width() / 3).min(40));
+
     view! {
         <div class="wynnmap-item guildterr contain-layout-size"
+            class:guildterr-notrans=move || !use_transparency.get()
             style:width=move || format!("{}px", terr.read().location.width())
             style:height=move || format!("{}px", terr.read().location.height())
             style:top=move || format!("{}px", terr.read().location.top_side())
             style:left=move || format!("{}px", terr.read().location.left_side())
-            style:background-color=move || format!("rgba({}, {})", col_rgb(), if use_transparency.get() {0.35} else {0.0})
-            style:border-color=move || format!("rgb({})", col_rgb())
+            style:--guild-col=move || col_rgb()
 
             on:mouseenter={
                 let name = name.clone();
@@ -113,9 +115,12 @@ pub fn Territory(
 
             // guild tag
             <Show when={move || show_gtag.get()}>
-                <svg style:height="1.875rem" class="w-full overflow-visible">
-                    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="30" font-weight="bold" fill="white" paint-order="stroke" stroke="black" stroke-width="3">{owner.read().guild.prefix.clone()}</text>
-                </svg>
+                <h1
+                    class="guildtag font-black text-white"
+                    style:--tsize=move || format!("{}px", namesize.read())
+                >
+                    {owner.read().guild.prefix.clone()}
+                </h1>
             </Show>
             // resource icons
             <Show when={move || show_res.get()}>
@@ -134,7 +139,7 @@ pub fn Territory(
 #[component]
 fn ResIcons(terr: Signal<Resources>) -> impl IntoView {
     view! {
-        <div class="flex pb-1 wynnmap-hide-zoomedout h-[24px] contain-paint" >
+        <div class="flex wynnmap-hide-zoomedout h-[24px] contain-paint" >
             {move || {
                 let t = terr.read();
 
@@ -195,20 +200,20 @@ fn TerrTimer(#[prop(into)] acquired: Signal<chrono::DateTime<chrono::Utc>>) -> i
 
         // times based on treasury
         if time < 3600 {
-            "background-color: oklch(0.723 0.219 149.579)"
+            "0.723 0.219 149.579"
         } else if time < (3600 * 24) {
-            "background-color: oklch(0.768 0.233 130.85);"
+            "0.768 0.233 130.85"
         } else if time < (3600 * 24 * 5) {
-            "background-color: oklch(0.795 0.184 86.047);"
+            "0.795 0.184 86.047"
         } else if time < (3600 * 24 * 12) {
-            "background-color: oklch(0.705 0.213 47.604);"
+            "0.705 0.213 47.604"
         } else {
-            "background-color: oklch(0.637 0.237 25.331);"
+            "0.637 0.237 25.331"
         }
     };
 
     view! {
-        <h4 class="px-2 rounded-2xl text-sm text-center whitespace-nowrap contain-paint" style={move || color}>{timestr}</h4>
+        <h4 class="px-2 rounded-2xl text-sm text-center whitespace-nowrap contain-paint" style:--bg-col={color}>{timestr}</h4>
     }
 }
 

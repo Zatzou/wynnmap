@@ -302,7 +302,6 @@ pub fn WynnMap(children: Children) -> impl IntoView {
         // outermost container used for containing the map
         <div
             class="wynnmap-container"
-            style="height: 100vh;"
             on:mousemove=ondrag
             on:mousedown=dragstart
             on:mouseup=dragend

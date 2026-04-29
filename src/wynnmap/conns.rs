@@ -12,25 +12,25 @@ pub fn Connections(#[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>) -
     let conn_path = move || create_route_paths(&terrs.read());
     let bounds = Memo::new(move |_| bounds(&terrs.read()));
 
-    let orig_x = move || bounds.read().0;
-    let orig_y = move || bounds.read().1;
-    let width = move || bounds.read().2;
-    let height = move || bounds.read().3;
-
-    let viewbox = move || format!("{} {} {} {}", orig_x(), orig_y(), width(), height());
-
-    let style = move || {
+    let viewbox = move || {
         format!(
-            "position:fixed;contain:strict;width:{}px;height:{}px;top:{}px;left:{}px",
-            width(),
-            height(),
-            orig_y(),
-            orig_x()
+            "{} {} {} {}",
+            bounds.read().0,
+            bounds.read().1,
+            bounds.read().2,
+            bounds.read().3
         )
     };
 
     view! {
-        <svg style={style} viewBox={viewbox} >
+        <svg
+            class="connpath"
+            style:left=move || format!("{}px", bounds.read().0)
+            style:top=move || format!("{}px", bounds.read().1)
+            style:width=move || format!("{}px", bounds.read().2)
+            style:height=move || format!("{}px", bounds.read().3)
+            viewBox={viewbox}
+        >
             <path
                 id="connpath"
                 d={move || conn_path()}
@@ -42,11 +42,11 @@ pub fn Connections(#[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>) -
                 "
                 <use
                     href=\"#connpath\"
-                    style=\"stroke:black;stroke-width:4;\"
+                    style=\"stroke:black;stroke-width:6;\"
                 />
                 <use
                     href=\"#connpath\"
-                    style=\"stroke:white;stroke-width:2;\"
+                    style=\"stroke:white;stroke-width:3;\"
                 />
                 "
             }/>
