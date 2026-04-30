@@ -1,6 +1,7 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use serde::Deserialize;
+use tokio::try_join;
 use tracing::{Instrument, error, info_span};
 use uuid::Uuid;
 use wynnmap_types::guild::Guild;
@@ -53,27 +54,31 @@ impl GuildTracker {
 
     #[tracing::instrument(skip(self), err(Debug))]
     async fn query_guilds(&self) -> Result<(), util::RequestError> {
-        let (wynn_guilds, wynntils_guilds) = async {
-            let res = self
-                .client
-                .get("https://api.wynncraft.com/v3/guild/list/guild")
-                .send()
-                .await?;
+        let (wynn_guilds, wynntils_guilds): (HashMap<Arc<str>, WynnGuild>, Vec<WynntilsGuild>) =
+            async {
+                try_join!(
+                    async {
+                        let res = self
+                            .client
+                            .get("https://api.wynncraft.com/v3/guild/list/guild")
+                            .send()
+                            .await?;
 
-            let wynn_guilds: HashMap<Arc<str>, WynnGuild> = res.parse_json().await?;
+                        res.parse_json().await
+                    },
+                    async {
+                        let res = self
+                            .client
+                            .get("https://athena.wynntils.com/cache/get/guildList")
+                            .send()
+                            .await?;
 
-            let res = self
-                .client
-                .get("https://athena.wynntils.com/cache/get/guildList")
-                .send()
-                .await?;
-
-            let wynntils_guilds: Vec<WynntilsGuild> = res.parse_json().await?;
-
-            Ok::<_, util::RequestError>((wynn_guilds, wynntils_guilds))
-        }
-        .instrument(info_span!("fetch"))
-        .await?;
+                        res.parse_json().await
+                    }
+                )
+            }
+            .instrument(info_span!("fetch"))
+            .await?;
 
         async {
             // acquire lock on the state

@@ -1,6 +1,9 @@
-use std::ops::{Add, Sub};
+use std::{
+    ops::{Add, Sub},
+    str::FromStr,
+};
 
-use leptos::prelude::*;
+use leptos::{attr::AttributeValue, prelude::*, tachys::html::property::IntoProperty};
 
 #[component]
 pub fn Incrementor<T>(
@@ -16,7 +19,10 @@ where
         + Ord
         + Copy
         + Default
+        + FromStr
         + Sync
+        + AttributeValue
+        + IntoProperty
         + 'static,
 {
     let increment = move |_| {
@@ -33,7 +39,15 @@ where
     view! {
         <div class="items-center">
             <button on:click=decrement class="bg-neutral-600 hover:bg-neutral-300 inline-block w-6 font-bold rounded">"-"</button>
-            <span class="inline-block w-7 text-center">{value}</span>
+            <input class="inline-block w-7 text-center" style:appearance="textfield" r#type="number" min=min max=max prop:value=value on:input:target=move |ev| {
+                let val = ev.target().value();
+
+                if let Ok(v) = val.parse::<T>() {
+                    value.set(v.clamp(min.get(), max.get()))
+                }
+            }
+            on:click:target=move |ev| ev.target().select()
+            />
             <button on:click=increment class="bg-neutral-600 hover:bg-neutral-300 inline-block w-6 font-bold rounded">"+"</button>
         </div>
     }
