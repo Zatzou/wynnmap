@@ -221,8 +221,8 @@ pub fn WynnMap(children: Children) -> impl IntoView {
                 let zoom = zoom.get() * 2.0;
 
                 position.set((
-                    (100.0 * zoom + screen_middle.0),
-                    (1200.0 * zoom + screen_middle.1),
+                    100.0f64.mul_add(zoom, screen_middle.0),
+                    1200.0f64.mul_add(zoom, screen_middle.1),
                 ));
 
                 transitioning.set(true);
@@ -360,14 +360,18 @@ const ZOOM_MIN: f64 = 0.0625;
 const ZOOM_MAX: f64 = 64.0;
 
 /// Calculate the new zoom level based on the current zoom level and the delta and clamp it to the min and max zoom levels
-fn calculate_new_zoom(current_zoom: f64, delta: f64) -> f64 {
+const fn calculate_new_zoom(current_zoom: f64, delta: f64) -> f64 {
     (delta.mul_add(current_zoom, current_zoom)).clamp(ZOOM_MIN, ZOOM_MAX)
 }
 
 /// Calculate the transform that has to be applied such that the zoom appears to be centered around the mouse position
 ///
 /// This is based on the stackoverflow answer here: <https://stackoverflow.com/a/27611642>
-fn calculate_zoom_compensation(center: (f64, f64), old_zoom: f64, new_zoom: f64) -> (f64, f64) {
+const fn calculate_zoom_compensation(
+    center: (f64, f64),
+    old_zoom: f64,
+    new_zoom: f64,
+) -> (f64, f64) {
     let i = (center.0 / old_zoom, center.1 / old_zoom);
 
     let n = (i.0 * new_zoom, i.1 * new_zoom);

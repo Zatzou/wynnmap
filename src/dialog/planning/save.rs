@@ -26,16 +26,16 @@ enum FileFormat {
 impl FileFormat {
     const fn mime_type(&self) -> &'static str {
         match self {
-            FileFormat::Wynnmap | FileFormat::Farog => "application/json",
-            FileFormat::RueaES => "application/x-lz4",
+            Self::Wynnmap | Self::Farog => "application/json",
+            Self::RueaES => "application/x-lz4",
         }
     }
 
     const fn file_ext(&self) -> &'static str {
         match self {
-            FileFormat::Wynnmap => "wynnmap",
-            FileFormat::Farog => "json",
-            FileFormat::RueaES => "lz4",
+            Self::Wynnmap => "wynnmap",
+            Self::Farog => "json",
+            Self::RueaES => "lz4",
         }
     }
 }

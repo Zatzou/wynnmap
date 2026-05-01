@@ -117,7 +117,7 @@ enum TreasTier {
 }
 
 impl TreasTier {
-    fn from_time(time: i64) -> Self {
+    const fn from_time(time: i64) -> Self {
         match time {
             t if t < 3600 => Self::VLow,
             t if t < (3600 * 24) => Self::Low,
@@ -129,21 +129,21 @@ impl TreasTier {
 
     const fn name(&self) -> &'static str {
         match self {
-            TreasTier::VHigh => "Very High",
-            TreasTier::High => "High",
-            TreasTier::Medium => "Medium",
-            TreasTier::Low => "Low",
-            TreasTier::VLow => "Very Low",
+            Self::VHigh => "Very High",
+            Self::High => "High",
+            Self::Medium => "Medium",
+            Self::Low => "Low",
+            Self::VLow => "Very Low",
         }
     }
 
     const fn color(&self) -> &'static str {
         match self {
-            TreasTier::VHigh => "oklch(0.637 0.237 25.331)",
-            TreasTier::High => "oklch(0.705 0.213 47.604)",
-            TreasTier::Medium => "oklch(0.795 0.184 86.047)",
-            TreasTier::Low => "oklch(0.768 0.233 130.85)",
-            TreasTier::VLow => "oklch(0.723 0.219 149.579)",
+            Self::VHigh => "oklch(0.637 0.237 25.331)",
+            Self::High => "oklch(0.705 0.213 47.604)",
+            Self::Medium => "oklch(0.795 0.184 86.047)",
+            Self::Low => "oklch(0.768 0.233 130.85)",
+            Self::VLow => "oklch(0.723 0.219 149.579)",
         }
     }
 }
