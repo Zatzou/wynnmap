@@ -1,7 +1,7 @@
 use axum::{body::Body, extract::Request, middleware::Next, response::Response};
 use reqwest::header;
 
-pub(crate) async fn file_cache_control(req: Request, next: Next) -> Response<Body> {
+pub async fn file_cache_control(req: Request, next: Next) -> Response<Body> {
     let res = next.run(req).await;
     let (mut parts, body) = res.into_parts();
 

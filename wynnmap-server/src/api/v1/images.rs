@@ -11,7 +11,7 @@ use axum::{
 
 use crate::{ImageState, etag::check_etag};
 
-pub(crate) fn router(state: Arc<ImageState>) -> axum::Router {
+pub fn router(state: Arc<ImageState>) -> axum::Router {
     axum::Router::new()
         .route("/maps.json", get(maps_json))
         .route("/{name}", get(get_image))

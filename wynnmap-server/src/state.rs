@@ -16,7 +16,7 @@ use wynnmap_types::{
 };
 
 #[derive(Clone, Default)]
-pub(crate) struct ImageState {
+pub struct ImageState {
     pub use_webp: bool,
 
     pub maps: Arc<RwLock<Vec<MapTile>>>,
@@ -25,12 +25,12 @@ pub(crate) struct ImageState {
 }
 
 #[derive(Debug, Default)]
-pub(crate) struct GuildState {
+pub struct GuildState {
     pub guilds: Arc<RwLock<BTreeMap<Arc<str>, Guild>>>,
 }
 
 #[derive(Debug)]
-pub(crate) struct TerritoryState {
+pub struct TerritoryState {
     pub inner: Arc<RwLock<TerritoryStateInner>>,
 
     pub bc_recv: Arc<broadcast::Receiver<TerrSockMessage>>,
@@ -38,7 +38,7 @@ pub(crate) struct TerritoryState {
 }
 
 #[derive(Debug, Default)]
-pub(crate) struct TerritoryStateInner {
+pub struct TerritoryStateInner {
     pub territories: BTreeMap<Arc<str>, Territory>,
     pub territories_etag: Arc<str>,
     pub territories_modified: DateTime<Utc>,
@@ -49,7 +49,7 @@ pub(crate) struct TerritoryStateInner {
 }
 
 #[derive(Deserialize)]
-pub(crate) struct ExTerrInfo {
+pub struct ExTerrInfo {
     pub resources: Resources,
     #[serde(alias = "Trading Routes")]
     pub connections: BTreeSet<Arc<str>>,

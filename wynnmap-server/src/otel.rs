@@ -27,7 +27,7 @@ fn resource(conf: &OtelConfig) -> Resource {
         .build()
 }
 
-pub(crate) fn init(conf: &OtelConfig) {
+pub fn init(conf: &OtelConfig) {
     let trace_provider = init_trace_provider(conf);
     let metrics_provider = init_metrics_provider(conf);
 

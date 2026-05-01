@@ -16,7 +16,7 @@ use wynnmap_types::ws::TerrSockMessage;
 
 use crate::{AnyError, header_date, state::TerritoryState};
 
-pub(crate) fn router(state: Arc<TerritoryState>) -> axum::Router {
+pub fn router(state: Arc<TerritoryState>) -> axum::Router {
     axum::Router::new()
         .route("/list", get(terr_list))
         .route("/guilds", get(guild_list))
