@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, time::Duration};
 
 use axum::http::HeaderValue;
 use chrono::{DateTime, Utc};
@@ -24,6 +24,7 @@ pub fn reqwest_client_from_conf(config: &Config) -> reqwest::Client {
             env!("CARGO_PKG_VERSION"),
             config.client.ua_contact
         ))
+        .timeout(Duration::from_secs(10))
         .build()
         .unwrap()
 }
