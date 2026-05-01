@@ -30,7 +30,7 @@ async fn maps_json(State(state): State<Arc<ImageState>>, headers: HeaderMap) -> 
         (header::ETAG, &format!("\"{etag}\"")),
     ];
 
-    if check_etag(headers, etag) {
+    if check_etag(&headers, etag) {
         (StatusCode::NOT_MODIFIED, resp_headers, Body::empty()).into_response()
     } else {
         let maps = { state.maps.read().await.clone() };
@@ -66,7 +66,7 @@ async fn get_image(
                 (header::CACHE_CONTROL, "public, max-age=86400, immutable"),
             ];
 
-            if check_etag(headers, etag) {
+            if check_etag(&headers, etag) {
                 (StatusCode::NOT_MODIFIED, resp_headers, Body::empty()).into_response()
             } else {
                 (StatusCode::OK, resp_headers, data).into_response()

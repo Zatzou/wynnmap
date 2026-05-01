@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use axum::{
     Json,
@@ -50,7 +50,7 @@ async fn terr_list(
         (header::LAST_MODIFIED, header_date(modified)),
     ];
 
-    if check_etag(headers, &etag) {
+    if check_etag(&headers, &etag) {
         (StatusCode::NOT_MODIFIED, resp_headers, Body::empty()).into_response()
     } else {
         (resp_headers, Json(territories)).into_response()
@@ -86,63 +86,59 @@ async fn ws_handler(
     ws: WebSocketUpgrade,
     State(state): State<Arc<TerritoryState>>,
 ) -> impl IntoResponse {
-    ws.on_upgrade(|s| async {
-        handle_socket(s, state).await;
+    ws.on_upgrade(move |s| async move {
+        state.active_conn.add(1, &[]);
+        let bc_recv = state.bc_recv.resubscribe();
+
+        if let Err(e) = handle_socket(s, bc_recv, state.clone()).await {
+            tracing::error!("Error handling socket: {:?}", e);
+        }
+
+        state.active_conn.add(-1, &[]);
     })
 }
 
-async fn handle_socket(socket: WebSocket, state: Arc<TerritoryState>) {
-    state.active_conn.add(1, &[]);
-    let bc_recv = state.bc_recv.resubscribe();
-
-    if let Err(e) = handle_socket_inner(socket, bc_recv, state.clone()).await {
-        tracing::error!("Error handling socket: {:?}", e);
-    }
-
-    state.active_conn.add(-1, &[]);
-
-    async fn handle_socket_inner(
-        mut socket: WebSocket,
-        mut bc_recv: tokio::sync::broadcast::Receiver<TerrSockMessage>,
-        state: Arc<TerritoryState>,
-    ) -> Result<(), AnyError> {
-        loop {
-            select! {
-                // respond to received pings and close messages
-                s = socket.recv() => {
-                    if let Some(Ok(msg)) = s {
-                        match msg {
-                            Message::Ping(data) => {
-                                socket.send(Message::Pong(data)).await?;
-                            }
-                            Message::Close(frame) => {
-                                socket.send(Message::Close(frame)).await?;
-                                break;
-                            }
-                            _ => {}
+async fn handle_socket(
+    mut socket: WebSocket,
+    mut bc_recv: tokio::sync::broadcast::Receiver<TerrSockMessage>,
+    state: Arc<TerritoryState>,
+) -> Result<(), AnyError> {
+    loop {
+        select! {
+            // respond to received pings and close messages
+            s = socket.recv() => {
+                if let Some(Ok(msg)) = s {
+                    match msg {
+                        Message::Ping(data) => {
+                            socket.send(Message::Pong(data)).await?;
                         }
-                    } else {
-                        break;
+                        Message::Close(frame) => {
+                            let _ = socket.send(Message::Close(frame)).await;
+                            break;
+                        }
+                        _ => {}
                     }
-                }
-                // send messages from the broadcast channel
-                m = bc_recv.recv() => {
-                    if let Ok(msg) = m {
-                        socket
-                            .send(Message::Text(
-                                serde_json::to_string(&msg)?.into(),
-                            ))
-                            .await?;
-                    }
-                }
-                // send the last updated timestamp every 30 seconds
-                _ = tokio::time::sleep(std::time::Duration::from_secs(30)) => {
-                    let ts = { state.inner.read().await.last_updated };
-                    socket.send(Message::Text(serde_json::to_string(&TerrSockMessage::LastUpdate { ts })?.into())).await?;
+                } else {
+                    break;
                 }
             }
+            // send messages from the broadcast channel
+            m = bc_recv.recv() => {
+                if let Ok(msg) = m {
+                    socket
+                        .send(Message::Text(
+                            serde_json::to_string(&msg)?.into(),
+                        ))
+                        .await?;
+                }
+            }
+            // send the last updated timestamp every 30 seconds
+            _ = tokio::time::sleep(Duration::from_secs(30)) => {
+                let ts = { state.inner.read().await.last_updated };
+                socket.send(Message::Text(serde_json::to_string(&TerrSockMessage::LastUpdate { ts })?.into())).await?;
+            }
         }
-
-        Ok(())
     }
+
+    Ok(())
 }
