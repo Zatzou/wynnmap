@@ -37,7 +37,7 @@ where
     };
 
     view! {
-        <div class="items-center">
+        <div class="items-center incrementor">
             <button on:click=decrement class="bg-neutral-600 hover:bg-neutral-300 inline-block w-6 font-bold rounded">"-"</button>
             <input class="inline-block w-7 text-center" style:appearance="textfield" r#type="number" min=min max=max prop:value=value on:input:target=move |ev| {
                 let val = ev.target().value();

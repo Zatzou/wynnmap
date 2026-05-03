@@ -67,3 +67,9 @@ html::before {
 .contain-layout-size {
     contain: layout size;
 }
+
+.incrementor input[type="number"]::-webkit-outer-spin-button,
+.incrementor input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
