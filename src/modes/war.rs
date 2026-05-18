@@ -16,7 +16,7 @@ use crate::{
         incrementor::Incrementor,
         sidebar::Sidebar,
         sidecard::{
-            SideCard, SideCardHover,
+            SideCard,
             terr::{GuildInfo, TerrInfo},
         },
     },
@@ -135,13 +135,13 @@ pub fn WarMap() -> impl IntoView {
             }
 
             Some(view! {
-                <SideCardHover>
+                <SideCard hover=true>
                     <TerrStats
                         name={hovered}
                         terrs={terrs}
                         owners={owners}
                     />
-                </SideCardHover>
+                </SideCard>
             })
         } else {None}}
 
@@ -208,7 +208,11 @@ pub fn WarMap() -> impl IntoView {
             let sel2 = sel.clone();
 
             Some(view! {
-                <SideCard closefn={move || selected.set(None)}>
+                <SideCard>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 cursor-pointer absolute top-2 right-2" on:click={move |_| selected.set(None)}>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+
                     <TerrStats name={sel} terrs={terrs} owners={owners} />
 
                     <TerrCalc name={sel2} terrs={terrs} owners={owners} />
@@ -228,8 +232,6 @@ fn TerrStats(
 
     view! {
         <TerrInfo name={name} terrs={terrs} />
-
-        <hr class="border-neutral-600" />
 
         <GuildInfo owner={Signal::derive(owner)} />
     }
@@ -322,10 +324,8 @@ fn TerrCalc(
     let def_tier = move || DefTier::from_defnum(def_num.get());
 
     view! {
-        <hr class="border-neutral-600" />
-
-        <div class="p-2">
-            <h1 class="text-xl">"Tower"</h1>
+        <div>
+            <h2 class="text-xl">"Tower"</h2>
             <div class="p-2">
                 <Checkbox id="hq" checked={hq}>"HQ"</Checkbox>
 
@@ -365,8 +365,6 @@ fn TerrCalc(
                 </div>
             </div>
         </div>
-
-        <hr class="border-neutral-600" />
 
         <div class="p-4">
             <h2>"Avg DPS: "{move || {

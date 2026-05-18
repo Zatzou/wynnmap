@@ -5,71 +5,12 @@
     src: url("./Roboto-VariableFont_wdth,wght.ttf") format("truetype-variations");
 }
 
-html {
-    font-family: "Roboto", sans-serif;
-    overflow: hidden;
+@import "./css/html.css";
+@import "./css/icons.css";
 
-    @apply bg-neutral-950;
-}
+@import "./css/wynnmap.css";
+@import "./css/dialog.css";
+@import "./css/sidebar.css";
+@import "./css/sidecard.css";
 
-html::before {
-    content: "";
-    background-color: transparent;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23a)'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    background-size: 182px;
-    opacity: 0.08;
-    top: 0;
-    left: 0;
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-}
-
-.icon-emeralds {
-    background-position: 0 -20px;
-}
-
-.icon-crops {
-    background-position: 0 0;
-}
-
-.icon-fish {
-    background-position: -20px 0;
-}
-
-.icon-ore {
-    background-position: -40px 0;
-}
-
-.icon-wood {
-    background-position: -60px 0;
-}
-
-[class^="icon-"] {
-    width: 20px;
-    height: 20px;
-    background-image: url("./icons.png");
-    image-rendering: pixelated;
-}
-
-@media (hover: none) {
-    .terrinfo-hoverbox {
-        display: none;
-    }
-}
-
-.contain-paint {
-    contain: paint;
-}
-
-.contain-layout-size {
-    contain: layout size;
-}
-
-.incrementor input[type="number"]::-webkit-outer-spin-button,
-.incrementor input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
+@import "./css/incrementor.css";

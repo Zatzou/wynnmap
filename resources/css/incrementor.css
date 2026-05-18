@@ -1,0 +1,22 @@
+.incrementor {
+    align-items: center;
+
+    button {
+        display: inline-block;
+        @apply bg-neutral-600 hover:bg-neutral-300 w-6 font-bold rounded;
+    }
+
+    input {
+        display: inline-block;
+        text-align: center;
+        appearance: textfield;
+
+        @apply w-7;
+    }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+}

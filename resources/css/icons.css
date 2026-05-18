@@ -1,0 +1,26 @@
+.icon-emeralds {
+    background-position: 0 -20px;
+}
+
+.icon-crops {
+    background-position: 0 0;
+}
+
+.icon-fish {
+    background-position: -20px 0;
+}
+
+.icon-ore {
+    background-position: -40px 0;
+}
+
+.icon-wood {
+    background-position: -60px 0;
+}
+
+[class^="icon-"] {
+    width: 20px;
+    height: 20px;
+    background-image: url("./icons.png");
+    image-rendering: pixelated;
+}

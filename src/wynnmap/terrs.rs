@@ -71,7 +71,7 @@ pub fn Territory(
     let namesize = Memo::new(move |_| (terr.read().location.width() / 3).min(40));
 
     view! {
-        <div class="wynnmap-item guildterr contain-layout-size"
+        <div class="wynnmap-item guildterr"
             class:guildterr-notrans=move || !use_transparency.get()
             style:width=move || format!("{}px", terr.read().location.width())
             style:height=move || format!("{}px", terr.read().location.height())
@@ -116,7 +116,7 @@ pub fn Territory(
             // guild tag
             <Show when={move || show_gtag.get()}>
                 <h1
-                    class="guildtag font-black text-white"
+                    class="guildtag"
                     style:--tsize=move || format!("{}px", namesize.read())
                 >
                     {owner.read().guild.prefix.clone()}
@@ -139,7 +139,7 @@ pub fn Territory(
 #[component]
 fn ResIcons(terr: Signal<Resources>) -> impl IntoView {
     view! {
-        <div class="flex wynnmap-hide-zoomedout h-[24px] contain-paint" >
+        <div class="resicons wynnmap-hide-zoomedout" >
             {move || {
                 let t = terr.read();
 
@@ -213,7 +213,7 @@ fn TerrTimer(#[prop(into)] acquired: Signal<chrono::DateTime<chrono::Utc>>) -> i
     };
 
     view! {
-        <h4 class="px-2 rounded-2xl text-sm text-center whitespace-nowrap contain-paint" style:--bg-col={color}>{timestr}</h4>
+        <h4 class="terrtimer" style:--bg-col={color}>{timestr}</h4>
     }
 }
 

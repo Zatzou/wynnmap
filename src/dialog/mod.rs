@@ -56,7 +56,7 @@ pub fn DialogRenderer() -> impl IntoView {
     move || {
         top_dialog().map(|top_dialog| {
             view! {
-                <div class="fixed top-0 left-0 w-full h-full">
+                <div class="dialogcontainer">
                     // display dialogs below the topmost one
                     {move || {
                         rest().into_iter().map(|d|
@@ -68,7 +68,7 @@ pub fn DialogRenderer() -> impl IntoView {
                     }}
 
                     // background
-                    <div class="fixed top-0 left-0 w-full h-full bg-black opacity-75" />
+                    <div class="dialogbackground" />
 
                     // topmost dialog
                     <DialogFrame>
@@ -83,7 +83,7 @@ pub fn DialogRenderer() -> impl IntoView {
 #[component]
 fn DialogFrame(children: Children) -> impl IntoView {
     view! {
-        <div class="fixed top-1/2 left-1/2 -translate-1/2">
+        <div class="dialogframe">
             {children()}
         </div>
     }

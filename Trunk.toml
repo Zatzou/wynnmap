@@ -13,7 +13,7 @@ command_arguments = [
     "-i",
     "./resources/style.css",
     "-o",
-    "./resources/tailwind.css",
+    "./wynnmap.css",
 ]
 
 [[proxy]]

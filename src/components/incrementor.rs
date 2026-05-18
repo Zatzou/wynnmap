@@ -37,18 +37,19 @@ where
     };
 
     view! {
-        <div class="items-center incrementor">
-            <button on:click=decrement class="bg-neutral-600 hover:bg-neutral-300 inline-block w-6 font-bold rounded">"-"</button>
-            <input class="inline-block w-7 text-center" style:appearance="textfield" r#type="number" min=min max=max prop:value=value on:input:target=move |ev| {
-                let val = ev.target().value();
+        <div class="incrementor">
+            <button on:click=decrement>"-"</button>
+            <input r#type="number" min=min max=max prop:value=value
+                on:input:target=move |ev| {
+                    let val = ev.target().value();
 
-                if let Ok(v) = val.parse::<T>() {
-                    value.set(v.clamp(min.get(), max.get()))
+                    if let Ok(v) = val.parse::<T>() {
+                        value.set(v.clamp(min.get(), max.get()))
+                    }
                 }
-            }
-            on:click:target=move |ev| ev.target().select()
+                on:click:target=move |ev| ev.target().select()
             />
-            <button on:click=increment class="bg-neutral-600 hover:bg-neutral-300 inline-block w-6 font-bold rounded">"+"</button>
+            <button on:click=increment>"+"</button>
         </div>
     }
 }

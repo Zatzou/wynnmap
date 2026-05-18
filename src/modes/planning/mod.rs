@@ -9,7 +9,7 @@ use crate::{
         gleaderboard::Gleaderboard,
         sidebar::Sidebar,
         sidecard::{
-            SideCard, SideCardHover,
+            SideCard,
             terr::{GuildName, TerrInfo},
         },
     },
@@ -172,7 +172,7 @@ pub fn PlanningMap() -> impl IntoView {
             let hovered = Signal::derive(move || hovered.clone());
 
             Some(view! {
-                <SideCardHover>
+                <SideCard hover=true>
                     <TerrInfo
                         name={hovered}
                         terrs={terrs}
@@ -183,7 +183,7 @@ pub fn PlanningMap() -> impl IntoView {
                             owned.read().get(&*hovered.read()).map(|g| g.get()).unwrap_or_default()
                         })}
                     />
-                </SideCardHover>
+                </SideCard>
             })
         } else {None}}
 
@@ -234,7 +234,10 @@ pub fn PlanningMap() -> impl IntoView {
             let sel = Signal::derive(move || sel.clone());
 
             Some(view! {
-                <SideCard closefn={move || selected.set(None)}>
+                <SideCard>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 cursor-pointer absolute top-2 right-2" on:click={move |_| selected.set(None)}>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
                     <TerrInfo
                         name={sel}
                         terrs={terrs}

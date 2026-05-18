@@ -15,7 +15,7 @@ pub fn TerrInfo(
     #[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>,
 ) -> impl IntoView {
     view! {
-        <div class="p-2">
+        <div>
             <h1 class="text-2xl">{name}</h1>
 
             <div class="p-2">
@@ -51,11 +51,11 @@ pub fn TerrInfo(
 #[component]
 pub fn GuildName(guild: Signal<Guild>) -> impl IntoView {
     view! {
-        <div class="p-2">
-            <h1 class="text-xl">
+        <div>
+            <h2 class="text-xl">
                 {move || guild.read().name.clone()}" "
                 <span class="font-mono">"["{move || guild.read().prefix.clone()}"]"</span>
-            </h1>
+            </h2>
         </div>
     }
 }
@@ -75,7 +75,7 @@ pub fn GuildInfo(#[prop(into)] owner: Signal<TerrOwner>) -> impl IntoView {
     let treas_tier = move |time: i64| TreasTier::from_time(time);
 
     view! {
-        <div class="p-2">
+        <div>
             <h1 class="text-xl">
                 {move || owner.read().guild.name.clone()}" "
                 <span class="font-mono">"["{move || owner.read().guild.prefix.clone()}"]"</span>

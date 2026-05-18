@@ -1,6 +1,6 @@
 /target
 /dist
-/resources/tailwind.css
+/wynnmap.css
 config.toml
 
 # ignore npm stuff

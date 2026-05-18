@@ -12,6 +12,8 @@
     transform-origin: 0 0;
     backface-visibility: hidden;
     contain: size layout;
+
+    transform: matrix3d(var(--z), 0, 0, 0, 0, var(--z), 0, 0, 0, 0, 1, 0, var(--x), var(--y), 0, 1)
 }
 
 .wynnmap-transitions {
@@ -66,31 +68,53 @@
     align-items: center;
     border: 2px solid rgb(var(--guild-col));
     border-radius: 2px;
+    contain: layout size;
+
+    .guildtag {
+        font-size: var(--tsize);
+        line-height: var(--tsize);
+
+        font-weight: 900;
+        color: white;
+        -webkit-text-stroke: black 4px;
+        paint-order: stroke;
+        font-optical-sizing: auto;
+
+        padding: 0 4px;
+        contain: paint;
+    }
+
+    .resicons {
+        display: flex;
+        height: 24px;
+        contain: paint;
+    }
+
+    .terrtimer {
+        @apply px-2;
+        @apply rounded-2xl;
+        @apply text-sm;
+        text-align: center;
+        white-space: nowrap;
+
+        contain: paint;
+
+        background-color: oklch(var(--bg-col));
+        color: black;
+    }
+
+    .attacktmr {
+        position: absolute;
+        width: calc(100% + 6px);
+        height: calc(100% + 6px);
+        z-index: -1;
+
+        border: 4px dashed transparent;
+    }
 }
 
 .guildterr-notrans {
     background-color: rgb(var(--guild-col));
-}
-
-.guildterr .guildtag {
-    font-size: var(--tsize);
-    line-height: var(--tsize);
-    -webkit-text-stroke: black 4px;
-    paint-order: stroke;
-    font-optical-sizing: auto;
-}
-
-.guildterr h4 {
-    background-color: oklch(var(--bg-col));
-}
-
-.guildterr .attacktmr {
-    position: absolute;
-    width: calc(100% + 6px);
-    height: calc(100% + 6px);
-    z-index: -1;
-
-    border: 4px dashed transparent;
 }
 
 @keyframes attackdelay {

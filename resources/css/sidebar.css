@@ -1,0 +1,57 @@
+.sidebar-btn {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    cursor: pointer;
+
+    @apply bg-neutral-900 rounded-e-full mt-2 p-2;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    height: 100dvh;
+
+    @apply bg-neutral-900 md:max-w-sm transition-transform;
+
+    &.closed {
+        transform: translateX(-100%);
+    }
+
+    >*:not(:last-child) {
+        display: flex;
+        border-bottom: 1px solid;
+
+        @apply border-neutral-600;
+    }
+
+    >.title {
+        justify-content: space-between;
+        align-items: center;
+        @apply p-2;
+
+        h1 {
+            @apply text-4xl;
+        }
+    }
+
+    >.content {
+        flex-direction: column;
+        flex-grow: 1;
+    }
+
+    >.settings-btn {
+        align-items: center;
+        cursor: pointer;
+        @apply p-2 gap-2;
+
+        h2 {
+            @apply text-xl;
+        }
+    }
+}
