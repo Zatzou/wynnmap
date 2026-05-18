@@ -1,0 +1,31 @@
+.gleaderboard {
+    display: grid;
+    grid-template-columns: min-content min-content auto auto;
+
+    background-color: black;
+
+    .glrow {
+        display: contents;
+
+        * {
+            background-color: rgba(var(--col), 0.3);
+        }
+
+        *:first-child {
+            height: 1lh;
+            width: 0.5lh;
+
+            background-color: rgb(var(--col));
+        }
+
+        *:nth-child(2) {
+            text-align: right;
+            @apply px-1 font-mono;
+        }
+
+        *:last-child {
+            text-align: right;
+            @apply pr-2;
+        }
+    }
+}

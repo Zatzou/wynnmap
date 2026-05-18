@@ -222,9 +222,9 @@ pub fn PlanningMap() -> impl IntoView {
                         <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" class:hidden={move || !show_guild_leaderboard.get()} />
                     </svg>
                 </div>
-                <hr class="border-neutral-600" class:hidden={move || !show_guild_leaderboard.get()} />
-                <div class="overflow-y-auto shrink min-h-0">
-                    <Gleaderboard owners={mapowneds} class="w-full" class:hidden={move || !show_guild_leaderboard.get()} />
+                <div class="overflow-y-auto shrink min-h-0" class:hidden={move || !show_guild_leaderboard.get()}>
+                    <hr class="border-neutral-600"/>
+                    <Gleaderboard owners={mapowneds}/>
                 </div>
             </div>
         </Sidebar>

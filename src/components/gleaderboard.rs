@@ -7,10 +7,7 @@ use leptos::prelude::*;
 use wynnmap_types::terr::TerrOwner;
 
 #[component]
-pub fn Gleaderboard(
-    #[prop(into)] owners: Signal<BTreeMap<Arc<str>, TerrOwner>>,
-    class: &'static str,
-) -> impl IntoView {
+pub fn Gleaderboard(#[prop(into)] owners: Signal<BTreeMap<Arc<str>, TerrOwner>>) -> impl IntoView {
     let guild_leaderboard = move || {
         let mut guilds = HashMap::new();
 
@@ -31,44 +28,26 @@ pub fn Gleaderboard(
     };
 
     view! {
-        <table class=class class:table-auto=true>
-            <tbody>
-                <For
-                    each=move || guild_leaderboard().into_iter()
-                    key=|(k, v)| (k.clone(), *v)
-                    children=move |(k, v)| {
-                        let col = k.get_color();
-                        let col = format!("{}, {}, {}", col.0, col.1, col.2);
-                        let name = k.name.clone();
-                        let link = move || format!("https://wynncraft.com/stats/guild/{}", name.clone());
+        <div class="gleaderboard">
+            <For
+                each=move || guild_leaderboard().into_iter()
+                key=|(k, v)| (k.clone(), *v)
+                children=move |(k, v)| {
+                    let col = k.get_color();
+                    let col = format!("{}, {}, {}", col.0, col.1, col.2);
+                    let name = k.name.clone();
+                    let link = move || format!("https://wynncraft.com/stats/guild/{}", name.clone());
 
-                        view! {
-                            <tr
-                                class="even:bg-neutral-800"
-                                style=format!("background-color: rgba({}, 0.3)", col)
-                            >
-                                <td>
-                                    <a href=link() target="_blank" class="block pl-2 font-mono">
-                                        "["
-                                        {k.prefix}
-                                        "]"
-                                    </a>
-                                </td>
-                                <td>
-                                    <a href=link() target="_blank" class="block">
-                                        {k.name}
-                                    </a>
-                                </td>
-                                <td>
-                                    <a href=link() target="_blank" class="block text-right pr-2">
-                                        {v}
-                                    </a>
-                                </td>
-                            </tr>
-                        }
+                    view! {
+                        <a class="glrow" style:--col=col href=link() target="_blank">
+                            <div/>
+                            <span>"["{k.prefix}"]"</span>
+                            <span>{k.name}</span>
+                            <span>{v}</span>
+                        </a>
                     }
-                />
-            </tbody>
-        </table>
+                }
+            />
+        </div>
     }
 }
