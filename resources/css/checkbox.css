@@ -1,0 +1,43 @@
+.checkbox:hover input {
+    @apply bg-neutral-500;
+}
+
+.checkbox {
+    display: inline-flex;
+    align-items: center;
+
+    input {
+        appearance: none;
+        position: relative;
+
+        cursor: pointer;
+        user-select: none;
+
+        @apply mr-2 h-5 w-5 rounded-sm bg-neutral-700;
+    }
+
+    input:checked+.checkmark {
+        display: flex;
+    }
+
+    .checkmark {
+        display: none;
+        position: absolute;
+
+        cursor: pointer;
+        user-select: none;
+
+        pointer-events: none;
+
+        @apply justify-center items-center h-5 w-5;
+
+        div {
+            @apply w-[0.4em] h-[0.75em] mb-0.5 rotate-45 border-white border-0 border-r-3 border-b-3;
+        }
+    }
+
+    label {
+        cursor: pointer;
+        user-select: none;
+    }
+}
