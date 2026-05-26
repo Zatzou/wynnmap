@@ -4,19 +4,15 @@ use axum::{
     Json,
     body::Body,
     extract::State,
-    http::{HeaderMap, header},
+    http::{HeaderMap, HeaderName, HeaderValue, header},
     response::{
         IntoResponse, Sse,
         sse::{Event, KeepAlive},
     },
     routing::get,
 };
-use futures::Stream;
 use reqwest::StatusCode;
-use tokio_stream::{
-    StreamExt,
-    wrappers::{BroadcastStream, errors::BroadcastStreamRecvError},
-};
+use tokio_stream::{StreamExt, wrappers::BroadcastStream};
 use wynnmap_types::api::v2::RespWrapper;
 
 use crate::{etag::check_etag, header_date, state::TerritoryState};
@@ -86,11 +82,19 @@ async fn guild_list(State(state): State<Arc<TerritoryState>>) -> impl IntoRespon
     )
 }
 
-async fn sse_handler(
-    State(state): State<Arc<TerritoryState>>,
-) -> Sse<impl Stream<Item = Result<Event, BroadcastStreamRecvError>>> {
+async fn sse_handler(State(state): State<Arc<TerritoryState>>) -> impl IntoResponse {
     let stream = BroadcastStream::new(state.bc_bytes.resubscribe())
         .map(|data| data.map(|data| Event::default().data(data)));
 
-    Sse::new(stream).keep_alive(KeepAlive::new().interval(Duration::from_secs(30)))
+    let mut res = Sse::new(stream)
+        .keep_alive(KeepAlive::new().interval(Duration::from_secs(30)))
+        .into_response();
+
+    // tell proxies to not buffer data
+    res.headers_mut().insert(
+        HeaderName::from_static("x-accel-buffering"),
+        HeaderValue::from_static("no"),
+    );
+
+    res
 }
