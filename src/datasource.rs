@@ -21,7 +21,7 @@ pub async fn load_map_tiles() -> Result<Vec<MapTile>, gloo_net::Error> {
 }
 
 pub async fn get_terrs() -> Result<BTreeMap<Arc<str>, Territory>, gloo_net::Error> {
-    let resp: BTreeMap<Arc<str>, Territory> = Request::get("/api/v2/terr/list")
+    let resp: BTreeMap<Arc<str>, Territory> = Request::get("/api/v3/terr/list")
         .send()
         .await?
         .json()
@@ -31,7 +31,7 @@ pub async fn get_terrs() -> Result<BTreeMap<Arc<str>, Territory>, gloo_net::Erro
 }
 
 pub async fn get_state() -> Result<RespWrapper<BTreeMap<Arc<str>, TerrState>>, gloo_net::Error> {
-    let resp: RespWrapper<BTreeMap<Arc<str>, TerrState>> = Request::get("/api/v2/terr/guilds")
+    let resp: RespWrapper<BTreeMap<Arc<str>, TerrState>> = Request::get("/api/v3/terr/state")
         .send()
         .await?
         .json()
