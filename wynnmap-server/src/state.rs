@@ -1,17 +1,13 @@
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    sync::Arc,
-};
+use std::{collections::BTreeMap, sync::Arc};
 
 use axum::body::Bytes;
 use chrono::{DateTime, Utc};
 use opentelemetry::metrics::UpDownCounter;
-use serde::Deserialize;
 use tokio::sync::{RwLock, broadcast};
 use wynnmap_types::{
     guild::Guild,
     maptile::MapTile,
-    terr::{Resources, TerrOwner, Territory},
+    terr::{TerrState, Territory},
     ws::TerrSockMessage,
 };
 
@@ -33,7 +29,10 @@ pub struct GuildState {
 pub struct TerritoryState {
     pub inner: Arc<RwLock<TerritoryStateInner>>,
 
+    #[deprecated]
     pub bc_recv: Arc<broadcast::Receiver<TerrSockMessage>>,
+    /// A broadcast receiver for encoded territory updates
+    pub bc_bytes: Arc<broadcast::Receiver<Arc<str>>>,
     pub active_conn: UpDownCounter<i64>,
 }
 
@@ -42,15 +41,9 @@ pub struct TerritoryStateInner {
     pub territories: BTreeMap<Arc<str>, Territory>,
     pub territories_etag: Arc<str>,
     pub territories_modified: DateTime<Utc>,
-    pub owners: BTreeMap<Arc<str>, TerrOwner>,
+
+    pub state: BTreeMap<Arc<str>, TerrState>,
 
     pub expires: DateTime<Utc>,
     pub last_updated: DateTime<Utc>,
-}
-
-#[derive(Deserialize)]
-pub struct ExTerrInfo {
-    pub resources: Resources,
-    #[serde(alias = "Trading Routes")]
-    pub connections: BTreeSet<Arc<str>>,
 }

@@ -5,9 +5,16 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{Region, guild::Guild};
+use crate::{
+    Region,
+    guild::Guild,
+    resources::{BaseResGen, Resources},
+    tier::WynnTier,
+};
 
 /// A Wynncraft territory
+///
+/// This struct holds the (mostly) static data of each territory, so location, conns and generated resources.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Territory {
     /// The location of this territory on the map
@@ -15,74 +22,7 @@ pub struct Territory {
     /// Names of the territories which connect to this one
     pub connections: BTreeSet<Arc<str>>,
     /// The resources that this territory generates
-    pub generates: Resources,
-}
-
-/// Resource values of the given territory
-#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq, Default)]
-pub struct Resources {
-    pub emeralds: i32,
-    pub ore: i32,
-    pub crops: i32,
-    pub fish: i32,
-    pub wood: i32,
-}
-
-impl Resources {
-    pub const fn has_emeralds(&self) -> bool {
-        self.emeralds > 9000
-    }
-
-    pub const fn has_ore(&self) -> bool {
-        self.ore != 0
-    }
-
-    pub const fn has_crops(&self) -> bool {
-        self.crops != 0
-    }
-
-    pub const fn has_fish(&self) -> bool {
-        self.fish != 0
-    }
-
-    pub const fn has_wood(&self) -> bool {
-        self.wood != 0
-    }
-
-    pub const fn has_double_ore(&self) -> bool {
-        self.ore >= 7200
-    }
-
-    pub const fn has_double_crops(&self) -> bool {
-        self.crops >= 7200
-    }
-
-    pub const fn has_double_fish(&self) -> bool {
-        self.fish >= 7200
-    }
-
-    pub const fn has_double_wood(&self) -> bool {
-        self.wood >= 7200
-    }
-
-    pub const fn has_res(&self) -> (bool, bool, bool, bool, bool) {
-        (
-            self.has_emeralds(),
-            self.has_crops(),
-            self.has_fish(),
-            self.has_ore(),
-            self.has_wood(),
-        )
-    }
-
-    pub const fn has_double_res(&self) -> (bool, bool, bool, bool) {
-        (
-            self.has_double_crops(),
-            self.has_double_fish(),
-            self.has_double_ore(),
-            self.has_double_wood(),
-        )
-    }
+    pub generates: BaseResGen,
 }
 
 /// Finds the externals of a given territory.
@@ -113,6 +53,7 @@ pub fn find_externals(
     externals
 }
 
+#[deprecated]
 /// Structure representing a territory owner and the time when they acquired the territory
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash, Default)]
 pub struct TerrOwner {
@@ -120,4 +61,21 @@ pub struct TerrOwner {
     pub guild: Guild,
     /// The time when they acquired the territory if known
     pub acquired: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+/// Structure representing the state information of the guild
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash, Default)]
+pub struct TerrState {
+    /// Current owner of the territory
+    pub guild: Guild,
+    /// The time when they acquired the territory if known
+    pub acquired: Option<chrono::DateTime<chrono::Utc>>,
+    /// Whether or not this territory is the current guilds hq
+    pub hq: bool,
+    /// Treasury level
+    pub treasury: WynnTier,
+    /// Defence level
+    pub defences: WynnTier,
+    /// Resources of the territory
+    pub resources: Resources,
 }

@@ -15,7 +15,6 @@ use tracing::info;
 
 use crate::trackers::guilds::GuildTracker;
 use crate::trackers::images::ImageTracker;
-use crate::trackers::terr_extra::TerrExtraTracker;
 use crate::trackers::territories::TerritoryTracker;
 
 mod api;
@@ -43,8 +42,7 @@ async fn main() {
 
     let img_state = ImageTracker::from_config(config.clone()).run();
     let guild_state = GuildTracker::with_config(&config).run();
-    let extra_data = TerrExtraTracker::with_config(&config).run();
-    let terr_state = TerritoryTracker::with_config(&config, &guild_state, extra_data).run();
+    let terr_state = TerritoryTracker::with_config(&config, &guild_state).run();
 
     let cors = CorsLayer::new()
         .allow_origin(cors::Any)
@@ -63,7 +61,13 @@ async fn main() {
                 .nest(
                     "/v2",
                     Router::new()
-                        .nest("/terr", api::v2::territories::router(terr_state))
+                        .nest("/terr", api::v2::territories::router(terr_state.clone()))
+                        .fallback(api_404),
+                )
+                .nest(
+                    "/v3",
+                    Router::new()
+                        .nest("/terr", api::v3::territories::router(terr_state))
                         .fallback(api_404),
                 )
                 .fallback(api_404),

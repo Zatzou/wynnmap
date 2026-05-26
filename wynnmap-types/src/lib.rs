@@ -4,7 +4,9 @@ pub mod ws;
 
 pub mod guild;
 pub mod maptile;
+pub mod resources;
 pub mod terr;
+pub mod tier;
 
 pub mod api;
 

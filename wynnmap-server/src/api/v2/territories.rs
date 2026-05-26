@@ -61,7 +61,7 @@ async fn terr_list(
 async fn guild_list(State(state): State<Arc<TerritoryState>>) -> impl IntoResponse {
     let (owners, expires, updated) = {
         let lock = state.inner.read().await;
-        (lock.owners.clone(), lock.expires, lock.last_updated)
+        (lock.state.clone(), lock.expires, lock.last_updated)
     };
 
     let resp_headers = [

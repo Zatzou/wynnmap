@@ -1,4 +1,9 @@
-use std::{collections::BTreeMap, mem, sync::Arc, time::Duration};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    mem,
+    sync::Arc,
+    time::Duration,
+};
 
 use chrono::{DateTime, Utc};
 use opentelemetry::global;
@@ -12,7 +17,9 @@ use uuid::Uuid;
 use wynnmap_types::{
     Region,
     guild::Guild,
-    terr::{TerrOwner, Territory},
+    resources::{BaseResGen, ResourceType, ResourceValues, Resources},
+    terr::{TerrState, Territory},
+    tier::WynnTier,
     ws::TerrSockMessage,
 };
 
@@ -20,43 +27,41 @@ use crate::{
     AnyError,
     config::Config,
     etag::sha224_etag_json,
-    state::{ExTerrInfo, GuildState, TerritoryState},
+    state::{GuildState, TerritoryState},
     trackers::util::{self, ResponseExt},
 };
 
 pub struct TerritoryTracker {
     client: reqwest::Client,
     guilds: Arc<RwLock<BTreeMap<Arc<str>, Guild>>>,
-    extra: Arc<RwLock<BTreeMap<Arc<str>, ExTerrInfo>>>,
 
     bc_send: broadcast::Sender<TerrSockMessage>,
+    bc_bytes: broadcast::Sender<Arc<str>>,
 
     state: Arc<TerritoryState>,
 }
 
 impl TerritoryTracker {
-    pub fn with_config(
-        config: &Config,
-        guild_state: &GuildState,
-        extra_data: Arc<RwLock<BTreeMap<Arc<str>, ExTerrInfo>>>,
-    ) -> Self {
+    pub fn with_config(config: &Config, guild_state: &GuildState) -> Self {
         let client = util::reqwest_client_from_conf(config);
 
         let (bc_send, bc_recv) = broadcast::channel(500);
+        let (bc_bytes_s, bc_bytes_r) = broadcast::channel(100);
 
         let meter = global::meter("wynnmap-server");
 
         Self {
             client,
             guilds: guild_state.guilds.clone(),
-            extra: extra_data,
 
             bc_send,
+            bc_bytes: bc_bytes_s,
 
             state: Arc::new(TerritoryState {
                 inner: Default::default(),
 
                 bc_recv: Arc::new(bc_recv),
+                bc_bytes: Arc::new(bc_bytes_r),
                 active_conn: meter.i64_up_down_counter("active-ws-sessions").build(),
             }),
         }
@@ -120,47 +125,48 @@ impl TerritoryTracker {
         .instrument(info_span!("fetch"))
         .await?;
 
-        // add connections and res generation data from the extradata and form the territories
-        let territories = {
-            // get the extradata
-            let exdata = self.extra.read().await;
-
-            // create the territory data
-            data.iter()
-                .map(|(name, t)| {
-                    let exdata = exdata.get(name);
-                    (
-                        name.clone(),
-                        Territory {
-                            location: t.location,
-                            connections: exdata.map(|e| e.connections.clone()).unwrap_or_default(),
-                            generates: exdata.map(|e| e.resources).unwrap_or_default(),
-                        },
-                    )
-                })
-                .collect::<BTreeMap<_, _>>()
-        };
-
         // create owner data
         let owners = {
             let guildlock = self.guilds.read().await;
 
-            data.into_iter()
+            data.clone()
+                .into_iter()
                 .map(|(name, t)| {
                     let mut guild: Guild = t.guild.into();
 
                     guild.color = guildlock.get(&guild.prefix).and_then(|g| g.color.clone());
 
+                    let resval_of = |rt| {
+                        t.resources
+                            .iter()
+                            .find(|r| r.kind == rt)
+                            .map(|r| r.as_resval())
+                            .unwrap_or_default()
+                    };
+
                     (
                         name,
-                        TerrOwner {
+                        TerrState {
                             guild,
                             acquired: Some(t.acquired.unwrap_or_default()),
+                            hq: t.hq,
+                            treasury: t.treasury,
+                            defences: t.defences,
+                            resources: Resources {
+                                emerald: resval_of(ResourceType::Emerald),
+                                ore: resval_of(ResourceType::Ore),
+                                crop: resval_of(ResourceType::Crop),
+                                fish: resval_of(ResourceType::Fish),
+                                wood: resval_of(ResourceType::Wood),
+                            },
                         },
                     )
                 })
                 .collect::<BTreeMap<_, _>>()
         };
+
+        // convert territory data
+        let territories = data.into_iter().map(|(n, t)| (n, t.into())).collect();
 
         // calculate etags
         let terr_etag = sha224_etag_json(&territories);
@@ -183,9 +189,9 @@ impl TerritoryTracker {
             lock.territories_etag = terr_etag;
 
             // update owners with swap for notify
-            if lock.owners != owners {
+            if lock.state != owners {
                 let mut old_owners = owners.clone();
-                mem::swap(&mut old_owners, &mut lock.owners);
+                mem::swap(&mut old_owners, &mut lock.state);
 
                 // return old owners for notifications
                 Some(old_owners)
@@ -197,16 +203,33 @@ impl TerritoryTracker {
         // send broadcasts to notify websockets
         if let Some(old_owners) = old_owners {
             async {
+                let mut updateds = BTreeMap::new();
+
                 for (tname, new) in owners {
                     let old = old_owners.get(&tname);
 
                     if old != Some(&new) {
-                        self.bc_send.send(TerrSockMessage::Capture {
-                            name: tname,
-                            old: old.cloned(),
-                            new,
-                        })?;
+                        updateds.insert(tname, new);
                     }
+                }
+
+                self.bc_send
+                    .send(TerrSockMessage::Update(updateds.clone()))?;
+
+                if !updateds.is_empty() {
+                    self.bc_bytes.send(
+                        serde_json::to_string(&TerrSockMessage::Update(updateds))
+                            .unwrap()
+                            .into(),
+                    )?;
+                } else {
+                    self.bc_bytes.send(
+                        serde_json::to_string(&TerrSockMessage::LastUpdate {
+                            ts: self.state.inner.read().await.last_updated,
+                        })
+                        .unwrap()
+                        .into(),
+                    )?;
                 }
 
                 Ok::<(), AnyError>(())
@@ -219,11 +242,41 @@ impl TerritoryTracker {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct WynnTerritory {
     guild: WynnGuild,
     acquired: Option<DateTime<Utc>>,
     location: Region,
+    #[serde(default)]
+    hq: bool,
+    resources: Vec<WynnRes>,
+    links: BTreeSet<Arc<str>>,
+    treasury: WynnTier,
+    defences: WynnTier,
+}
+
+impl From<WynnTerritory> for Territory {
+    fn from(t: WynnTerritory) -> Self {
+        let rescount = |rt| {
+            t.resources
+                .iter()
+                .find(|r| r.kind == rt)
+                .map(|r| r.base_gen)
+                .unwrap_or(0)
+        };
+
+        Self {
+            location: t.location,
+            connections: t.links,
+            generates: BaseResGen {
+                emerald: rescount(ResourceType::Emerald),
+                ore: rescount(ResourceType::Ore),
+                crop: rescount(ResourceType::Crop),
+                fish: rescount(ResourceType::Fish),
+                wood: rescount(ResourceType::Wood),
+            },
+        }
+    }
 }
 
 #[derive(Deserialize, Clone)]
@@ -240,6 +293,27 @@ impl From<WynnGuild> for Guild {
             name: value.name.unwrap_or_else(|| "Nobody".into()),
             prefix: value.prefix.unwrap_or_else(|| "None".into()),
             color: Some("#FFFFFF".into()),
+        }
+    }
+}
+
+#[derive(Deserialize, Clone)]
+struct WynnRes {
+    #[serde(rename = "type")]
+    kind: ResourceType,
+    generation: i32,
+    #[serde(alias = "baseGeneration")]
+    base_gen: i32,
+    stored: i32,
+    limit: i32,
+}
+
+impl WynnRes {
+    fn as_resval(&self) -> ResourceValues {
+        ResourceValues {
+            generation: self.generation,
+            stored: self.stored,
+            limit: self.limit,
         }
     }
 }

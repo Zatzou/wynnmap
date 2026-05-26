@@ -2,24 +2,21 @@
 //!
 //! This module contains the type definitions for the websocket server and client.
 
-use std::sync::Arc;
+use std::{collections::BTreeMap, sync::Arc};
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::terr::TerrOwner;
+use crate::terr::TerrState;
 
 /// Messages which may be passed on the websocket
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[allow(clippy::large_enum_variant)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub enum TerrSockMessage {
-    /// Territory capture message
+    /// Territory update message
     ///
-    /// This message is used to indicate that a territory has been captured. The message contains the territory name, old owner and the new owner.
-    Capture {
-        name: Arc<str>,
-        old: Option<TerrOwner>,
-        new: TerrOwner,
-    },
+    /// This message gives the client an list with all updated territories. Only certain parts may have changed but the whole list is still sent
+    Update(BTreeMap<Arc<str>, TerrState>),
 
     /// Message giving the user the last timestamp of when the territory tracker has received an update from wynn
     ///
