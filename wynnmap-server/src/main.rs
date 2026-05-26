@@ -58,7 +58,6 @@ async fn main() {
                     "/v1",
                     Router::new()
                         .nest("/images", api::v1::images::router(img_state))
-                        .nest("/terr", api::v1::territories::router(terr_state.clone()))
                         .fallback(api_404),
                 )
                 .nest(
