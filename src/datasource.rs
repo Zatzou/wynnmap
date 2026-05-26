@@ -1,14 +1,14 @@
-use std::{collections::BTreeMap, sync::Arc, time::Duration};
+use std::{collections::BTreeMap, sync::Arc};
 
 use chrono::{DateTime, Utc};
 use codee::string::JsonSerdeWasmCodec;
 use gloo_net::http::Request;
 use leptos::prelude::*;
-use leptos_use::{UseWebSocketReturn, core::ConnectionReadyState, use_websocket};
+use leptos_use::{UseEventSourceReturn, use_event_source};
 use wynnmap_types::{
     api::v2::RespWrapper,
     maptile::MapTile,
-    terr::{TerrOwner, Territory},
+    terr::{TerrState, Territory},
     ws::TerrSockMessage,
 };
 
@@ -30,8 +30,8 @@ pub async fn get_terrs() -> Result<BTreeMap<Arc<str>, Territory>, gloo_net::Erro
     Ok(resp)
 }
 
-pub async fn get_owners() -> Result<RespWrapper<BTreeMap<Arc<str>, TerrOwner>>, gloo_net::Error> {
-    let resp: RespWrapper<BTreeMap<Arc<str>, TerrOwner>> = Request::get("/api/v2/terr/guilds")
+pub async fn get_state() -> Result<RespWrapper<BTreeMap<Arc<str>, TerrState>>, gloo_net::Error> {
+    let resp: RespWrapper<BTreeMap<Arc<str>, TerrState>> = Request::get("/api/v2/terr/guilds")
         .send()
         .await?
         .json()
@@ -40,38 +40,23 @@ pub async fn get_owners() -> Result<RespWrapper<BTreeMap<Arc<str>, TerrOwner>>, 
     Ok(resp)
 }
 
-pub fn ws_terr_changes(
-    owners: RwSignal<BTreeMap<Arc<str>, TerrOwner>>,
+pub fn sse_terr_updates(
+    state: RwSignal<BTreeMap<Arc<str>, TerrState>>,
     last_updated: RwSignal<DateTime<Utc>>,
 ) {
-    let UseWebSocketReturn {
-        ready_state,
-        message,
-        open,
-        ..
-    } = use_websocket::<(), TerrSockMessage, JsonSerdeWasmCodec>("/api/v2/terr/guilds/ws");
-
-    Effect::new(move || {
-        if ready_state.get() == ConnectionReadyState::Closed {
-            let opfn = open.clone();
-
-            // attempt to reconnect every 10 seconds if the connection is closed
-            set_timeout(
-                move || {
-                    if ready_state.get() == ConnectionReadyState::Closed {
-                        opfn();
-                    }
-                },
-                Duration::from_secs(10),
-            );
-        }
-    });
+    let UseEventSourceReturn { message, .. } =
+        use_event_source::<TerrSockMessage, JsonSerdeWasmCodec>("/api/v3/terr/state/sse");
 
     Effect::new(move || {
         if let Some(msg) = message.get() {
-            match msg {
-                TerrSockMessage::Capture { name, old: _, new } => {
-                    owners.write().insert(name, new);
+            match msg.data {
+                TerrSockMessage::Update(updates) => {
+                    state.update(|s| {
+                        for (name, data) in updates {
+                            s.insert(name, data);
+                        }
+                    });
+
                     last_updated.set(Utc::now());
                 }
                 TerrSockMessage::LastUpdate { ts } => {

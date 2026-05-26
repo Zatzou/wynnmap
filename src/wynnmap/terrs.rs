@@ -6,14 +6,17 @@ use std::{
 
 use leptos::prelude::*;
 use web_sys::PointerEvent;
-use wynnmap_types::terr::{Resources, TerrOwner, Territory};
+use wynnmap_types::{
+    resources::BaseResGen,
+    terr::{TerrState, Territory},
+};
 
 use crate::{sectimer::SecondTimer, settings::use_toggle};
 
 #[component]
 pub fn TerrView(
     #[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>,
-    #[prop(into)] owners: Signal<BTreeMap<Arc<str>, TerrOwner>>,
+    #[prop(into)] state: Signal<BTreeMap<Arc<str>, TerrState>>,
     #[prop(optional)] hovered: RwSignal<Option<Arc<str>>>,
     #[prop(optional)] selected: RwSignal<Option<Arc<str>>>,
     #[prop(optional)] hide_timers: bool,
@@ -26,14 +29,14 @@ pub fn TerrView(
                 children=move |(k, v)| {
                     let k2 = k.clone();
                     let owner = Memo::new(move |_|
-                        owners.read().get(&k2).cloned().unwrap_or_default()
+                        state.read().get(&k2).cloned().unwrap_or_default()
                     );
 
                     view! {
                         <Territory
                             name=k
                             terr=v.into()
-                            owner={owner.into()}
+                            state={owner.into()}
                             hovered=hovered
                             selected=selected
                             hide_timers=hide_timers
@@ -49,13 +52,13 @@ pub fn TerrView(
 pub fn Territory(
     name: Arc<str>,
     terr: Signal<Territory>,
-    owner: Signal<TerrOwner>,
+    state: Signal<TerrState>,
     #[prop(optional)] hovered: RwSignal<Option<Arc<str>>>,
     #[prop(optional)] selected: RwSignal<Option<Arc<str>>>,
     #[prop(optional)] hide_timers: bool,
 ) -> impl IntoView {
     let col_rgb = move || {
-        let col = owner.read().guild.get_color();
+        let col = state.read().guild.get_color();
         format!("{} {} {}", col.0, col.1, col.2)
     };
 
@@ -71,7 +74,7 @@ pub fn Territory(
     let namesize = Memo::new(move |_| (terr.read().location.width() / 3).min(40));
 
     view! {
-        <div class="wynnmap-item guildterr"
+        <div class="wynnmap-item guildterr" class:hq={move || state.read().hq}
             class:guildterr-notrans=move || !use_transparency.get()
             style:width=move || format!("{}px", terr.read().location.width())
             style:height=move || format!("{}px", terr.read().location.height())
@@ -107,11 +110,16 @@ pub fn Territory(
             }
         >
             // attack timer border
-            {move || owner.read().acquired.map(|a| view! {
+            {move || state.read().acquired.map(|a| view! {
                 <Show when={move || !hide_timers}>
                     <AttackBorder acquired=a />
                 </Show>
             })}
+
+            // {move || state.read().hq.then(|| view!{
+            //     <div class="hqicon">
+            //     </div>
+            // })}
 
             // guild tag
             <Show when={move || show_gtag.get()}>
@@ -119,7 +127,7 @@ pub fn Territory(
                     class="guildtag"
                     style:--tsize=move || format!("{}px", namesize.read())
                 >
-                    {owner.read().guild.prefix.clone()}
+                    {state.read().guild.prefix.clone()}
                 </h1>
             </Show>
             // resource icons
@@ -127,7 +135,7 @@ pub fn Territory(
                 <ResIcons terr={Signal::derive(move || terr.get().generates)} />
             </Show>
             // timer
-            {move || owner.read().acquired.map(|a| view! {
+            {move || state.read().acquired.map(|a| view! {
                 <Show when={move || show_timers.get() && !hide_timers}>
                     <TerrTimer acquired=a />
                 </Show>
@@ -137,17 +145,17 @@ pub fn Territory(
 }
 
 #[component]
-fn ResIcons(terr: Signal<Resources>) -> impl IntoView {
+fn ResIcons(terr: Signal<BaseResGen>) -> impl IntoView {
     view! {
         <div class="resicons wynnmap-hide-zoomedout" >
             {move || {
                 let t = terr.read();
 
                 [
-                    (t.has_emeralds(), "emeralds"),
+                    (t.has_emerald(), "emeralds"),
 
-                    (t.has_crops(), "crops"),
-                    (t.has_double_crops(), "crops"),
+                    (t.has_crop(), "crops"),
+                    (t.has_double_crop(), "crops"),
 
                     (t.has_fish(), "fish"),
                     (t.has_double_fish(), "fish"),

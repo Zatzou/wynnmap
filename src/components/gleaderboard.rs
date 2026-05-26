@@ -4,14 +4,14 @@ use std::{
 };
 
 use leptos::prelude::*;
-use wynnmap_types::terr::TerrOwner;
+use wynnmap_types::terr::TerrState;
 
 #[component]
-pub fn Gleaderboard(#[prop(into)] owners: Signal<BTreeMap<Arc<str>, TerrOwner>>) -> impl IntoView {
+pub fn Gleaderboard(#[prop(into)] state: Signal<BTreeMap<Arc<str>, TerrState>>) -> impl IntoView {
     let guild_leaderboard = move || {
         let mut guilds = HashMap::new();
 
-        for (_, v) in owners.read().iter() {
+        for (_, v) in state.read().iter() {
             let guild = v.guild.clone();
             let terr = guilds.entry(guild).or_insert(0);
             *terr += 1;

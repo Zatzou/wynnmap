@@ -80,7 +80,7 @@
         paint-order: stroke;
         font-optical-sizing: auto;
 
-        padding: 0 4px;
+        padding: 5px 5px;
         contain: paint;
     }
 
@@ -115,6 +115,10 @@
 
 .guildterr-notrans {
     background-color: rgb(var(--guild-col));
+}
+
+.guildterr.hq {
+    background-color: rgb(var(--guild-col) / 0.75);
 }
 
 @keyframes attackdelay {

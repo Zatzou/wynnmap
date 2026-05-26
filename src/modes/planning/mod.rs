@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, sync::Arc};
 
 use leptos::{leptos_dom::logging::console_log, prelude::*, task::spawn_local};
 use leptos_router::hooks::use_location;
-use wynnmap_types::{guild::Guild, terr::TerrOwner};
+use wynnmap_types::{guild::Guild, terr::TerrState};
 
 use crate::{
     components::{
@@ -128,17 +128,19 @@ pub fn PlanningMap() -> impl IntoView {
                 let own = own.get();
                 owners.insert(
                     terr.clone(),
-                    TerrOwner {
+                    TerrState {
                         guild: own,
                         acquired: None,
+                        ..Default::default()
                     },
                 );
             } else {
                 owners.insert(
                     terr.clone(),
-                    TerrOwner {
+                    TerrState {
                         guild: Guild::default(),
                         acquired: None,
+                        ..Default::default()
                     },
                 );
             }
@@ -160,7 +162,7 @@ pub fn PlanningMap() -> impl IntoView {
             </Show>
 
             // territories
-            <TerrView terrs={terrs} owners={mapowneds} hovered=hovered selected=selected hide_timers=true />
+            <TerrView terrs={terrs} state={mapowneds} hovered=hovered selected=selected hide_timers=true />
         </WynnMap>
 
         // hover box
@@ -176,6 +178,7 @@ pub fn PlanningMap() -> impl IntoView {
                     <TerrInfo
                         name={hovered}
                         terrs={terrs}
+                        state={mapowneds}
                     />
                     <hr class="border-neutral-600" />
                     <GuildName
@@ -224,7 +227,7 @@ pub fn PlanningMap() -> impl IntoView {
                 </div>
                 <div class="overflow-y-auto shrink min-h-0" class:hidden={move || !show_guild_leaderboard.get()}>
                     <hr class="border-neutral-600"/>
-                    <Gleaderboard owners={mapowneds}/>
+                    <Gleaderboard state={mapowneds}/>
                 </div>
             </div>
         </Sidebar>
@@ -241,6 +244,7 @@ pub fn PlanningMap() -> impl IntoView {
                     <TerrInfo
                         name={sel}
                         terrs={terrs}
+                        state={mapowneds}
                     />
                     <hr class="border-neutral-600" />
                     <GuildSelect

@@ -7,7 +7,7 @@ use std::{
 
 use chrono::Utc;
 use leptos::{prelude::*, task::spawn_local};
-use wynnmap_types::terr::{TerrOwner, Territory};
+use wynnmap_types::terr::{TerrState, Territory};
 
 use crate::{
     components::{
@@ -38,7 +38,7 @@ pub fn WarMap() -> impl IntoView {
     let show_guild_leaderboard = use_toggle("gleaderboard", true);
 
     let terrs = RwSignal::new(BTreeMap::new());
-    let owners = RwSignal::new(BTreeMap::new());
+    let state = RwSignal::new(BTreeMap::new());
     let last_updated = RwSignal::new(Utc::now());
 
     let load_terrs = move |terrs: RwSignal<_>| async move {
@@ -63,7 +63,7 @@ pub fn WarMap() -> impl IntoView {
     spawn_local(load_terrs(terrs));
 
     let load_owners = move |owners: RwSignal<_>| async move {
-        match datasource::get_owners().await {
+        match datasource::get_state().await {
             Ok(data) => {
                 owners.set(data.data);
                 last_updated.set(data.updated);
@@ -84,9 +84,9 @@ pub fn WarMap() -> impl IntoView {
         }
     };
 
-    spawn_local(load_owners(owners));
+    spawn_local(load_owners(state));
 
-    datasource::ws_terr_changes(owners, last_updated);
+    datasource::sse_terr_updates(state, last_updated);
 
     let hovered = RwSignal::new(None);
     let selected = RwSignal::new(None);
@@ -124,7 +124,7 @@ pub fn WarMap() -> impl IntoView {
 
             // territories
             <Show when={move || show_terrs.get()}>
-                <TerrView terrs={terrs} owners={owners} hovered=hovered selected=selected />
+                <TerrView terrs={terrs} state={state} hovered=hovered selected=selected />
             </Show>
         </WynnMap>
 
@@ -139,7 +139,7 @@ pub fn WarMap() -> impl IntoView {
                     <TerrStats
                         name={hovered}
                         terrs={terrs}
-                        owners={owners}
+                        state={state}
                     />
                 </SideCard>
             })
@@ -198,7 +198,7 @@ pub fn WarMap() -> impl IntoView {
                 </div>
                 <div class="overflow-y-auto shrink min-h-0" class:hidden={move || !show_guild_leaderboard.get()}>
                     <hr class="border-neutral-600"/>
-                    <Gleaderboard owners={owners}/>
+                    <Gleaderboard state={state}/>
                 </div>
             </div>
         </Sidebar>
@@ -213,9 +213,9 @@ pub fn WarMap() -> impl IntoView {
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                     </svg>
 
-                    <TerrStats name={sel} terrs={terrs} owners={owners} />
+                    <TerrStats name={sel} terrs={terrs} state={state} />
 
-                    <TerrCalc name={sel2} terrs={terrs} owners={owners} />
+                    <TerrCalc name={sel2} terrs={terrs} state={state} />
                 </SideCard>
             })
         })}
@@ -226,14 +226,14 @@ pub fn WarMap() -> impl IntoView {
 fn TerrStats(
     #[prop(into)] name: Signal<Arc<str>>,
     #[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>,
-    #[prop(into)] owners: Signal<BTreeMap<Arc<str>, TerrOwner>>,
+    #[prop(into)] state: Signal<BTreeMap<Arc<str>, TerrState>>,
 ) -> impl IntoView {
-    let owner = move || owners.read().get(&name.get()).cloned().unwrap_or_default();
+    let owner = move || state.read().get(&name.get()).cloned().unwrap_or_default();
 
     view! {
-        <TerrInfo name={name} terrs={terrs} />
+        <TerrInfo name={name} terrs={terrs} state={state} />
 
-        <GuildInfo owner={Signal::derive(owner)} />
+        <GuildInfo state={Signal::derive(owner)} />
     }
 }
 
@@ -241,10 +241,10 @@ fn TerrStats(
 fn TerrCalc(
     #[prop(into)] name: Signal<Arc<str>>,
     #[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>,
-    #[prop(into)] owners: Signal<BTreeMap<Arc<str>, TerrOwner>>,
+    #[prop(into)] state: Signal<BTreeMap<Arc<str>, TerrState>>,
 ) -> impl IntoView {
     let guild = Memo::new(move |_| {
-        owners
+        state
             .read()
             .get(&name.get())
             .map_or_else(Arc::default, |t| t.guild.prefix.clone())
@@ -259,7 +259,13 @@ fn TerrCalc(
     let ext_names =
         Memo::new(move |_| wynnmap_types::terr::find_externals(&name.read(), &terrs.read()));
 
-    let hq = RwSignal::new(false);
+    let hq = RwSignal::new(
+        state
+            .read_untracked()
+            .get(&*name.read())
+            .map(|s| s.hq)
+            .unwrap_or_default(),
+    );
 
     let damage = RwSignal::new(11);
     let attacks = RwSignal::new(11);
@@ -273,7 +279,7 @@ fn TerrCalc(
             .read_untracked()
             .iter()
             .filter(|n| {
-                owners
+                state
                     .read_untracked()
                     .get(*n)
                     .is_some_and(|t| t.guild.prefix == *guild.read_untracked())
@@ -286,7 +292,7 @@ fn TerrCalc(
             .read_untracked()
             .iter()
             .filter(|n| {
-                owners
+                state
                     .read_untracked()
                     .get(*n)
                     .is_some_and(|t| t.guild.prefix == *guild.read_untracked())
