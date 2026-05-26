@@ -59,12 +59,6 @@ async fn main() {
                         .fallback(api_404),
                 )
                 .nest(
-                    "/v2",
-                    Router::new()
-                        .nest("/terr", api::v2::territories::router(terr_state.clone()))
-                        .fallback(api_404),
-                )
-                .nest(
                     "/v3",
                     Router::new()
                         .nest("/terr", api::v3::territories::router(terr_state))

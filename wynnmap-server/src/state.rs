@@ -29,8 +29,6 @@ pub struct GuildState {
 pub struct TerritoryState {
     pub inner: Arc<RwLock<TerritoryStateInner>>,
 
-    #[deprecated]
-    pub bc_recv: Arc<broadcast::Receiver<TerrSockMessage>>,
     /// A broadcast receiver for encoded territory updates
     pub bc_bytes: Arc<broadcast::Receiver<Arc<str>>>,
     pub active_conn: UpDownCounter<i64>,

@@ -35,7 +35,6 @@ pub struct TerritoryTracker {
     client: reqwest::Client,
     guilds: Arc<RwLock<BTreeMap<Arc<str>, Guild>>>,
 
-    bc_send: broadcast::Sender<TerrSockMessage>,
     bc_bytes: broadcast::Sender<Arc<str>>,
 
     state: Arc<TerritoryState>,
@@ -45,7 +44,6 @@ impl TerritoryTracker {
     pub fn with_config(config: &Config, guild_state: &GuildState) -> Self {
         let client = util::reqwest_client_from_conf(config);
 
-        let (bc_send, bc_recv) = broadcast::channel(500);
         let (bc_bytes_s, bc_bytes_r) = broadcast::channel(100);
 
         let meter = global::meter("wynnmap-server");
@@ -54,13 +52,11 @@ impl TerritoryTracker {
             client,
             guilds: guild_state.guilds.clone(),
 
-            bc_send,
             bc_bytes: bc_bytes_s,
 
             state: Arc::new(TerritoryState {
                 inner: Default::default(),
 
-                bc_recv: Arc::new(bc_recv),
                 bc_bytes: Arc::new(bc_bytes_r),
                 active_conn: meter.i64_up_down_counter("active-ws-sessions").build(),
             }),
@@ -212,9 +208,6 @@ impl TerritoryTracker {
                         updateds.insert(tname, new);
                     }
                 }
-
-                self.bc_send
-                    .send(TerrSockMessage::Update(updateds.clone()))?;
 
                 if !updateds.is_empty() {
                     self.bc_bytes.send(
