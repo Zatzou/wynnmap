@@ -7,7 +7,7 @@
 
     @apply bg-neutral-900 rounded-e-full mt-2 p-2;
 
-    border: 1px var(--color-neutral-400) solid;
+    border: 1px var(--color-neutral-600) solid;
     border-left: 0;
 }
 
