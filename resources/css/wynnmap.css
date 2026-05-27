@@ -152,3 +152,7 @@
         border-color: transparent;
     }
 }
+
+.hidden {
+    display: none;
+}
