@@ -69,18 +69,12 @@
     border: 2px solid rgb(var(--guild-col));
     border-radius: 2px;
     contain: layout size;
-    .crown-container {
-        position: relative;
-        /* this one is special, its not like the other icons. */
-        > .icon-crown {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            contain: paint;
-            background-repeat: no-repeat;
-            bottom: -5px;
-            left: -20px;
-        }
+
+    .icon-crown {
+        display: none;
+        aspect-ratio: 1;
+        contain: paint;
+        margin-bottom: -3px;
     }
 
     .guildtag {
@@ -101,6 +95,7 @@
         display: flex;
         height: 24px;
         contain: paint;
+        margin-top: -5px;
     }
 
     .terrtimer {
@@ -132,7 +127,12 @@
 
 .guildterr.hq {
     background-color: rgb(var(--guild-col) / 0.75);
+
+    .icon-crown {
+        display: block;
+    }
 }
+
 
 @keyframes attackdelay {
     0% {
