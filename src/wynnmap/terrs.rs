@@ -28,16 +28,16 @@ pub fn TerrView(
                 each=move || terrs.get().into_iter()
                 key=move |(k, _)| k.clone()
                 children=move |(k, v)| {
-                    let k2 = k.clone();
-                    let owner = Memo::new(move |_|
-                        state.read().get(&k2).cloned().unwrap_or_default()
-                    );
+                    let state = Memo::new({
+                        let k = k.clone();
+                        move |_| state.read().get(&k).cloned().unwrap_or_default()
+                    });
 
                     view! {
                         <Territory
                             name=k
                             terr=v.into()
-                            state={owner.into()}
+                            state={state.into()}
                             hovered=hovered
                             selected=selected
                             hide_timers=hide_timers
@@ -129,16 +129,18 @@ pub fn Territory(
                     {state.read().guild.prefix.clone()}
                 </h1>
             </Show>
+
             // resource icons
             <Show when={move || show_res.get()}>
                 <ResIcons terr={Signal::derive(move || terr.get().generates)} />
             </Show>
+
             // timer
-            {move || state.read().acquired.map(|a| view! {
-                <Show when={move || show_timers.get() && !hide_timers}>
+            <Show when={move || show_timers.get() && !hide_timers}>
+                {move || state.read().acquired.map(|a| view! {
                     <TerrTimer acquired=a />
-                </Show>
-            })}
+                })}
+            </Show>
         </div>
     }
 }
