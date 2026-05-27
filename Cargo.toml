@@ -18,7 +18,7 @@ gloo-net = { version = "0.7", default-features = false, features = [
     "http",
     "json",
 ] }
-leptos = { version = "0.8", features = ["csr"] }
+leptos = { version = "0.8", features = ["csr", "delegation"] }
 leptos-use = { version = "0.18", default-features = false, features = [
     "use_websocket",
     "use_event_source",
