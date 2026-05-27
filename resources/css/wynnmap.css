@@ -69,6 +69,19 @@
     border: 2px solid rgb(var(--guild-col));
     border-radius: 2px;
     contain: layout size;
+    .crown-container {
+        position: relative;
+        /* this one is special, its not like the other icons. */
+        > .icon-crown {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            contain: paint;
+            background-repeat: no-repeat;
+            bottom: -5px;
+            left: -20px;
+        }
+    }
 
     .guildtag {
         font-size: var(--tsize);

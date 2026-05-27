@@ -19,3 +19,6 @@ command_arguments = [
 [[proxy]]
 backend = "https://wynnmap.zatzou.com/api/"
 # backend = "http://localhost:8081/api/"
+
+[watch]
+ignore = ["icons.ase"]
