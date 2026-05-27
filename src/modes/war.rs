@@ -7,7 +7,10 @@ use std::{
 
 use chrono::Utc;
 use leptos::{prelude::*, task::spawn_local};
-use wynnmap_types::terr::{TerrState, Territory};
+use wynnmap_types::{
+    terr::{TerrState, Territory},
+    tier::WynnTier,
+};
 
 use crate::{
     components::{
@@ -327,7 +330,7 @@ fn TerrCalc(
         x
     });
 
-    let def_tier = move || DefTier::from_defnum(def_num.get());
+    let def_tier = move || WynnTier::from_defnum(def_num.get());
 
     view! {
         <div>
@@ -388,49 +391,8 @@ fn TerrCalc(
 
                 fmt_num(health / (1.0 - def))
             }}</h2>
-            <h2>"Defense: "<span style:color=move || def_tier().color()>{move || def_tier().name()}</span></h2>
+            <h2>"Defense: "<span style:color=move || def_tier().color()>{move || def_tier().to_string()}</span></h2>
         </div>
-    }
-}
-
-#[derive(Clone, Copy)]
-enum DefTier {
-    VHigh,
-    High,
-    Medium,
-    Low,
-    VLow,
-}
-
-impl DefTier {
-    const fn from_defnum(num: i32) -> Self {
-        match num {
-            41.. => Self::VHigh,
-            23.. => Self::High,
-            11.. => Self::Medium,
-            -2.. => Self::Low,
-            _ => Self::VLow,
-        }
-    }
-
-    const fn name(self) -> &'static str {
-        match self {
-            Self::VHigh => "Very High",
-            Self::High => "High",
-            Self::Medium => "Medium",
-            Self::Low => "Low",
-            Self::VLow => "Very Low",
-        }
-    }
-
-    const fn color(self) -> &'static str {
-        match self {
-            Self::VHigh => "oklch(0.637 0.237 25.331)",
-            Self::High => "oklch(0.705 0.213 47.604)",
-            Self::Medium => "oklch(0.795 0.184 86.047)",
-            Self::Low => "oklch(0.768 0.233 130.85)",
-            Self::VLow => "oklch(0.723 0.219 149.579)",
-        }
     }
 }
 

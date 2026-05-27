@@ -36,6 +36,7 @@ impl Display for WynnTier {
 }
 
 impl WynnTier {
+    /// Return the hex color generally used for this tier
     pub const fn color(&self) -> &'static str {
         match self {
             WynnTier::VeryLow => "#00AA00",  // dark green
@@ -43,6 +44,17 @@ impl WynnTier {
             WynnTier::Medium => "#FFFF55",   // yellow
             WynnTier::High => "#FF5555",     // red
             WynnTier::VeryHigh => "#AA0000", // dark red
+        }
+    }
+
+    /// Get the tier based on a defence number calculated by the calculator
+    pub const fn from_defnum(num: i32) -> Self {
+        match num {
+            41.. => Self::VeryHigh,
+            23.. => Self::High,
+            11.. => Self::Medium,
+            -2.. => Self::Low,
+            _ => Self::VeryLow,
         }
     }
 }
