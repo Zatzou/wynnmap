@@ -6,3 +6,4 @@ config.toml
 # ignore npm stuff
 /node_modules
 /package-lock.json
+resources/tailwind.css
