@@ -7,7 +7,7 @@
 
     @apply bg-neutral-900 rounded-e-full mt-2 p-2;
 
-    border: 1px rgba(255,255,255,0.5) solid;
+    border: 1px var(--color-neutral-400) solid;
     border-left: 0;
 }
 
@@ -21,7 +21,7 @@
     height: 100dvh;
 
     box-sizing: border-box;
-    border-right: 1px rgba(255,255,255,0.3) solid;
+    border-right: 1px var(--color-neutral-600) solid;
 
     @apply bg-neutral-900 md:max-w-sm transition-transform;
 
