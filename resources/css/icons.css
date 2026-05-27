@@ -18,9 +18,16 @@
     background-position: -60px 0;
 }
 
+.icon-crown {
+    background-position: -20px -20px;
+}
+.icon-crown.tsd {
+    background-position: -80px -60px;
+}
+
 [class^="icon-"] {
     width: 20px;
     height: 20px;
-    background-image: url("./icons.png");
+    background-image: url("./icons.webp");
     image-rendering: pixelated;
 }

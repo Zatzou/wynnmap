@@ -109,6 +109,12 @@ pub fn Territory(
                 }
             }
         >
+            // guild hq crown
+            <Show when={move || state.read().hq}>
+                <div class="crown-container">
+                    <div class="icon-crown" />
+                </div>
+            </Show>
             // attack timer border
             {move || state.read().acquired.map(|a| view! {
                 <Show when={move || !hide_timers}>
