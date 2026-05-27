@@ -99,7 +99,7 @@
 
         contain: paint;
 
-        background-color: oklch(var(--bg-col));
+        background-color: var(--bg-col);
         color: black;
     }
 

@@ -9,6 +9,7 @@ use web_sys::PointerEvent;
 use wynnmap_types::{
     resources::BaseResGen,
     terr::{TerrState, Territory},
+    tier::WynnTier,
 };
 
 use crate::{sectimer::SecondTimer, settings::use_toggle};
@@ -203,22 +204,7 @@ fn TerrTimer(#[prop(into)] acquired: Signal<chrono::DateTime<chrono::Utc>>) -> i
         }
     };
 
-    let color = move || {
-        let time = time.get();
-
-        // times based on treasury
-        if time < 3600 {
-            "0.723 0.219 149.579"
-        } else if time < (3600 * 24) {
-            "0.768 0.233 130.85"
-        } else if time < (3600 * 24 * 5) {
-            "0.795 0.184 86.047"
-        } else if time < (3600 * 24 * 12) {
-            "0.705 0.213 47.604"
-        } else {
-            "0.637 0.237 25.331"
-        }
-    };
+    let color = move || WynnTier::from_secs_held(time.get()).color();
 
     view! {
         <h4 class="terrtimer" style:--bg-col={color}>{timestr}</h4>

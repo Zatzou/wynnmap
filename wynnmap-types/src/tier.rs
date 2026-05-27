@@ -57,4 +57,19 @@ impl WynnTier {
             _ => Self::VeryLow,
         }
     }
+
+    /// Get the tier based on seconds a territory has been held
+    pub const fn from_secs_held(seconds: i64) -> Self {
+        if seconds < 3600 {
+            Self::VeryLow
+        } else if seconds < (3600 * 24) {
+            Self::Low
+        } else if seconds < (3600 * 24 * 5) {
+            Self::Medium
+        } else if seconds < (3600 * 24 * 12) {
+            Self::High
+        } else {
+            Self::VeryHigh
+        }
+    }
 }
