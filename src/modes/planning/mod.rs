@@ -152,8 +152,19 @@ pub fn PlanningMap() -> impl IntoView {
     let hovered = RwSignal::new(None);
     let selected = RwSignal::new(None);
 
+    // update the selected territory on click
+    let onclick = Callback::new(move |pos| {
+        selected.set(
+            terrs
+                .read()
+                .iter()
+                .find(|(_, t)| t.location.contains(pos))
+                .map(|(n, _)| n.clone()),
+        );
+    });
+
     view! {
-        <WynnMap>
+        <WynnMap onclick=onclick>
             <DefaultMapTiles />
 
             // conns
@@ -162,7 +173,7 @@ pub fn PlanningMap() -> impl IntoView {
             </Show>
 
             // territories
-            <TerrView terrs={terrs} state={mapowneds} hovered=hovered selected=selected hide_timers=true />
+            <TerrView terrs={terrs} state={mapowneds} hovered=hovered hide_timers=true />
         </WynnMap>
 
         // hover box

@@ -116,8 +116,19 @@ pub fn WarMap() -> impl IntoView {
         }
     });
 
+    // update the selected territory on click
+    let onclick = Callback::new(move |pos| {
+        selected.set(
+            terrs
+                .read()
+                .iter()
+                .find(|(_, t)| t.location.contains(pos))
+                .map(|(n, _)| n.clone()),
+        );
+    });
+
     view! {
-        <WynnMap>
+        <WynnMap onclick=onclick>
             <DefaultMapTiles />
 
             // conns
@@ -127,7 +138,7 @@ pub fn WarMap() -> impl IntoView {
 
             // territories
             <Show when={move || show_terrs.get()}>
-                <TerrView terrs={terrs} state={state} hovered=hovered selected=selected />
+                <TerrView terrs={terrs} state={state} hovered=hovered />
             </Show>
         </WynnMap>
 

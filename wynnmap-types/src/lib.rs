@@ -73,4 +73,11 @@ impl Region {
     pub const fn get_midpoint(&self) -> (i32, i32) {
         (self.midpoint_x(), self.midpoint_y())
     }
+
+    pub const fn contains(&self, (x, y): (i32, i32)) -> bool {
+        x >= self.left_side()
+            && x <= self.right_side()
+            && y >= self.top_side()
+            && y <= self.bottom_side()
+    }
 }

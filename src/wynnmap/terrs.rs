@@ -1,27 +1,33 @@
-use std::{
-    collections::BTreeMap,
-    sync::{Arc, Mutex},
-    time::Duration,
-};
+use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 use leptos::prelude::*;
-use web_sys::PointerEvent;
 use wynnmap_types::{
     resources::BaseResGen,
     terr::{TerrState, Territory},
     tier::WynnTier,
 };
 
-use crate::{sectimer::SecondTimer, settings::use_toggle};
+use crate::{sectimer::SecondTimer, settings::use_toggle, wynnmap::RelMousePos};
 
 #[component]
 pub fn TerrView(
     #[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>,
     #[prop(into)] state: Signal<BTreeMap<Arc<str>, TerrState>>,
     #[prop(optional)] hovered: RwSignal<Option<Arc<str>>>,
-    #[prop(optional)] selected: RwSignal<Option<Arc<str>>>,
     #[prop(optional)] hide_timers: bool,
 ) -> impl IntoView {
+    let pos = expect_context::<RelMousePos>();
+
+    Effect::new(move || {
+        let t = terrs
+            .read()
+            .iter()
+            .find(|(_, t)| t.location.contains(*pos.0.read()))
+            .map(|(n, _)| n.clone());
+
+        hovered.set(t);
+    });
+
     view! {
         <div class="wynnmap-items">
             <For
@@ -35,11 +41,8 @@ pub fn TerrView(
 
                     view! {
                         <Territory
-                            name=k
                             terr=v.into()
                             state={state.into()}
-                            hovered=hovered
-                            selected=selected
                             hide_timers=hide_timers
                         />
                     }
@@ -51,11 +54,8 @@ pub fn TerrView(
 
 #[component]
 pub fn Territory(
-    name: Arc<str>,
     terr: Signal<Territory>,
     state: Signal<TerrState>,
-    #[prop(optional)] hovered: RwSignal<Option<Arc<str>>>,
-    #[prop(optional)] selected: RwSignal<Option<Arc<str>>>,
     #[prop(optional)] hide_timers: bool,
 ) -> impl IntoView {
     let col_rgb = move || {
@@ -69,9 +69,6 @@ pub fn Territory(
     let show_timers = use_toggle("timers", true);
     let use_transparency = use_toggle("use_transparency", true);
 
-    let lastpos = Arc::new(Mutex::new((0, 0)));
-    let lastpos2 = lastpos.clone();
-
     let namesize = Memo::new(move |_| (terr.read().location.width() / 3).min(40));
 
     view! {
@@ -82,33 +79,6 @@ pub fn Territory(
             style:top=move || format!("{}px", terr.read().location.top_side())
             style:left=move || format!("{}px", terr.read().location.left_side())
             style:--guild-col=move || col_rgb()
-
-            on:mouseenter={
-                let name = name.clone();
-                move |_| {
-                    hovered.set(Some(name.clone()));
-                }
-            }
-            on:mouseleave=move |_| {
-                hovered.set(None);
-            }
-
-            on:pointerdown=move |e: PointerEvent| {
-                let mut lastpos = lastpos.lock().unwrap();
-                *lastpos = (e.client_x(), e.client_y());
-            }
-            on:pointerup={
-                let name = name.clone();
-                move |e: PointerEvent| {
-                    let lastpos = lastpos2.lock().unwrap();
-                    let (x, y) = *lastpos;
-                    drop(lastpos);
-
-                    if e.client_x().abs_diff(x) < 5 && e.client_y().abs_diff(y) < 5 {
-                        selected.set(Some(name.clone()));
-                    }
-                }
-            }
         >
             // attack timer border
             {move || state.read().acquired.map(|a| view! {

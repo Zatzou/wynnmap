@@ -2,14 +2,21 @@ use core::panic;
 use std::sync::{Arc, Mutex};
 
 use leptos::{ev, leptos_dom::helpers, prelude::*};
-use web_sys::{KeyboardEvent, MouseEvent, TouchEvent, TouchList, WheelEvent};
+use web_sys::{KeyboardEvent, MouseEvent, PointerEvent, TouchEvent, TouchList, WheelEvent};
 
 pub mod conns;
 pub mod maptile;
 pub mod terrs;
 
+/// Mouse position on the map atlas
+#[derive(Clone)]
+pub struct RelMousePos(pub RwSignal<(i32, i32)>);
+
 #[component]
-pub fn WynnMap(children: Children) -> impl IntoView {
+pub fn WynnMap(
+    children: Children,
+    #[prop(optional)] onclick: Option<Callback<(i32, i32)>>,
+) -> impl IntoView {
     // grab user agent
     let user_agent = helpers::window()
         .navigator()
@@ -35,27 +42,23 @@ pub fn WynnMap(children: Children) -> impl IntoView {
     let transitioning = RwSignal::new(false);
 
     // mouse position stored for zoom compensation
-    let mousepos = Arc::new(Mutex::new((0, 0)));
+    let mousepos = RwSignal::new((0, 0));
 
     // mouse position and drag events
-    let ondrag = {
-        let mousepos = mousepos.clone();
-        move |e: MouseEvent| {
-            e.prevent_default();
+    let ondrag = move |e: MouseEvent| {
+        e.prevent_default();
 
-            // if we are dragging move the map
-            if dragging.get() {
-                let pos = position.get();
+        // if we are dragging move the map
+        if dragging.get() {
+            let pos = position.get();
 
-                position.set((
-                    pos.0 + f64::from(e.movement_x()),
-                    pos.1 + f64::from(e.movement_y()),
-                ));
-            }
-
-            let mut mpos = mousepos.lock().unwrap();
-            *mpos = (e.client_x(), e.client_y());
+            position.set((
+                pos.0 + f64::from(e.movement_x()),
+                pos.1 + f64::from(e.movement_y()),
+            ));
         }
+
+        mousepos.set((e.client_x(), e.client_y()));
     };
 
     // detect when a mouse drag starts
@@ -73,27 +76,23 @@ pub fn WynnMap(children: Children) -> impl IntoView {
     };
 
     // detect zooming using a mouse wheel
-    let zoomchange = {
-        let mousepos = mousepos.clone();
-        move |e: WheelEvent| {
-            e.prevent_default();
+    let zoomchange = move |e: WheelEvent| {
+        e.prevent_default();
 
-            // enable the transition when zooming with the mousewheel
-            transitioning.set(true);
+        // enable the transition when zooming with the mousewheel
+        transitioning.set(true);
 
-            // get the mouse position
-            let mpos1 = mousepos.lock().unwrap();
-            let mpos = (f64::from(mpos1.0), f64::from(mpos1.1));
-            drop(mpos1);
+        // get the mouse position
+        let mpos1 = mousepos.get();
+        let mpos = (f64::from(mpos1.0), f64::from(mpos1.1));
 
-            // calculate the new zoom level
-            let old_zoom = zoom.get();
-            let new_zoom = calculate_new_zoom(old_zoom, -e.delta_y() / 300.0);
+        // calculate the new zoom level
+        let old_zoom = zoom.get();
+        let new_zoom = calculate_new_zoom(old_zoom, -e.delta_y() / 300.0);
 
-            zoom.set(new_zoom);
+        zoom.set(new_zoom);
 
-            apply_zoom_compensation(mpos, old_zoom, new_zoom, position);
-        }
+        apply_zoom_compensation(mpos, old_zoom, new_zoom, position);
     };
 
     // touch positions stored for touch events
@@ -296,6 +295,45 @@ pub fn WynnMap(children: Children) -> impl IntoView {
         }
     };
 
+    // use pointer events to handle clicks on the map
+    let relmousepos = RwSignal::new((0, 0));
+    provide_context(RelMousePos(relmousepos));
+
+    let pointermove = move |e: PointerEvent| {
+        let pos = (e.client_x(), e.client_y());
+
+        // calculate the compensation
+        let zoom = zoom.get();
+        let map_pos = position.get();
+        let rel = (
+            (pos.0 as f64 - map_pos.0) / zoom,
+            (pos.1 as f64 - map_pos.1) / zoom,
+        );
+        relmousepos.set((rel.0 as i32, rel.1 as i32));
+    };
+
+    let dragstartpos = RwSignal::new((0, 0));
+
+    let pointerdown = move |e: PointerEvent| {
+        dragstartpos.set((e.client_x(), e.client_y()));
+
+        // also update position on down to support touch events
+        pointermove(e);
+    };
+
+    let pointerup = move |e: PointerEvent| {
+        let pos = (e.client_x(), e.client_y());
+        let startpos = dragstartpos.get();
+
+        // emit clicks when the map hasnt been moved meaningfully
+        if let Some(cb) = onclick
+            && startpos.0.abs_diff(pos.0) < 5
+            && startpos.1.abs_diff(pos.1) < 5
+        {
+            cb.run(relmousepos.get())
+        }
+    };
+
     window_event_listener(ev::keydown, onkeydown);
 
     view! {
@@ -309,6 +347,9 @@ pub fn WynnMap(children: Children) -> impl IntoView {
             on:wheel=zoomchange
             on:touchstart=touchstart
             on:touchmove=ontouchdrag
+            on:pointermove=pointermove
+            on:pointerdown=pointerdown
+            on:pointerup=pointerup
         >
             // the inner container used for moving the map
             // this container contains the map contents and is moved when the map is dragged
