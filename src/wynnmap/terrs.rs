@@ -75,7 +75,7 @@ pub fn Territory(
     let namesize = Memo::new(move |_| (terr.read().location.width() / 3).min(40));
 
     view! {
-        <div class="wynnmap-item guildterr" class:hq={move || state.read().hq}
+        <div class="guildterr" class:hq={move || state.read().hq}
             class:guildterr-notrans=move || !use_transparency.get()
             style:width=move || format!("{}px", terr.read().location.width())
             style:height=move || format!("{}px", terr.read().location.height())
