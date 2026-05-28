@@ -28,13 +28,18 @@
     display: none;
 }
 
+.wynnmap-tiles {
+    contain: style;
+    isolation: isolate;
+    pointer-events: none;
+    user-select: none;
+}
+
 .wynnmap-tile {
     position: fixed;
     max-width: unset;
-    pointer-events: none;
-    backface-visibility: hidden;
-    contain: strict;
     content-visibility: auto;
+
     /* reduce chromium/webkit pixel gaps */
     /* still visible at high zooms but greatly reduced */
     mix-blend-mode: plus-lighter;
@@ -44,7 +49,12 @@
     position: fixed;
     pointer-events: none;
     backface-visibility: hidden;
-    contain: strict;
+    content-visibility: auto;
+}
+
+.wynnmap-items {
+    contain: style;
+    isolation: isolate;
 }
 
 .wynnmap-item {
@@ -61,24 +71,39 @@
 }
 
 .guildterr {
-    background-color: rgb(var(--guild-col) / 0.35);
+    position: fixed;
+
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    border: 2px solid rgb(var(--guild-col));
-    contain: layout size;
 
-    .icon-crown {
+    background-color: rgb(var(--guild-col) / 0.35);
+    border: 2px solid rgb(var(--guild-col));
+
+    contain: layout size;
+    isolation: isolate;
+
+    >.icon-crown {
         display: none;
         aspect-ratio: 1;
-        contain: paint;
-        margin-bottom: -3px;
+        content-visibility: auto;
     }
 
-    .guildtag {
+    &.hq {
+        background-color: rgb(var(--guild-col) / 0.75);
+
+        >.icon-crown {
+            display: block;
+        }
+    }
+
+    >.guildtag {
         font-size: var(--tsize);
-        line-height: var(--tsize);
+        height: 1lh;
+        width: 6ch;
+        flex-shrink: 0;
+        text-align: center;
 
         font-weight: 900;
         color: white;
@@ -86,31 +111,51 @@
         paint-order: stroke;
         font-optical-sizing: auto;
 
-        padding: 5px 5px;
-        contain: paint;
+        margin: -0.15lh 0;
+        content-visibility: auto;
+        pointer-events: none;
+        user-select: none;
     }
 
-    .resicons {
+    >.resicons {
         display: flex;
         height: 24px;
-        contain: paint;
-        margin-top: -5px;
+        width: 120px;
+        flex-shrink: 0;
+        justify-content: center;
+        content-visibility: auto;
+        isolation: isolate;
+        pointer-events: none;
+        user-select: none;
     }
 
-    .terrtimer {
-        @apply px-2;
-        @apply rounded-2xl;
+    >.terrtimer {
         @apply text-sm;
         text-align: center;
         white-space: nowrap;
 
-        contain: paint;
+        display: flex;
+        justify-content: center;
+        height: 1lh;
+        width: 16ch;
+        flex-shrink: 0;
 
-        background-color: var(--bg-col);
-        color: black;
+        content-visibility: auto;
+        pointer-events: none;
+        user-select: none;
+
+        >h4 {
+            @apply px-2;
+            @apply rounded-2xl;
+
+            contain: paint;
+
+            background-color: var(--bg-col);
+            color: black;
+        }
     }
 
-    .attacktmr {
+    >.attacktmr {
         position: absolute;
         width: calc(100% + 6px);
         height: calc(100% + 6px);
@@ -122,14 +167,6 @@
 
 .guildterr-notrans {
     background-color: rgb(var(--guild-col));
-}
-
-.guildterr.hq {
-    background-color: rgb(var(--guild-col) / 0.75);
-
-    .icon-crown {
-        display: block;
-    }
 }
 
 

@@ -207,7 +207,9 @@ fn TerrTimer(#[prop(into)] acquired: Signal<chrono::DateTime<chrono::Utc>>) -> i
     let color = move || WynnTier::from_secs_held(time.get()).color();
 
     view! {
-        <h4 class="terrtimer" style:--bg-col={color}>{timestr}</h4>
+        <div class="terrtimer">
+            <h4 style:--bg-col={color}>{timestr}</h4>
+        </div>
     }
 }
 
