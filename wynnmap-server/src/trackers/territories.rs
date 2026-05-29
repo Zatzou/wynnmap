@@ -156,7 +156,7 @@ impl TerritoryTracker {
         .await?;
 
         // create owner data
-        let owners = {
+        let state = {
             let guildlock = self.guilds.read().await;
 
             data.clone()
@@ -202,7 +202,7 @@ impl TerritoryTracker {
         let terr_etag = sha224_etag_json(&territories);
 
         // update territory data
-        let old_owners = {
+        let old_state = {
             let mut lock = self.state.inner.write().await;
 
             // update expires and last updated
@@ -219,24 +219,20 @@ impl TerritoryTracker {
             lock.territories_etag = terr_etag;
 
             // update owners with swap for notify
-            if lock.state != owners {
-                let mut old_owners = owners.clone();
-                mem::swap(&mut old_owners, &mut lock.state);
+            let mut old_state = state.clone();
+            mem::swap(&mut old_state, &mut lock.state);
 
-                // return old owners for notifications
-                Some(old_owners)
-            } else {
-                None
-            }
+            // return old owners for notifications
+            old_state
         };
 
         // send broadcasts to notify websockets
-        if let Some(old_owners) = old_owners {
+        if !old_state.is_empty() {
             async {
                 let mut updateds = BTreeMap::new();
 
-                for (tname, new) in owners {
-                    let old = old_owners.get(&tname);
+                for (tname, new) in state {
+                    let old = old_state.get(&tname);
 
                     if old != Some(&new) {
                         updateds.insert(tname, new);
