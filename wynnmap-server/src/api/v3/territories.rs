@@ -11,17 +11,36 @@ use axum::{
     },
     routing::get,
 };
+use opentelemetry::global;
 use reqwest::StatusCode;
 use tokio_stream::{StreamExt, wrappers::BroadcastStream};
+use tower_http::metrics::{InFlightRequestsLayer, in_flight_requests::InFlightRequestsCounter};
 use wynnmap_types::api::v2::RespWrapper;
 
 use crate::{etag::check_etag, header_date, state::TerritoryState};
 
 pub fn router(state: Arc<TerritoryState>) -> axum::Router {
+    let counter = InFlightRequestsCounter::new();
+    let meter = global::meter("wynnmap-server");
+
+    {
+        let counter = counter.clone();
+        meter
+            .i64_observable_up_down_counter("active-sse-sessions")
+            .with_description("Active SSE connections")
+            .with_callback(move |observer| {
+                observer.observe(counter.get() as i64, &[]);
+            })
+            .build();
+    }
+
     axum::Router::new()
         .route("/list", get(terr_list))
         .route("/state", get(guild_list))
-        .route("/state/sse", get(sse_handler))
+        .route(
+            "/state/sse",
+            get(sse_handler).route_layer(InFlightRequestsLayer::new(counter)),
+        )
         .with_state(state)
 }
 

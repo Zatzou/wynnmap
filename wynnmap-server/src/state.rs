@@ -2,13 +2,11 @@ use std::{collections::BTreeMap, sync::Arc};
 
 use axum::body::Bytes;
 use chrono::{DateTime, Utc};
-use opentelemetry::metrics::UpDownCounter;
 use tokio::sync::{RwLock, broadcast};
 use wynnmap_types::{
     guild::Guild,
     maptile::MapTile,
     terr::{TerrState, Territory},
-    ws::TerrSockMessage,
 };
 
 #[derive(Clone, Default)]
@@ -31,7 +29,6 @@ pub struct TerritoryState {
 
     /// A broadcast receiver for encoded territory updates
     pub bc_bytes: Arc<broadcast::Receiver<Arc<str>>>,
-    pub active_conn: UpDownCounter<i64>,
 }
 
 #[derive(Debug, Default)]

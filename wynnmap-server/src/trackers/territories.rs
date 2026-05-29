@@ -6,7 +6,7 @@ use std::{
 };
 
 use chrono::{DateTime, Utc};
-use opentelemetry::global;
+use opentelemetry::{global, metrics::Gauge};
 use serde::Deserialize;
 use tokio::{
     sync::{RwLock, broadcast},
@@ -36,6 +36,7 @@ pub struct TerritoryTracker {
     guilds: Arc<RwLock<BTreeMap<Arc<str>, Guild>>>,
 
     bc_bytes: broadcast::Sender<Arc<str>>,
+    terrs_updated: Gauge<i64>,
 
     state: Arc<TerritoryState>,
 }
@@ -53,12 +54,15 @@ impl TerritoryTracker {
             guilds: guild_state.guilds.clone(),
 
             bc_bytes: bc_bytes_s,
+            terrs_updated: meter
+                .i64_gauge("terrs_updated")
+                .with_description("Territories updated this cycle")
+                .build(),
 
             state: Arc::new(TerritoryState {
                 inner: Default::default(),
 
                 bc_bytes: Arc::new(bc_bytes_r),
-                active_conn: meter.i64_up_down_counter("active-ws-sessions").build(),
             }),
         }
     }
@@ -208,6 +212,8 @@ impl TerritoryTracker {
                         updateds.insert(tname, new);
                     }
                 }
+
+                self.terrs_updated.record(updateds.len() as i64, &[]);
 
                 if !updateds.is_empty() {
                     self.bc_bytes.send(
