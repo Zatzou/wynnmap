@@ -9,7 +9,8 @@ use chrono::{DateTime, Utc};
 use opentelemetry::{global, metrics::Gauge};
 use serde::Deserialize;
 use tokio::{
-    sync::{RwLock, broadcast},
+    select,
+    sync::{RwLock, broadcast, mpsc},
     time::Instant,
 };
 use tracing::{Instrument, error, info_span};
@@ -68,13 +69,17 @@ impl TerritoryTracker {
     }
 
     pub fn run(self) -> Arc<TerritoryState> {
-        let state2 = self.state.clone();
+        let state = self.state.clone();
+        let (notify_send, mut notify_recv) = mpsc::channel(100);
+        let bc_bytes = self.bc_bytes.clone();
 
+        // tracker code
         tokio::spawn(async move {
             let tracker = self;
 
             loop {
-                let res = tracker.query_territories().await;
+                let sender = notify_send.clone();
+                let res = tracker.query_territories(sender).await;
 
                 let waittime = match res {
                     Ok(expires) => {
@@ -105,11 +110,36 @@ impl TerritoryTracker {
             }
         });
 
-        state2
+        // notifier code
+        {
+            let state = state.inner.clone();
+            tokio::spawn(async move {
+                loop {
+                    let data = select! {
+                        Some(data) = notify_recv.recv() => {
+                            data
+                        },
+                        // send last updated notifications every 60s
+                        _ = tokio::time::sleep(Duration::from_secs(60)) => {
+                            TerrSockMessage::LastUpdate { ts: state.read().await.last_updated }
+                        }
+                    };
+
+                    bc_bytes
+                        .send(serde_json::to_string(&data).unwrap().into())
+                        .unwrap();
+                }
+            });
+        }
+
+        state
     }
 
     #[tracing::instrument(skip(self), err(Debug))]
-    async fn query_territories(&self) -> Result<Option<DateTime<Utc>>, AnyError> {
+    async fn query_territories(
+        &self,
+        notify_send: mpsc::Sender<TerrSockMessage>,
+    ) -> Result<Option<DateTime<Utc>>, AnyError> {
         let (data, expires) = async {
             let res = self
                 .client
@@ -216,19 +246,7 @@ impl TerritoryTracker {
                 self.terrs_updated.record(updateds.len() as i64, &[]);
 
                 if !updateds.is_empty() {
-                    self.bc_bytes.send(
-                        serde_json::to_string(&TerrSockMessage::Update(updateds))
-                            .unwrap()
-                            .into(),
-                    )?;
-                } else {
-                    self.bc_bytes.send(
-                        serde_json::to_string(&TerrSockMessage::LastUpdate {
-                            ts: self.state.inner.read().await.last_updated,
-                        })
-                        .unwrap()
-                        .into(),
-                    )?;
+                    notify_send.send(TerrSockMessage::Update(updateds)).await?;
                 }
 
                 Ok::<(), AnyError>(())

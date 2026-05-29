@@ -1,14 +1,11 @@
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
 use axum::{
     Json,
     body::Body,
     extract::State,
     http::{HeaderMap, HeaderName, HeaderValue, header},
-    response::{
-        IntoResponse, Sse,
-        sse::{Event, KeepAlive},
-    },
+    response::{IntoResponse, Sse, sse::Event},
     routing::get,
 };
 use opentelemetry::global;
@@ -105,9 +102,7 @@ async fn sse_handler(State(state): State<Arc<TerritoryState>>) -> impl IntoRespo
     let stream = BroadcastStream::new(state.bc_bytes.resubscribe())
         .map(|data| data.map(|data| Event::default().data(data)));
 
-    let mut res = Sse::new(stream)
-        .keep_alive(KeepAlive::new().interval(Duration::from_secs(30)))
-        .into_response();
+    let mut res = Sse::new(stream).into_response();
 
     // tell proxies to not buffer data
     res.headers_mut().insert(
