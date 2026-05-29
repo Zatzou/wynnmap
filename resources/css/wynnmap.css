@@ -5,6 +5,7 @@
     overflow: hidden;
     backface-visibility: hidden;
     contain: strict;
+    isolation: isolate;
 }
 
 .wynnmap-inner {
@@ -48,6 +49,7 @@
 .connpath {
     position: fixed;
     pointer-events: none;
+    user-select: none;
     backface-visibility: hidden;
     content-visibility: auto;
 }
@@ -81,13 +83,12 @@
     background-color: rgb(var(--guild-col) / 0.35);
     border: 2px solid rgb(var(--guild-col));
 
-    contain: layout size;
-    isolation: isolate;
+    pointer-events: none;
+    user-select: none;
 
     >.icon-crown {
         display: none;
         aspect-ratio: 1;
-        content-visibility: auto;
     }
 
     &.hq {
@@ -112,9 +113,6 @@
         font-optical-sizing: auto;
 
         margin: -0.15lh 0;
-        content-visibility: auto;
-        pointer-events: none;
-        user-select: none;
     }
 
     >.resicons {
@@ -123,10 +121,6 @@
         width: 120px;
         flex-shrink: 0;
         justify-content: center;
-        content-visibility: auto;
-        isolation: isolate;
-        pointer-events: none;
-        user-select: none;
     }
 
     >.terrtimer {
@@ -139,10 +133,6 @@
         height: 1lh;
         width: 16ch;
         flex-shrink: 0;
-
-        content-visibility: auto;
-        pointer-events: none;
-        user-select: none;
 
         >h4 {
             @apply px-2;
