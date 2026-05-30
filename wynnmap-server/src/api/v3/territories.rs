@@ -23,7 +23,7 @@ pub fn router(state: Arc<TerritoryState>) -> axum::Router {
     {
         let counter = counter.clone();
         meter
-            .i64_observable_up_down_counter("active-sse-sessions")
+            .i64_observable_gauge("active-sse-sessions")
             .with_description("Active SSE connections")
             .with_callback(move |observer| {
                 observer.observe(counter.get() as i64, &[]);
