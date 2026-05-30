@@ -2,6 +2,9 @@
 public_url = "./"
 minify = "on_release"
 
+[watch]
+ignore = ["wynnmap-server", "icons.ase"]
+
 [serve]
 addresses = ["0.0.0.0"]
 
@@ -19,6 +22,3 @@ command_arguments = [
 [[proxy]]
 backend = "https://wynnmap.zatzou.com/api/"
 # backend = "http://localhost:8081/api/"
-
-[watch]
-ignore = ["icons.ase"]
