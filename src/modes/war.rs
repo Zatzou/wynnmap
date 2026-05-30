@@ -5,10 +5,9 @@ use std::{
     time::Duration,
 };
 
-use chrono::Utc;
 use leptos::{prelude::*, task::spawn_local};
 use wynnmap_types::{
-    terr::{TerrState, Territory},
+    terr::{TerrState, TerrTimestamps, Territory},
     tier::WynnTier,
 };
 
@@ -42,7 +41,7 @@ pub fn WarMap() -> impl IntoView {
 
     let terrs = RwSignal::new(BTreeMap::new());
     let state = RwSignal::new(BTreeMap::new());
-    let last_updated = RwSignal::new(Utc::now());
+    let last_updated = RwSignal::new(TerrTimestamps::default());
 
     let load_terrs = move |terrs: RwSignal<_>| async move {
         match datasource::get_terrs().await {
@@ -68,8 +67,8 @@ pub fn WarMap() -> impl IntoView {
     let load_owners = move |owners: RwSignal<_>| async move {
         match datasource::get_state().await {
             Ok(data) => {
-                owners.set(data.data);
-                last_updated.set(data.updated);
+                owners.set(data.terrs);
+                // last_updated.set(data.updated);
             }
             Err(err) => {
                 if !dialogs.contains("err_maptiles") {
@@ -89,7 +88,7 @@ pub fn WarMap() -> impl IntoView {
 
     spawn_local(load_owners(state));
 
-    datasource::sse_terr_updates(state, last_updated);
+    datasource::ws_terr_updates(state, last_updated);
 
     let hovered = RwSignal::new(None);
     let selected = RwSignal::new(None);
@@ -97,7 +96,7 @@ pub fn WarMap() -> impl IntoView {
     let SecondTimer(now) = expect_context();
     let data_age = Memo::new(move |_| {
         now.read()
-            .signed_duration_since(last_updated.read())
+            .signed_duration_since(last_updated.read().updated.unwrap_or_default())
             .num_seconds()
     });
 

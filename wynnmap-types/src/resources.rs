@@ -96,3 +96,19 @@ pub struct ResourceValues {
     pub stored: i32,
     pub limit: i32,
 }
+
+impl From<ResourceValues> for (i32, i32, i32) {
+    fn from(value: ResourceValues) -> Self {
+        (value.generation, value.stored, value.limit)
+    }
+}
+
+impl From<(i32, i32, i32)> for ResourceValues {
+    fn from((g, s, l): (i32, i32, i32)) -> Self {
+        Self {
+            generation: g,
+            stored: s,
+            limit: l,
+        }
+    }
+}

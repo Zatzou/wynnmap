@@ -2,13 +2,12 @@ use serde::{Deserialize, Serialize};
 
 pub mod ws;
 
+pub mod encoding;
 pub mod guild;
 pub mod maptile;
 pub mod resources;
 pub mod terr;
 pub mod tier;
-
-pub mod api;
 
 /// A rectangular region in the minecraft world
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]

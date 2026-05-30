@@ -4,6 +4,8 @@ use crc32fast::Hasher;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::terr::CompactState;
+
 /// Struct representing a guild
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash)]
 pub struct Guild {
@@ -77,5 +79,59 @@ impl Guild {
         let bytes: Vec<u8> = hash.to_ne_bytes().into_iter().rev().collect();
 
         (bytes[1], bytes[2], bytes[3])
+    }
+
+    pub(crate) fn apply_diff(&mut self, diff: CompactGuild) {
+        if let Some(uuid) = diff.uuid {
+            self.uuid = uuid;
+        }
+
+        if let Some(name) = diff.name {
+            self.name = name;
+        }
+
+        if let Some(prefix) = diff.prefix {
+            self.prefix = prefix;
+        }
+
+        if let Some(color) = diff.color {
+            self.color = color;
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub(crate) struct CompactGuild {
+    #[serde(rename = "u")]
+    pub uuid: Option<Option<Uuid>>,
+    #[serde(rename = "n")]
+    pub name: Option<Arc<str>>,
+    #[serde(rename = "p")]
+    pub prefix: Option<Arc<str>>,
+    #[serde(rename = "c")]
+    pub color: Option<Option<Arc<str>>>,
+}
+
+impl CompactGuild {
+    pub fn from_full(guild: Guild) -> Self {
+        Self {
+            uuid: Some(guild.uuid),
+            name: Some(guild.name),
+            prefix: Some(guild.prefix),
+            color: Some(guild.color),
+        }
+    }
+
+    pub fn from_diff(new: Guild, old: &Guild) -> Self {
+        Self {
+            uuid: CompactState::diff(new.uuid, &old.uuid),
+            name: CompactState::diff(new.name, &old.name),
+            prefix: CompactState::diff(new.prefix, &old.prefix),
+            color: CompactState::diff(new.color, &old.color),
+        }
+    }
+
+    pub const fn has_some(&self) -> bool {
+        self.uuid.is_some() || self.name.is_some() || self.prefix.is_some() || self.color.is_some()
     }
 }

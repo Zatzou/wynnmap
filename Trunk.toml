@@ -22,3 +22,8 @@ command_arguments = [
 [[proxy]]
 backend = "https://wynnmap.zatzou.com/api/"
 # backend = "http://localhost:8081/api/"
+
+[[proxy]]
+backend = "wss://wynnmap.zatzou.com/api/v3/terr/state/ws"
+# backend = "ws://localhost:8081/api/v3/terr/state/ws"
+ws = true

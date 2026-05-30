@@ -16,10 +16,10 @@ use tokio::{
 use tracing::{Instrument, error, info_span};
 use uuid::Uuid;
 use wynnmap_types::{
-    Region,
+    Region, encoding,
     guild::Guild,
     resources::{BaseResGen, ResourceType, ResourceValues, Resources},
-    terr::{TerrState, Territory},
+    terr::{CompactState, TerrState, Territory},
     tier::WynnTier,
     ws::TerrSockMessage,
 };
@@ -36,7 +36,7 @@ pub struct TerritoryTracker {
     client: reqwest::Client,
     guilds: Arc<RwLock<BTreeMap<Arc<str>, Guild>>>,
 
-    bc_bytes: broadcast::Sender<Arc<str>>,
+    bc_bytes: broadcast::Sender<Arc<Vec<u8>>>,
     terrs_updated: Gauge<i64>,
 
     state: Arc<TerritoryState>,
@@ -64,6 +64,10 @@ impl TerritoryTracker {
                 inner: Default::default(),
 
                 bc_bytes: Arc::new(bc_bytes_r),
+                ws_conns: meter
+                    .i64_up_down_counter("active-ws-sessions")
+                    .with_description("Active websocket sessions")
+                    .build(),
             }),
         }
     }
@@ -121,12 +125,12 @@ impl TerritoryTracker {
                         },
                         // send last updated notifications every 60s
                         _ = tokio::time::sleep(Duration::from_secs(60)) => {
-                            TerrSockMessage::LastUpdate { ts: state.read().await.last_updated }
+                            TerrSockMessage::LastUpdate(state.read().await.timestamps)
                         }
                     };
 
                     bc_bytes
-                        .send(serde_json::to_string(&data).unwrap().into())
+                        .send(encoding::encode_data(&data).unwrap().into())
                         .unwrap();
                 }
             });
@@ -140,7 +144,7 @@ impl TerritoryTracker {
         &self,
         notify_send: mpsc::Sender<TerrSockMessage>,
     ) -> Result<Option<DateTime<Utc>>, AnyError> {
-        let (data, expires) = async {
+        let (data, expires, wynntick) = async {
             let res = self
                 .client
                 .get("https://api.wynncraft.com/v3/guild/list/territory")
@@ -148,9 +152,12 @@ impl TerritoryTracker {
                 .await?;
 
             let expires = res.expires();
+            let wynntick = res
+                .get_header("territorylasttick")
+                .and_then(|t| DateTime::parse_from_str(t, "%Y-%m-%d %H:%M:%S%.f%:z").ok());
             let data: BTreeMap<Arc<str>, WynnTerritory> = res.parse_json().await?;
 
-            Ok::<_, util::RequestError>((data, expires))
+            Ok::<_, util::RequestError>((data, expires, wynntick))
         }
         .instrument(info_span!("fetch"))
         .await?;
@@ -202,12 +209,11 @@ impl TerritoryTracker {
         let terr_etag = sha224_etag_json(&territories);
 
         // update territory data
-        let old_state = {
+        let (old_state, timestamps) = {
             let mut lock = self.state.inner.write().await;
 
             // update expires and last updated
             lock.expires = expires.unwrap_or_default();
-            lock.last_updated = Utc::now();
 
             // update territories
             if lock.territories != territories {
@@ -222,8 +228,16 @@ impl TerritoryTracker {
             let mut old_state = state.clone();
             mem::swap(&mut old_state, &mut lock.state);
 
+            lock.timestamps.updated = Some(Utc::now());
+
+            if old_state != lock.state {
+                lock.timestamps.changed = lock.timestamps.updated;
+            }
+
+            lock.timestamps.wynntick = wynntick;
+
             // return old owners for notifications
-            old_state
+            (old_state, lock.timestamps)
         };
 
         // send broadcasts to notify websockets
@@ -234,15 +248,21 @@ impl TerritoryTracker {
                 for (tname, new) in state {
                     let old = old_state.get(&tname);
 
-                    if old != Some(&new) {
-                        updateds.insert(tname, new);
+                    if let Some(old) = old
+                        && old != &new
+                    {
+                        updateds.insert(tname, CompactState::from_diff(new, old));
+                    } else if old.is_none() {
+                        updateds.insert(tname, CompactState::from_full(new));
                     }
                 }
 
                 self.terrs_updated.record(updateds.len() as i64, &[]);
 
                 if !updateds.is_empty() {
-                    notify_send.send(TerrSockMessage::Update(updateds)).await?;
+                    notify_send
+                        .send(TerrSockMessage::Update(updateds, timestamps))
+                        .await?;
                 }
 
                 Ok::<(), AnyError>(())

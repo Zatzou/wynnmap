@@ -1,43 +1,27 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use axum::{
     Json,
     body::Body,
-    extract::State,
-    http::{HeaderMap, HeaderName, HeaderValue, header},
-    response::{IntoResponse, Sse, sse::Event},
+    extract::{
+        State, WebSocketUpgrade,
+        ws::{Message, WebSocket},
+    },
+    http::{HeaderMap, header},
+    response::IntoResponse,
     routing::get,
 };
-use opentelemetry::global;
 use reqwest::StatusCode;
-use tokio_stream::{StreamExt, wrappers::BroadcastStream};
-use tower_http::metrics::{InFlightRequestsLayer, in_flight_requests::InFlightRequestsCounter};
-use wynnmap_types::api::v2::RespWrapper;
+use tokio::{select, sync::broadcast, time::timeout};
+use wynnmap_types::terr::MapState;
 
-use crate::{etag::check_etag, header_date, state::TerritoryState};
+use crate::{AnyError, etag::check_etag, header_date, state::TerritoryState};
 
 pub fn router(state: Arc<TerritoryState>) -> axum::Router {
-    let counter = InFlightRequestsCounter::new();
-    let meter = global::meter("wynnmap-server");
-
-    {
-        let counter = counter.clone();
-        meter
-            .i64_observable_gauge("active-sse-sessions")
-            .with_description("Active SSE connections")
-            .with_callback(move |observer| {
-                observer.observe(counter.get() as i64, &[]);
-            })
-            .build();
-    }
-
     axum::Router::new()
         .route("/list", get(terr_list))
-        .route("/state", get(guild_list))
-        .route(
-            "/state/sse",
-            get(sse_handler).route_layer(InFlightRequestsLayer::new(counter)),
-        )
+        .route("/state", get(map_state))
+        .route("/state/ws", get(ws_handler))
         .with_state(state)
 }
 
@@ -74,10 +58,10 @@ async fn terr_list(
 }
 
 #[tracing::instrument(skip(state))]
-async fn guild_list(State(state): State<Arc<TerritoryState>>) -> impl IntoResponse {
-    let (owners, expires, updated) = {
+async fn map_state(State(state): State<Arc<TerritoryState>>) -> impl IntoResponse {
+    let (state, expires, timestamps) = {
         let lock = state.inner.read().await;
-        (lock.state.clone(), lock.expires, lock.last_updated)
+        (lock.state.clone(), lock.expires, lock.timestamps)
     };
 
     let resp_headers = [
@@ -86,29 +70,70 @@ async fn guild_list(State(state): State<Arc<TerritoryState>>) -> impl IntoRespon
             String::from("public, max-age=10, immutable, must-revalidate"),
         ),
         (header::EXPIRES, header_date(expires)),
-        (header::LAST_MODIFIED, header_date(updated)),
+        (
+            header::LAST_MODIFIED,
+            header_date(timestamps.changed.unwrap_or_default()),
+        ),
     ];
 
     (
         resp_headers,
-        Json(RespWrapper {
-            data: owners,
-            updated,
+        Json(MapState {
+            terrs: state,
+            timestamps,
         }),
     )
 }
 
-async fn sse_handler(State(state): State<Arc<TerritoryState>>) -> impl IntoResponse {
-    let stream = BroadcastStream::new(state.bc_bytes.resubscribe())
-        .map(|data| data.map(|data| Event::default().data(data)));
+async fn ws_handler(
+    ws: WebSocketUpgrade,
+    State(state): State<Arc<TerritoryState>>,
+) -> impl IntoResponse {
+    ws.on_upgrade(move |s| async move {
+        state.ws_conns.add(1, &[]);
+        let bc_recv = state.bc_bytes.resubscribe();
 
-    let mut res = Sse::new(stream).into_response();
+        if let Err(e) = handle_socket(s, bc_recv).await {
+            tracing::error!("Error handling socket: {:?}", e);
+        }
 
-    // tell proxies to not buffer data
-    res.headers_mut().insert(
-        HeaderName::from_static("x-accel-buffering"),
-        HeaderValue::from_static("no"),
-    );
+        state.ws_conns.add(-1, &[]);
+    })
+}
 
-    res
+async fn handle_socket(
+    mut socket: WebSocket,
+    mut bc_recv: broadcast::Receiver<Arc<Vec<u8>>>,
+) -> Result<(), AnyError> {
+    loop {
+        select! {
+            // respond to received pings and close messages
+            s = socket.recv() => {
+                if let Some(Ok(msg)) = s {
+                    match msg {
+                        Message::Ping(data) => {
+                            if data.len() > 32 { break; }
+                            socket.send(Message::Pong(data)).await?;
+                        }
+                        Message::Close(frame) => {
+                            let _ = timeout(Duration::from_secs(5), socket.send(Message::Close(frame))).await;
+                            break;
+                        }
+                        _ => { break; }
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            // send messages from the broadcast channel
+            Ok(msg) = bc_recv.recv() => {
+                socket
+                    .send(Message::Binary((*msg).clone().into()))
+                    .await?;
+            }
+        }
+    }
+
+    Ok(())
 }
