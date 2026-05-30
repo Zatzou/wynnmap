@@ -68,7 +68,7 @@ pub fn WarMap() -> impl IntoView {
         match datasource::get_state().await {
             Ok(data) => {
                 owners.set(data.terrs);
-                // last_updated.set(data.updated);
+                last_updated.set(data.timestamps);
             }
             Err(err) => {
                 if !dialogs.contains("err_maptiles") {
@@ -95,9 +95,11 @@ pub fn WarMap() -> impl IntoView {
 
     let SecondTimer(now) = expect_context();
     let data_age = Memo::new(move |_| {
-        now.read()
-            .signed_duration_since(last_updated.read().updated.unwrap_or_default())
-            .num_seconds()
+        if let Some(updated) = last_updated.read().updated {
+            now.read().signed_duration_since(updated).num_seconds()
+        } else {
+            0
+        }
     });
 
     // Update the territory data every 10 minutes to ensure the map stays up to date
