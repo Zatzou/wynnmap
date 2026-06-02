@@ -13,8 +13,6 @@
     transform-origin: 0 0;
     backface-visibility: hidden;
     contain: size layout;
-
-    transform: matrix3d(var(--z), 0, 0, 0, 0, var(--z), 0, 0, 0, 0, 1, 0, var(--x), var(--y), 0, 1)
 }
 
 .wynnmap-transitions {

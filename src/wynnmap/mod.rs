@@ -364,9 +364,12 @@ pub fn WynnMap(
                 // will-change:transform if using gecko (according to user agent) or you're currently holding down (moving.get())
                 style:will-change=move || {if is_gecko || moving.get() {"transform"} else {""}}
 
-                style:--z=move || zoom.read().to_string()
-                style:--x=move || position.read().0.to_string()
-                style:--y=move || position.read().1.to_string()
+                style:transform=move ||
+                    format!("matrix3d({0}, 0, 0, 0, 0, {0}, 0, 0, 0, 0, 1, 0, {1}, {2}, 0, 1)",
+                        zoom.read(),
+                        position.read().0,
+                        position.read().1
+                    )
             >
                 {children()}
             </div>
