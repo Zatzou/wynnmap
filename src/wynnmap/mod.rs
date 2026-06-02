@@ -25,8 +25,6 @@ pub fn WynnMap(
     // test if Gecko engine. If it contains `like Gecko` then its probably not Gecko.
     let is_gecko = user_agent.contains("Gecko/") && !user_agent.contains("like Gecko");
 
-    // is the map being dragged currently
-    let dragging = RwSignal::new(false);
     // is the map being moved currently
     let moving = RwSignal::new(false);
 
@@ -49,7 +47,7 @@ pub fn WynnMap(
         e.prevent_default();
 
         // if we are dragging move the map
-        if dragging.get() {
+        if moving.get() {
             let pos = position.get();
 
             position.set((
@@ -64,14 +62,12 @@ pub fn WynnMap(
     // detect when a mouse drag starts
     let dragstart = move |e: MouseEvent| {
         e.prevent_default();
-        dragging.set(true);
         moving.set(true);
     };
 
     // detect when a mouse drag ends
     let dragend = move |e: MouseEvent| {
         e.prevent_default();
-        dragging.set(false);
         moving.set(false);
     };
 
@@ -359,7 +355,7 @@ pub fn WynnMap(
                 class="wynnmap-inner"
                 class:wynnmap-zoomedin={move || zoom.get() > 1.0}
                 class:wynnmap-zoomedout={move || zoom.get() < 0.3}
-                class:wynnmap-transitions={move || transitioning.get() && !dragging.get()}
+                class:wynnmap-transitions={move || transitioning.get() && !moving.get()}
                 // disable the transition after it has run
                 on:transitionend=move |_| {transitioning.set(false);}
 
