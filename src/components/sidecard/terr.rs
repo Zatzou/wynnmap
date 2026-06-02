@@ -37,7 +37,7 @@ pub fn TerrInfo(
                         materials.into_iter()
                             // .filter(|(n, _, _)| *n > 0)
                             .map(|(_n, name, res)| view! {
-                                <div class={move || format!("icon-{name}")}></div>
+                                <div class={move || format!("spriteicon icon-{name}")}></div>
                                 <span>{move || format_rate(res.generation)}</span>
                                 <span>{res.stored}</span>
                                 <span>"/"</span>

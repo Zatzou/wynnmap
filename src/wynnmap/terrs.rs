@@ -88,7 +88,9 @@ pub fn Territory(
             })}
 
             // guild hq crown
-            <div class="icon-crown" />
+            <Show when=move || state.read().hq>
+                <div class="spriteicon icon-crown" />
+            </Show>
 
             // guild tag
             <Show when={move || show_gtag.get()}>
@@ -138,7 +140,7 @@ fn ResIcons(terr: Signal<BaseResGen>) -> impl IntoView {
                     (t.has_double_wood(), "wood")
                 ].into_iter()
                     .filter(|(b, _)| *b)
-                    .map(|(_, n)| view! { <div class={move || format!("icon-{n}")} /> })
+                    .map(|(_, n)| view! { <div class={move || format!("spriteicon icon-{n}")} /> })
                     .collect::<Vec<_>>()
             }}
         </div>

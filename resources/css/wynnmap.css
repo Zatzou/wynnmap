@@ -62,11 +62,11 @@
     backface-visibility: hidden;
 }
 
-.wynnmap-container [class^="icon-"] {
+.wynnmap-container .spriteicon {
     image-rendering: smooth;
 }
 
-.wynnmap-zoomedin [class^="icon-"] {
+.wynnmap-zoomedin .spriteicon {
     image-rendering: pixelated;
 }
 
@@ -84,17 +84,8 @@
     pointer-events: none;
     user-select: none;
 
-    >.icon-crown {
-        display: none;
-        aspect-ratio: 1;
-    }
-
     &.hq {
         background-color: rgb(var(--guild-col) / 0.75);
-
-        >.icon-crown {
-            display: block;
-        }
     }
 
     >.guildtag {
