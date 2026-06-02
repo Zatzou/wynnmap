@@ -300,16 +300,18 @@ pub fn WynnMap(
     provide_context(RelMousePos(relmousepos));
 
     let pointermove = move |e: PointerEvent| {
-        let pos = (e.client_x(), e.client_y());
+        if !moving.get() {
+            let pos = (e.client_x(), e.client_y());
 
-        // calculate the compensation
-        let zoom = zoom.get();
-        let map_pos = position.get();
-        let rel = (
-            (pos.0 as f64 - map_pos.0) / zoom,
-            (pos.1 as f64 - map_pos.1) / zoom,
-        );
-        relmousepos.set((rel.0 as i32, rel.1 as i32));
+            // calculate the compensation
+            let zoom = zoom.get();
+            let map_pos = position.get();
+            let rel = (
+                (pos.0 as f64 - map_pos.0) / zoom,
+                (pos.1 as f64 - map_pos.1) / zoom,
+            );
+            relmousepos.set((rel.0 as i32, rel.1 as i32));
+        }
     };
 
     let dragstartpos = RwSignal::new((0, 0));
