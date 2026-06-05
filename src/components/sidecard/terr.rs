@@ -17,7 +17,7 @@ pub fn TerrStats(
     let owner = move || state.read().get(&name.get()).cloned().unwrap_or_default();
 
     view! {
-        <TerrInfo name={name} terrs={terrs} state={state} />
+        <TerrInfo name terrs state />
 
         <GuildInfo state={Signal::derive(owner)} />
     }

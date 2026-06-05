@@ -55,10 +55,10 @@ pub fn WarMap() -> impl IntoView {
 
     spawn_local(load_terrs(terrs));
 
-    let load_owners = move |owners: RwSignal<_>| async move {
+    let load_owners = move || async move {
         match datasource::get_state().await {
             Ok(data) => {
-                owners.set(data.terrs);
+                state.set(data.terrs);
                 last_updated.set(data.timestamps);
             }
             Err(err) => {
@@ -77,7 +77,7 @@ pub fn WarMap() -> impl IntoView {
         }
     };
 
-    spawn_local(load_owners(state));
+    spawn_local(load_owners());
 
     datasource::ws_terr_updates(state, last_updated);
 
@@ -125,12 +125,12 @@ pub fn WarMap() -> impl IntoView {
 
             // conns
             <Show when={move || show_conns.get()}>
-                <Connections terrs={terrs} />
+                <Connections terrs />
             </Show>
 
             // territories
             <Show when={move || show_terrs.get()}>
-                <TerrView terrs={terrs} state={state} hovered=hovered />
+                <TerrView terrs state hovered />
             </Show>
         </WynnMap>
 
@@ -144,8 +144,8 @@ pub fn WarMap() -> impl IntoView {
                 <SideCard hover=true>
                     <TerrStats
                         name={hovered}
-                        terrs={terrs}
-                        state={state}
+                        terrs
+                        state
                     />
                 </SideCard>
             })
@@ -204,24 +204,22 @@ pub fn WarMap() -> impl IntoView {
                 </div>
                 <div class="overflow-y-auto shrink min-h-0" class:hidden={move || !show_guild_leaderboard.get()}>
                     <hr class="border-neutral-600"/>
-                    <Gleaderboard state={state}/>
+                    <Gleaderboard state/>
                 </div>
             </div>
         </Sidebar>
 
         // selected terr info
         {move || selected.get().map(|sel| {
-            let sel2 = sel.clone();
-
             Some(view! {
                 <SideCard>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 cursor-pointer absolute top-2 right-2" on:click={move |_| selected.set(None)}>
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                     </svg>
 
-                    <TerrStats name={sel} terrs={terrs} state={state} />
+                    <TerrStats name={sel.clone()} terrs state />
 
-                    <TerrCalc name={sel2} terrs={terrs} state={state} />
+                    <TerrCalc name={sel} terrs state />
                 </SideCard>
             })
         })}

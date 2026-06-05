@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[component]
-pub fn MapTile(tile: Signal<MapTile>) -> impl IntoView {
+pub fn MapTile(#[prop(into)] tile: Signal<MapTile>) -> impl IntoView {
     view! {
         <img
             src=tile.get().url
@@ -39,7 +39,7 @@ pub fn MapTiles(#[prop(into)] tiles: Signal<Vec<MapTile>>) -> impl IntoView {
                             show_non_main.get()
                         }
                     })
-                    .map(|tile| view! { <MapTile tile=tile.into() /> })
+                    .map(|tile| view! { <MapTile tile /> })
                     .collect_view()
             }}
         </div>

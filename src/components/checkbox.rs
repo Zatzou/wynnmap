@@ -8,7 +8,7 @@ pub fn Checkbox(
 ) -> impl IntoView {
     view! {
         <div class="checkbox">
-            <input id=id type="checkbox" bind:checked=checked/>
+            <input id type="checkbox" bind:checked=checked/>
             <div class="checkmark">
                 <div/>
             </div>

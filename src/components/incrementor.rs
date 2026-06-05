@@ -39,7 +39,7 @@ where
     view! {
         <div class="incrementor">
             <button on:click=decrement>"-"</button>
-            <input r#type="number" min=min max=max prop:value=value
+            <input r#type="number" min max prop:value=value
                 on:input:target=move |ev| {
                     let val = ev.target().value();
 

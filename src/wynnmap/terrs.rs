@@ -33,18 +33,14 @@ pub fn TerrView(
             <For
                 each=move || terrs.get().into_iter()
                 key=move |(k, _)| k.clone()
-                children=move |(k, v)| {
+                children=move |(name, terr)| {
                     let state = Memo::new({
-                        let k = k.clone();
-                        move |_| state.read().get(&k).cloned().unwrap_or_default()
+                        let name = name.clone();
+                        move |_| state.read().get(&name).cloned().unwrap_or_default()
                     });
 
                     view! {
-                        <Territory
-                            terr=v.into()
-                            state={state.into()}
-                            hide_timers=hide_timers
-                        />
+                        <Territory terr state hide_timers/>
                     }
                 }
             />
@@ -54,8 +50,8 @@ pub fn TerrView(
 
 #[component]
 pub fn Territory(
-    terr: Signal<Territory>,
-    state: Signal<TerrState>,
+    #[prop(into)] terr: Signal<Territory>,
+    #[prop(into)] state: Signal<TerrState>,
     #[prop(optional)] hide_timers: bool,
 ) -> impl IntoView {
     let col_rgb = move || {
@@ -81,9 +77,9 @@ pub fn Territory(
             style:--guild-col=move || col_rgb()
         >
             // attack timer border
-            {move || state.read().acquired.map(|a| view! {
+            {move || state.read().acquired.map(|acquired| view! {
                 <Show when={move || !hide_timers}>
-                    <AttackBorder acquired=a />
+                    <AttackBorder acquired/>
                 </Show>
             })}
 
@@ -109,8 +105,8 @@ pub fn Territory(
 
             // timer
             <Show when={move || show_timers.get() && !hide_timers}>
-                {move || state.read().acquired.map(|a| view! {
-                    <TerrTimer acquired=a />
+                {move || state.read().acquired.map(|acquired| view! {
+                    <TerrTimer acquired/>
                 })}
             </Show>
         </div>
