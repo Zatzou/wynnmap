@@ -41,6 +41,13 @@ thiserror = "2"
 wasm-bindgen-futures = "0.4"
 lz4_flex = "0.13"
 rmp-serde = "1.3"
+lucide-leptos = { version = "3.11", features = [
+    "account",
+    "notifications",
+    "arrows",
+    "text",
+    "files",
+] }
 
 [profile.release]
 lto = true

@@ -191,7 +191,6 @@ pub fn PlanningMap() -> impl IntoView {
                         terrs={terrs}
                         state={mapowneds}
                     />
-                    <hr class="border-neutral-600" />
                     <GuildName
                         guild={Signal::derive(move || {
                             owned.read().get(&*hovered.read()).map(|g| g.get()).unwrap_or_default()
@@ -229,12 +228,10 @@ pub fn PlanningMap() -> impl IntoView {
             // guild leaderboard
             <div class="flex flex-col min-h-0">
                 <hr class="border-neutral-600" />
-                <div class="flex justify-between items-center text-xl p-2 py-1" on:click={move |_| show_guild_leaderboard.set(!show_guild_leaderboard.get())}>
+                <div class="flex justify-between items-center text-xl p-2 py-1 cursor-pointer" on:click={move |_| show_guild_leaderboard.set(!show_guild_leaderboard.get())}>
                     <h2>"Guild leaderboard"</h2>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 cursor-pointer" >
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" class:hidden={move || show_guild_leaderboard.get()} />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" class:hidden={move || !show_guild_leaderboard.get()} />
-                    </svg>
+                    <Show when=move || !show_guild_leaderboard.get()><lucide_leptos::ChevronUp size=24/></Show>
+                    <Show when=move || show_guild_leaderboard.get()><lucide_leptos::ChevronDown size=24/></Show>
                 </div>
                 <div class="overflow-y-auto shrink min-h-0" class:hidden={move || !show_guild_leaderboard.get()}>
                     <hr class="border-neutral-600"/>
@@ -248,16 +245,12 @@ pub fn PlanningMap() -> impl IntoView {
             let sel = Signal::derive(move || sel.clone());
 
             Some(view! {
-                <SideCard>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 cursor-pointer absolute top-2 right-2" on:click={move |_| selected.set(None)}>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                    </svg>
+                <SideCard on_close={move |_| selected.set(None)}>
                     <TerrInfo
                         name={sel}
                         terrs={terrs}
                         state={mapowneds}
                     />
-                    <hr class="border-neutral-600" />
                     <GuildSelect
                         terr_name={sel}
                         terr_owners={owned}

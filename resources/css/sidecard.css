@@ -20,14 +20,16 @@
         pointer-events: none;
     }
 
-    >*:not(:last-child):not(svg) {
-        border-bottom: 1px solid;
+    >.content {
+        >*:not(:last-child) {
+            border-bottom: 1px solid;
 
-        @apply border-neutral-600;
-    }
+            @apply border-neutral-600;
+        }
 
-    >div {
-        @apply p-2;
+        >div {
+            @apply p-2;
+        }
     }
 }
 

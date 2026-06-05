@@ -106,9 +106,10 @@ pub fn DialogCloseButton(#[prop(optional)] children: Option<Children>) -> impl I
         .into_any()
     } else {
         view! {
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 cursor-pointer" on:click=close>
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
-        }.into_any()
+            <div class="cursor-pointer" on:click=close>
+                <lucide_leptos::X size=32/>
+            </div>
+        }
+        .into_any()
     }
 }

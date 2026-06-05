@@ -14,10 +14,18 @@ pub mod terr;
 pub fn SideCard(
     #[prop(optional)] children: Option<Children>,
     #[prop(optional)] hover: bool,
+    #[prop(optional, into)] on_close: Option<Callback<()>>,
 ) -> impl IntoView {
     view! {
         <div class="sidecard" class:hover={hover}>
-            {children.map(|c| c())}
+            {move || on_close.map(|f| view!{
+                <div class="cursor-pointer absolute top-2 right-2 m-0" on:click={move |_| f.run(())}>
+                    <lucide_leptos::X size=32/>
+                </div>
+            })}
+            <div class="content">
+                {children.map(|c| c())}
+            </div>
         </div>
     }
 }
