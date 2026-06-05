@@ -8,6 +8,21 @@ use wynnmap_types::{
 
 use crate::sectimer::SecondTimer;
 
+#[component]
+pub fn TerrStats(
+    #[prop(into)] name: Signal<Arc<str>>,
+    #[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>,
+    #[prop(into)] state: Signal<BTreeMap<Arc<str>, TerrState>>,
+) -> impl IntoView {
+    let owner = move || state.read().get(&name.get()).cloned().unwrap_or_default();
+
+    view! {
+        <TerrInfo name={name} terrs={terrs} state={state} />
+
+        <GuildInfo state={Signal::derive(owner)} />
+    }
+}
+
 // Displays the name of the territory and the resources it produces.
 #[component]
 pub fn TerrInfo(
