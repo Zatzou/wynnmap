@@ -1,12 +1,14 @@
-use core::panic;
-use std::sync::{Arc, Mutex};
-
-use leptos::{ev, leptos_dom::helpers, prelude::*};
+use leptos::{ev, prelude::*};
 use web_sys::{KeyboardEvent, MouseEvent, PointerEvent, TouchEvent, TouchList, WheelEvent};
 
 pub mod conns;
 pub mod maptile;
 pub mod terrs;
+
+/// The minimum zoom level
+const ZOOM_MIN: f64 = 0.0625;
+/// The maximum zoom level
+const ZOOM_MAX: f64 = 64.0;
 
 /// Mouse position on the map atlas
 #[derive(Clone)]
@@ -17,14 +19,6 @@ pub fn WynnMap(
     children: Children,
     #[prop(optional)] onclick: Option<Callback<(i32, i32)>>,
 ) -> impl IntoView {
-    // grab user agent
-    let user_agent = helpers::window()
-        .navigator()
-        .user_agent()
-        .unwrap_or_default();
-    // test if Gecko engine. If it contains `like Gecko` then its probably not Gecko.
-    let is_gecko = user_agent.contains("Gecko/") && !user_agent.contains("like Gecko");
-
     // is the map being moved currently
     let moving = RwSignal::new(false);
 
@@ -43,7 +37,7 @@ pub fn WynnMap(
     let mousepos = RwSignal::new((0, 0));
 
     // mouse position and drag events
-    let ondrag = move |e: MouseEvent| {
+    let mousemove = move |e: MouseEvent| {
         e.prevent_default();
 
         // if we are dragging move the map
@@ -60,19 +54,19 @@ pub fn WynnMap(
     };
 
     // detect when a mouse drag starts
-    let dragstart = move |e: MouseEvent| {
+    let mousedown = move |e: MouseEvent| {
         e.prevent_default();
         moving.set(true);
     };
 
     // detect when a mouse drag ends
-    let dragend = move |e: MouseEvent| {
+    let mouseup = move |e: MouseEvent| {
         e.prevent_default();
         moving.set(false);
     };
 
     // detect zooming using a mouse wheel
-    let zoomchange = move |e: WheelEvent| {
+    let wheel = move |e: WheelEvent| {
         e.prevent_default();
 
         // enable the transition when zooming with the mousewheel
@@ -92,105 +86,100 @@ pub fn WynnMap(
     };
 
     // touch positions stored for touch events
-    let tpos = Arc::new(Mutex::new(Vec::new()));
+    let tpos = RwSignal::new(Vec::new());
 
     // detect when a touch starts and update the active touches
-    let touchstart = {
-        let tpos = tpos.clone();
-        move |e: TouchEvent| {
-            e.prevent_default();
+    let touchstart = move |e: TouchEvent| {
+        e.prevent_default();
 
-            let mut tpos = tpos.lock().unwrap();
-            *tpos = get_touch_positions(&e.touches());
+        tpos.set(get_touch_positions(&e.touches()));
 
-            if tpos.is_empty() {
-                moving.set(false);
-            } else {
-                moving.set(true);
-            }
+        if tpos.read().is_empty() {
+            moving.set(false);
+        } else {
+            moving.set(true);
         }
     };
 
     // handle the touch events for dragging and zooming
-    let ontouchdrag = {
-        let tpos = tpos.clone();
-        move |e: TouchEvent| {
-            e.prevent_default();
+    let touchmove = move |e: TouchEvent| {
+        e.prevent_default();
 
-            // get the touch positions
-            let tl = e.touches();
-            let mut tpos = tpos.lock().unwrap();
+        // get the touch positions
+        let tl = e.touches();
 
-            // if the touch positions are different from the stored touch positions update the stored touch positions
-            if tl.length() as usize != tpos.len() {
-                *tpos = get_touch_positions(&tl);
-                return;
-            }
-
-            // match the number of touches to determine if it's a drag or zoom
-            match tpos.len() {
-                // drag
-                1 => {
-                    // current position
-                    let pos = position.get();
-
-                    // new delta
-                    let touch = tl.get(0).unwrap();
-                    let npos = (touch.client_x(), touch.client_y());
-
-                    // update the position
-                    position.set((
-                        pos.0 + f64::from(npos.0 - tpos[0].0),
-                        pos.1 + f64::from(npos.1 - tpos[0].1),
-                    ));
-                }
-                // zoom
-                2 => {
-                    // disable will-change to prevent flickering
-                    moving.set(false);
-
-                    // get the touch positions
-                    let touch1 = tl.get(0).unwrap();
-                    let touch2 = tl.get(1).unwrap();
-
-                    let npos = (
-                        (touch1.client_x(), touch1.client_y()),
-                        (touch2.client_x(), touch2.client_y()),
-                    );
-
-                    // calculate the distance between the touches
-                    let dist =
-                        f64::from((npos.0.0 - npos.1.0).pow(2) + (npos.0.1 - npos.1.1).pow(2))
-                            .sqrt();
-
-                    // calculate the distance between the touches before the zoom
-                    let opos =
-                        f64::from((tpos[0].0 - tpos[1].0).pow(2) + (tpos[0].1 - tpos[1].1).pow(2))
-                            .sqrt();
-
-                    // calculate the delta
-                    let delta = dist - opos;
-
-                    // calculate the new zoom level
-                    let old_zoom = zoom.get();
-                    let new_zoom = calculate_new_zoom(old_zoom, delta / 300.0);
-
-                    zoom.set(new_zoom);
-
-                    let mpos = (
-                        f64::from(npos.0.0 + npos.1.0) / 2.0,
-                        f64::from(npos.0.1 + npos.1.1) / 2.0,
-                    );
-
-                    apply_zoom_compensation(mpos, old_zoom, new_zoom, position);
-                }
-                _ => {}
-            }
-
-            // update the touch positions after the event
-            // this ensures that we can calculate deltas correctly
-            *tpos = get_touch_positions(&tl);
+        // if the touch positions are different from the stored touch positions update the stored touch positions
+        if tl.length() as usize != tpos.read().len() {
+            tpos.set(get_touch_positions(&tl));
+            return;
         }
+
+        // match the number of touches to determine if it's a drag or zoom
+        match tpos.read().len() {
+            // drag
+            1 => {
+                // current position
+                let pos = position.get();
+
+                // new delta
+                let touch = tl.get(0).unwrap();
+                let npos = (touch.client_x(), touch.client_y());
+
+                let tpos = tpos.read();
+
+                // update the position
+                position.set((
+                    pos.0 + f64::from(npos.0 - tpos[0].0),
+                    pos.1 + f64::from(npos.1 - tpos[0].1),
+                ));
+            }
+            // zoom
+            2 => {
+                // disable will-change to prevent flickering
+                moving.set(false);
+
+                // get the touch positions
+                let touch1 = tl.get(0).unwrap();
+                let touch2 = tl.get(1).unwrap();
+
+                let npos = (
+                    (touch1.client_x(), touch1.client_y()),
+                    (touch2.client_x(), touch2.client_y()),
+                );
+
+                let tpos = tpos.read();
+
+                // calculate the distance between the touches
+                let dist =
+                    f64::from((npos.0.0 - npos.1.0).pow(2) + (npos.0.1 - npos.1.1).pow(2)).sqrt();
+
+                // calculate the distance between the touches before the zoom
+                let opos =
+                    f64::from((tpos[0].0 - tpos[1].0).pow(2) + (tpos[0].1 - tpos[1].1).pow(2))
+                        .sqrt();
+
+                // calculate the delta
+                let delta = dist - opos;
+
+                // calculate the new zoom level
+                let old_zoom = zoom.get();
+                let new_zoom = calculate_new_zoom(old_zoom, delta / 300.0);
+
+                zoom.set(new_zoom);
+
+                let mpos = (
+                    f64::from(npos.0.0 + npos.1.0) / 2.0,
+                    f64::from(npos.0.1 + npos.1.1) / 2.0,
+                );
+
+                apply_zoom_compensation(mpos, old_zoom, new_zoom, position);
+            }
+            _ => {}
+        }
+
+        // update the touch positions after the event
+        // this ensures that we can calculate deltas correctly
+        tpos.set(get_touch_positions(&tl));
     };
 
     let onkeydown = move |e: KeyboardEvent| {
@@ -291,6 +280,8 @@ pub fn WynnMap(
         }
     };
 
+    window_event_listener(ev::keydown, onkeydown);
+
     // use pointer events to handle clicks on the map
     let relmousepos = RwSignal::new((0, 0));
     provide_context(RelMousePos(relmousepos));
@@ -332,19 +323,17 @@ pub fn WynnMap(
         }
     };
 
-    window_event_listener(ev::keydown, onkeydown);
-
     view! {
         // outermost container used for containing the map
         <div
             class="wynnmap-container"
-            on:mousemove=ondrag
-            on:mousedown=dragstart
-            on:mouseup=dragend
-            on:mouseleave=dragend
-            on:wheel=zoomchange
+            on:mousemove=mousemove
+            on:mousedown=mousedown
+            on:mouseup=mouseup
+            on:mouseleave=mouseup
+            on:wheel=wheel
             on:touchstart=touchstart
-            on:touchmove=ontouchdrag
+            on:touchmove=touchmove
             on:pointermove=pointermove
             on:pointerdown=pointerdown
             on:pointerup=pointerup
@@ -355,18 +344,18 @@ pub fn WynnMap(
                 class="wynnmap-inner"
                 class:wynnmap-zoomedin={move || zoom.get() > 1.0}
                 class:wynnmap-zoomedout={move || zoom.get() < 0.3}
-                class:wynnmap-transitions={move || transitioning.get() && !moving.get()}
+                class:wynnmap-transitions=move || transitioning.get() && !moving.get()
                 // disable the transition after it has run
-                on:transitionend=move |_| {transitioning.set(false);}
+                on:transitionend=move |_| transitioning.set(false)
 
                 // will-change:transform if using gecko (according to user agent) or you're currently holding down (moving.get())
-                style:will-change=move || {if is_gecko || moving.get() {"transform"} else {""}}
+                style:will-change=move || moving.get().then_some("transform")
 
                 style:transform=move ||
-                    format!("matrix3d({0}, 0, 0, 0, 0, {0}, 0, 0, 0, 0, 1, 0, {1}, {2}, 0, 1)",
-                        zoom.read(),
-                        position.read().0,
-                        position.read().1
+                    format!("matrix3d({z},0,0,0,0,{z},0,0,0,0,1,0,{x},{y},0,1)",
+                        z = zoom.read(),
+                        x = position.read().0,
+                        y = position.read().1
                     )
             >
                 {children()}
@@ -391,11 +380,6 @@ fn get_touch_positions(tl: &TouchList) -> Vec<(i32, i32)> {
 
     positions
 }
-
-/// The minimum zoom level
-const ZOOM_MIN: f64 = 0.0625;
-/// The maximum zoom level
-const ZOOM_MAX: f64 = 64.0;
 
 /// Calculate the new zoom level based on the current zoom level and the delta and clamp it to the min and max zoom levels
 const fn calculate_new_zoom(current_zoom: f64, delta: f64) -> f64 {
