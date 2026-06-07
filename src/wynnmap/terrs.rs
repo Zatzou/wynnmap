@@ -7,7 +7,12 @@ use wynnmap_types::{
     tier::WynnTier,
 };
 
-use crate::{sectimer::SecondTimer, settings::use_toggle, wynnmap::RelMousePos};
+use crate::{
+    sectimer::SecondTimer,
+    settings::use_toggle,
+    util::{as_px, fmt_time_short},
+    wynnmap::RelMousePos,
+};
 
 #[component]
 pub fn TerrView(
@@ -65,15 +70,16 @@ pub fn Territory(
     let show_timers = use_toggle("timers", true);
     let use_transparency = use_toggle("use_transparency", true);
 
-    let namesize = Memo::new(move |_| (terr.read().location.width() / 3).min(40));
+    let location = move || terr.read().location;
+    let namesize = Memo::new(move |_| (location().width() / 3).min(40));
 
     view! {
         <div class="guildterr" class:hq={move || state.read().hq}
             class:guildterr-notrans=move || !use_transparency.get()
-            style:width=move || format!("{}px", terr.read().location.width())
-            style:height=move || format!("{}px", terr.read().location.height())
-            style:top=move || format!("{}px", terr.read().location.top_side())
-            style:left=move || format!("{}px", terr.read().location.left_side())
+            style:width=move || as_px(location().width())
+            style:height=move || as_px(location().height())
+            style:top=move || as_px(location().top_side())
+            style:left=move || as_px(location().left_side())
             style:--guild-col=move || col_rgb()
         >
             // attack timer border
@@ -92,7 +98,7 @@ pub fn Territory(
             <Show when={move || show_gtag.get()}>
                 <h1
                     class="guildtag"
-                    style:--tsize=move || format!("{}px", namesize.read())
+                    style:--tsize=move || as_px(namesize.read())
                 >
                     {state.read().guild.prefix.clone()}
                 </h1>
@@ -147,32 +153,11 @@ fn ResIcons(terr: Signal<BaseResGen>) -> impl IntoView {
 fn TerrTimer(#[prop(into)] acquired: Signal<chrono::DateTime<chrono::Utc>>) -> impl IntoView {
     let SecondTimer(now) = expect_context::<SecondTimer>();
 
-    let time = Memo::new(move |_| {
-        now.read()
-            .signed_duration_since(acquired.read())
-            .num_seconds()
-    });
+    let time = Memo::new(move |_| now.read().signed_duration_since(acquired.read()));
 
-    let timestr = move || {
-        let time = time.get();
+    let timestr = move || fmt_time_short(time.get());
 
-        let days = time / 86400;
-        let hours = (time % 86400) / 3600;
-        let minutes = (time % 3600) / 60;
-        let seconds = time % 60;
-
-        if days > 0 {
-            format!("{days}d {hours}h")
-        } else if hours > 0 {
-            format!("{hours}h {minutes}m")
-        } else if minutes > 0 {
-            format!("{minutes}m {seconds}s")
-        } else {
-            format!("{seconds}s")
-        }
-    };
-
-    let color = move || WynnTier::from_secs_held(time.get()).color();
+    let color = move || WynnTier::from_time_held(time.get()).color();
 
     view! {
         <div class="terrtimer">

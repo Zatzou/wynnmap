@@ -6,7 +6,7 @@ use wynnmap_types::{
     terr::{TerrState, Territory},
 };
 
-use crate::sectimer::SecondTimer;
+use crate::{sectimer::SecondTimer, util::fmt_time_long};
 
 #[component]
 pub fn TerrStats(
@@ -97,7 +97,7 @@ pub fn GuildInfo(#[prop(into)] state: Signal<TerrState>) -> impl IntoView {
         state
             .read()
             .acquired
-            .map(|acq| now.read().signed_duration_since(acq).num_seconds())
+            .map(|acq| now.read().signed_duration_since(acq))
     });
 
     view! {
@@ -109,28 +109,11 @@ pub fn GuildInfo(#[prop(into)] state: Signal<TerrState>) -> impl IntoView {
 
             {move || time.get().map(|time| view! {
                 <div class="p-2">
-                    <h2>"Time held: "{move || format_time(time)}</h2>
+                    <h2>"Time held: "{move || fmt_time_long(time)}</h2>
                     <h2>"Treasury: "<span style:color=move || state.read().treasury.color()>{move || state.read().treasury.to_string()}</span></h2>
                     <h2>"Defences: "<span style:color=move || state.read().defences.color()>{move || state.read().defences.to_string()}</span></h2>
                 </div>
             })}
         </div>
-    }
-}
-
-fn format_time(time: i64) -> String {
-    let days = time / 86400;
-    let hours = (time % 86400) / 3600;
-    let minutes = (time % 3600) / 60;
-    let seconds = time % 60;
-
-    if days > 0 {
-        format!("{days}d {hours}h {minutes}m {seconds}s")
-    } else if hours > 0 {
-        format!("{hours}h {minutes}m {seconds}s")
-    } else if minutes > 0 {
-        format!("{minutes}m {seconds}s")
-    } else {
-        format!("{seconds}s")
     }
 }

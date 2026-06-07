@@ -19,6 +19,7 @@ mod modes;
 mod notfound;
 mod sectimer;
 mod settings;
+mod util;
 mod wynnmap;
 
 fn main() {

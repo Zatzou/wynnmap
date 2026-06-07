@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use chrono::TimeDelta;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
@@ -60,7 +61,9 @@ impl WynnTier {
     }
 
     /// Get the tier based on seconds a territory has been held
-    pub const fn from_secs_held(seconds: i64) -> Self {
+    pub const fn from_time_held(time: TimeDelta) -> Self {
+        let seconds = time.num_seconds();
+
         if seconds < 3600 {
             Self::VeryLow
         } else if seconds < (3600 * 24) {

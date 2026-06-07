@@ -7,6 +7,8 @@ use std::{
 use leptos::prelude::*;
 use wynnmap_types::terr::Territory;
 
+use crate::util::as_px;
+
 #[component]
 pub fn Connections(#[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>) -> impl IntoView {
     let conn_path = move || create_route_paths(&terrs.read());
@@ -25,10 +27,10 @@ pub fn Connections(#[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>) -
     view! {
         <svg
             class="connpath"
-            style:left=move || format!("{}px", bounds.read().0)
-            style:top=move || format!("{}px", bounds.read().1)
-            style:width=move || format!("{}px", bounds.read().2)
-            style:height=move || format!("{}px", bounds.read().3)
+            style:left=move || as_px(bounds.read().0)
+            style:top=move || as_px(bounds.read().1)
+            style:width=move || as_px(bounds.read().2)
+            style:height=move || as_px(bounds.read().3)
             viewBox={viewbox}
         >
             <path

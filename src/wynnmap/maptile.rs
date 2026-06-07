@@ -7,18 +7,21 @@ use crate::{
     datasource,
     dialog::{Dialogs, info::info_dialog},
     settings::use_toggle,
+    util::as_px,
 };
 
 #[component]
 pub fn MapTile(#[prop(into)] tile: Signal<MapTile>) -> impl IntoView {
+    let location = move || tile.read().location;
+
     view! {
         <img
             src=tile.get().url
             class="wynnmap-tile"
-            style:width=move || format!("{}px", tile.read().location.width())
-            style:height=move || format!("{}px", tile.read().location.height())
-            style:top=move || format!("{}px", tile.read().location.top_side())
-            style:left=move || format!("{}px", tile.read().location.left_side())
+            style:width=move || as_px(location().width())
+            style:height=move || as_px(location().height())
+            style:top=move || as_px(location().top_side())
+            style:left=move || as_px(location().left_side())
         />
     }
 }

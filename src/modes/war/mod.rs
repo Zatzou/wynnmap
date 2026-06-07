@@ -1,5 +1,6 @@
 use std::{collections::BTreeMap, time::Duration};
 
+use chrono::TimeDelta;
 use leptos::{prelude::*, task::spawn_local};
 use wynnmap_types::terr::TerrTimestamps;
 
@@ -15,6 +16,7 @@ use crate::{
     modes::war::calc::TerrCalc,
     sectimer::SecondTimer,
     settings::use_toggle,
+    util::fmt_time_short,
     wynnmap::{WynnMap, conns::Connections, maptile::DefaultMapTiles, terrs::TerrView},
 };
 
@@ -87,9 +89,9 @@ pub fn WarMap() -> impl IntoView {
     let SecondTimer(now) = expect_context();
     let data_age = Memo::new(move |_| {
         if let Some(updated) = last_updated.read().updated {
-            now.read().signed_duration_since(updated).num_seconds()
+            now.read().signed_duration_since(updated)
         } else {
-            0
+            TimeDelta::zero()
         }
     });
 
@@ -152,27 +154,12 @@ pub fn WarMap() -> impl IntoView {
         } else {None}}
 
         // outdated data warning
-        {move || if data_age.get() > 600 {
+        {move || if *data_age.read() > TimeDelta::minutes(10) {
             Some(view! {
                 <div class="fixed bottom-4 right-4 bg-neutral-900 text-white rounded-md w-sm p-2">
                     <h1 class="text-2xl">"Warning: territory data is outdated"</h1>
                     <p>"Data was last updated " {move || {
-                        let time = data_age.get();
-
-                        let days = time / 86400;
-                        let hours = (time % 86400) / 3600;
-                        let minutes = (time % 3600) / 60;
-                        let seconds = time % 60;
-
-                        if days > 0 {
-                            format!("{days}d {hours}h")
-                        } else if hours > 0 {
-                            format!("{hours}h {minutes}m")
-                        } else if minutes > 0 {
-                            format!("{minutes}m {seconds}s")
-                        } else {
-                            format!("{seconds}s")
-                        }
+                        fmt_time_short(data_age.get())
                     }} " ago"</p>
                     <p>"If this issue does not resolve within an hour and Wynn isn't having api issues contact the developer."</p>
                 </div>
