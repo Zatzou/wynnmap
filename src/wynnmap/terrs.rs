@@ -24,13 +24,17 @@ pub fn TerrView(
     let pos = expect_context::<RelMousePos>();
 
     Effect::new(move || {
-        let t = terrs
-            .read()
-            .iter()
-            .find(|(_, t)| t.location.contains(*pos.0.read()))
-            .map(|(n, _)| n.clone());
+        if let Some(pos) = *pos.0.read() {
+            let t = terrs
+                .read()
+                .iter()
+                .find(|(_, t)| t.location.contains(pos))
+                .map(|(n, _)| n.clone());
 
-        hovered.set(t);
+            hovered.set(t);
+        } else {
+            hovered.set(None);
+        }
     });
 
     view! {

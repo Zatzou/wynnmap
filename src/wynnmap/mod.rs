@@ -12,7 +12,7 @@ const ZOOM_MAX: f64 = 64.0;
 
 /// Mouse position on the map atlas
 #[derive(Clone)]
-pub struct RelMousePos(pub RwSignal<(i32, i32)>);
+pub struct RelMousePos(pub RwSignal<Option<(i32, i32)>>);
 
 #[component]
 pub fn WynnMap(
@@ -283,7 +283,7 @@ pub fn WynnMap(
     window_event_listener(ev::keydown, onkeydown);
 
     // use pointer events to handle clicks on the map
-    let relmousepos = RwSignal::new((0, 0));
+    let relmousepos = RwSignal::new(None);
     provide_context(RelMousePos(relmousepos));
 
     let pointermove = move |e: PointerEvent| {
@@ -297,7 +297,7 @@ pub fn WynnMap(
                 (pos.0 as f64 - map_pos.0) / zoom,
                 (pos.1 as f64 - map_pos.1) / zoom,
             );
-            relmousepos.set((rel.0 as i32, rel.1 as i32));
+            relmousepos.set(Some((rel.0 as i32, rel.1 as i32)));
         }
     };
 
@@ -319,8 +319,12 @@ pub fn WynnMap(
             && startpos.0.abs_diff(pos.0) < 5
             && startpos.1.abs_diff(pos.1) < 5
         {
-            cb.run(relmousepos.get())
+            cb.run(relmousepos.get().unwrap_or_default())
         }
+    };
+
+    let pointerleave = move |_| {
+        relmousepos.set(None);
     };
 
     view! {
@@ -337,6 +341,7 @@ pub fn WynnMap(
             on:pointermove=pointermove
             on:pointerdown=pointerdown
             on:pointerup=pointerup
+            on:pointerleave=pointerleave
         >
             // the inner container used for moving the map
             // this container contains the map contents and is moved when the map is dragged
