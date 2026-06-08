@@ -17,7 +17,7 @@ where
 }
 
 pub fn handlers(
-    position: RwSignal<(f64, f64)>,
+    position: RwSignal<[f64; 2]>,
     zoom: RwSignal<f64>,
     moving: RwSignal<bool>,
     transitioning: RwSignal<bool>,
@@ -28,31 +28,33 @@ pub fn handlers(
     impl Fn(WheelEvent) + Copy + 'static,
 > {
     // mouse position stored for zoom compensation
-    let mousepos = RwSignal::new((0, 0));
+    let mousepos = RwSignal::new([0, 0]);
 
     let mousemove = move |e: MouseEvent| {
         e.prevent_default();
 
         // if we are dragging move the map
         if moving.get() {
-            position.update(|(x, y)| {
+            position.update(|[x, y]| {
                 *x += f64::from(e.movement_x());
                 *y += f64::from(e.movement_y());
             });
         }
 
-        mousepos.set((e.client_x(), e.client_y()));
+        mousepos.set([e.client_x(), e.client_y()]);
     };
 
     // detect when a mouse drag starts
     let start_mousemove = move |e: MouseEvent| {
         e.prevent_default();
+
         moving.set(true);
     };
 
     // detect when a mouse drag ends
     let end_mousemove = move |e: MouseEvent| {
         e.prevent_default();
+
         moving.set(false);
     };
 
@@ -64,8 +66,7 @@ pub fn handlers(
         transitioning.set(true);
 
         // get the mouse position
-        let mpos1 = mousepos.get();
-        let mpos = (f64::from(mpos1.0), f64::from(mpos1.1));
+        let mpos = mousepos.get().map(f64::from);
 
         // calculate the new zoom level
         let old_zoom = zoom.get();

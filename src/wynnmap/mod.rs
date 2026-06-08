@@ -18,12 +18,12 @@ const ZOOM_MAX: f64 = 64.0;
 
 /// Mouse position on the map atlas
 #[derive(Clone)]
-pub struct RelMousePos(pub RwSignal<Option<(i32, i32)>>);
+pub struct RelMousePos(pub RwSignal<Option<[i32; 2]>>);
 
 #[component]
 pub fn WynnMap(
     children: Children,
-    #[prop(optional)] onclick: Option<Callback<(i32, i32)>>,
+    #[prop(optional)] onclick: Option<Callback<[i32; 2]>>,
 ) -> impl IntoView {
     // is the map being moved currently
     let moving = RwSignal::new(false);
@@ -31,7 +31,7 @@ pub fn WynnMap(
     // position of the map
     let screen_middle = get_viewport_middle();
     // use the midpoint to position the map so that it is centered
-    let position = RwSignal::new((100.0 + screen_middle.0, 1200.0 + screen_middle.1));
+    let position = RwSignal::new([100.0 + screen_middle[0], 1200.0 + screen_middle[1]]);
 
     // the current zoom level
     let zoom = RwSignal::new(0.5);
@@ -95,8 +95,8 @@ pub fn WynnMap(
                 style:transform=move ||
                     format!("matrix3d({z},0,0,0,0,{z},0,0,0,0,1,0,{x},{y},0,1)",
                         z = zoom.read(),
-                        x = position.read().0,
-                        y = position.read().1
+                        x = position.read()[0],
+                        y = position.read()[1]
                     )
             >
                 {children()}

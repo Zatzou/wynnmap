@@ -13,7 +13,7 @@ where
 }
 
 pub fn handlers(
-    position: RwSignal<(f64, f64)>,
+    position: RwSignal<[f64; 2]>,
     zoom: RwSignal<f64>,
     moving: RwSignal<bool>,
 ) -> TouchEventHandlers<impl Fn(TouchEvent) + Copy + 'static, impl Fn(TouchEvent) + Copy + 'static>
@@ -48,26 +48,20 @@ pub fn handlers(
         }
 
         // match the number of touches to determine if it's a drag or zoom
-        match tpos.read().len() {
+        match tpos.read()[..] {
             // drag
-            1 => {
-                // current position
-                let pos = position.get();
-
+            [tpos] => {
                 // new delta
                 let touch = tl.get(0).unwrap();
-                let npos = (touch.client_x(), touch.client_y());
+                let npos = [touch.client_x(), touch.client_y()];
 
-                let tpos = tpos.read();
-
-                // update the position
-                position.set((
-                    pos.0 + f64::from(npos.0 - tpos[0].0),
-                    pos.1 + f64::from(npos.1 - tpos[0].1),
-                ));
+                position.update(|[x, y]| {
+                    *x += f64::from(npos[0] - tpos[0]);
+                    *y += f64::from(npos[1] - tpos[1]);
+                });
             }
             // zoom
-            2 => {
+            [t1, t2] => {
                 // disable will-change to prevent flickering
                 moving.set(false);
 
@@ -80,16 +74,12 @@ pub fn handlers(
                     (touch2.client_x(), touch2.client_y()),
                 );
 
-                let tpos = tpos.read();
-
                 // calculate the distance between the touches
                 let dist =
                     f64::from((npos.0.0 - npos.1.0).pow(2) + (npos.0.1 - npos.1.1).pow(2)).sqrt();
 
                 // calculate the distance between the touches before the zoom
-                let opos =
-                    f64::from((tpos[0].0 - tpos[1].0).pow(2) + (tpos[0].1 - tpos[1].1).pow(2))
-                        .sqrt();
+                let opos = f64::from((t1[0] - t2[0]).pow(2) + (t1[1] - t2[1]).pow(2)).sqrt();
 
                 // calculate the delta
                 let delta = dist - opos;
@@ -100,10 +90,10 @@ pub fn handlers(
 
                 zoom.set(new_zoom);
 
-                let mpos = (
+                let mpos = [
                     f64::from(npos.0.0 + npos.1.0) / 2.0,
                     f64::from(npos.0.1 + npos.1.1) / 2.0,
-                );
+                ];
 
                 apply_zoom_compensation(mpos, old_zoom, new_zoom, position);
             }
@@ -122,17 +112,14 @@ pub fn handlers(
 }
 
 /// Convinience function for getting the touch positions out of a DOM [`TouchList`]
-fn get_touch_positions(tl: &TouchList) -> Vec<(i32, i32)> {
+fn get_touch_positions(tl: &TouchList) -> Vec<[i32; 2]> {
     let mut positions = Vec::new();
 
     // iterate over the touches and store the positions
-    let mut x = 0;
-    while x < tl.length() {
-        let touch = tl.get(x).unwrap();
+    for i in 0..tl.length() {
+        let touch = tl.get(i).unwrap();
 
-        positions.push((touch.client_x(), touch.client_y()));
-
-        x += 1;
+        positions.push([touch.client_x(), touch.client_y()]);
     }
 
     positions

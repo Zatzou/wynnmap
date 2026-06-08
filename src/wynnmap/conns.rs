@@ -57,7 +57,7 @@ pub fn Connections(#[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>) -
 }
 
 fn create_route_paths(terrs: &BTreeMap<Arc<str>, Territory>) -> String {
-    let mut terr_conns: BTreeSet<((i32, i32), (i32, i32))> = BTreeSet::new();
+    let mut terr_conns: BTreeSet<([i32; 2], [i32; 2])> = BTreeSet::new();
     for (name, terr) in terrs {
         for conn in &terr.connections {
             if let Some(other_terr) = terrs.get(conn) {
@@ -81,10 +81,10 @@ fn create_route_paths(terrs: &BTreeMap<Arc<str>, Territory>) -> String {
         write!(
             pathing,
             "M{} {}L{} {}",
-            start.0,
-            start.1, // x and y of starting point
-            end.0,
-            end.1 // x and y of ending point
+            start[0],
+            start[1], // x and y of starting point
+            end[0],
+            end[1] // x and y of ending point
         )
         .expect("Write should not fail");
     }
