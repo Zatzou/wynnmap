@@ -4,7 +4,7 @@ use axum::body::Bytes;
 use image::ImageReader;
 use reqwest::StatusCode;
 use serde::Deserialize;
-use tokio::{sync::RwLock, task::JoinHandle};
+use tokio::{sync::RwLock, task::JoinSet};
 use tracing::{Instrument, error, info_span};
 use webp::Encoder;
 use wynnmap_types::{Region, maptile::MapTile};
@@ -108,32 +108,49 @@ impl ImageTracker {
             return Ok(());
         }
 
-        // download and process the tiles
-        let mut tasks = Vec::new();
-        for tile in tiles.clone() {
-            let self2 = self.clone();
-            let task: JoinHandle<Result<_, AnyError>> = tokio::task::spawn(
-                async move {
-                    let data = self2.download_image(&tile.url, &tile.name).await?;
+        // download and process the tiles, limit concurrency to 4
+        let mut processed_images = Vec::new();
+        for chunk in tiles.chunks(4) {
+            let mut tasks: JoinSet<Result<_, AnyError>> = JoinSet::new();
 
-                    if let Some(data) = data {
-                        let img = if self2.config.images.use_webp {
-                            tokio::task::spawn_blocking(|| encode_image(data))
-                                .instrument(info_span!("encode_image"))
-                                .await??
+            for tile in chunk {
+                let tile = tile.clone();
+                let self2 = self.clone();
+                tasks.spawn(
+                    async move {
+                        let data = self2.download_image(&tile.url, &tile.name).await?;
+
+                        if let Some(data) = data {
+                            let img = if self2.config.images.use_webp {
+                                tokio::task::spawn_blocking(|| encode_image(data))
+                                    .instrument(info_span!("encode_image"))
+                                    .await??
+                            } else {
+                                data
+                            };
+
+                            Ok(Some((tile.md5.clone(), img)))
                         } else {
-                            data
-                        };
-
-                        Ok(Some((tile.md5.clone(), img)))
-                    } else {
-                        Ok(None)
+                            Ok(None)
+                        }
                     }
-                }
-                .instrument(info_span!("load_image")),
-            );
+                    .instrument(info_span!("load_image")),
+                );
+            }
 
-            tasks.push(task);
+            for res in tasks.join_all().await {
+                if let Some(res) = res? {
+                    processed_images.push(res);
+                }
+            }
+        }
+
+        let mut maps_cache = self.state.map_cache.write().await;
+
+        // add the images to the cache
+        for (name, img) in processed_images {
+            let etag = sha224_etag(&img);
+            maps_cache.insert(name, (etag, img));
         }
 
         // reprocess the json data
@@ -155,16 +172,6 @@ impl ImageTracker {
 
             tiles
         };
-
-        let mut maps_cache = self.state.map_cache.write().await;
-
-        // add the images to the cache
-        for task in tasks {
-            if let Some((name, img)) = task.await?? {
-                let etag = sha224_etag(&img);
-                maps_cache.insert(name, (etag, img));
-            }
-        }
 
         let mut maps = self.state.maps.write().await;
         let mut maps_etag = self.state.maps_etag.write().await;
