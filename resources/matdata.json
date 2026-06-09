@@ -1,0 +1,210 @@
+{
+    "COPPER": {
+        "prof": "mining",
+        "color": "#a94f2a"
+    },
+    "GUDGEON": {
+        "prof": "fishing",
+        "color": "#758f9f"
+    },
+    "OAK": {
+        "prof": "woodcutting",
+        "color": "#7f603b"
+    },
+    "WHEAT": {
+        "prof": "farming",
+        "color": "#ebba58"
+    },
+    "BARLEY": {
+        "prof": "farming",
+        "color": "#876316"
+    },
+    "BIRCH": {
+        "prof": "woodcutting",
+        "color": "#e1c385"
+    },
+    "GRANITE": {
+        "prof": "mining",
+        "color": "#f3ba8f"
+    },
+    "TROUT": {
+        "prof": "fishing",
+        "color": "#2e5145"
+    },
+    "GOLD": {
+        "prof": "mining",
+        "color": "#dab450"
+    },
+    "OAT": {
+        "prof": "farming",
+        "color": "#708526"
+    },
+    "SALMON": {
+        "prof": "fishing",
+        "color": "#c43b16"
+    },
+    "WILLOW": {
+        "prof": "woodcutting",
+        "color": "#404f33"
+    },
+    "ACACIA": {
+        "prof": "woodcutting",
+        "color": "#a06438"
+    },
+    "CARP": {
+        "prof": "fishing",
+        "color": "#fffb75"
+    },
+    "MALT": {
+        "prof": "farming",
+        "color": "#a27e1c"
+    },
+    "SANDSTONE": {
+        "prof": "mining",
+        "color": "#fffbbc"
+    },
+    "HOPS": {
+        "prof": "farming",
+        "color": "#69834c"
+    },
+    "ICEFISH": {
+        "prof": "fishing",
+        "color": "#69a8cc"
+    },
+    "IRON": {
+        "prof": "mining",
+        "color": "#9e9c98"
+    },
+    "SPRUCE": {
+        "prof": "woodcutting",
+        "color": "#644c2f"
+    },
+    "JUNGLE": {
+        "prof": "woodcutting",
+        "color": "#906546"
+    },
+    "PIRANHA": {
+        "prof": "fishing",
+        "color": "#4b6993"
+    },
+    "RYE": {
+        "prof": "farming",
+        "color": "#c19f4a"
+    },
+    "SILVER": {
+        "prof": "mining",
+        "color": "#dde9e8"
+    },
+    "COBALT": {
+        "prof": "mining",
+        "color": "#589ad6"
+    },
+    "DARK": {
+        "prof": "woodcutting",
+        "color": "#3e2616"
+    },
+    "KOI": {
+        "prof": "fishing",
+        "color": "#c43b16"
+    },
+    "MILLET": {
+        "prof": "farming",
+        "color": "#c19f4a"
+    },
+    "DECAY": {
+        "prof": "farming",
+        "color": "#5f4818"
+    },
+    "GYLIA": {
+        "prof": "fishing",
+        "color": "#b958bc"
+    },
+    "KANDERSTONE": {
+        "prof": "mining",
+        "color": "#9ed1bf"
+    },
+    "LIGHT": {
+        "prof": "woodcutting",
+        "color": "#998b6d"
+    },
+    "BASS": {
+        "prof": "fishing",
+        "color": "#729049"
+    },
+    "DIAMOND": {
+        "prof": "mining",
+        "color": "#79e4ec"
+    },
+    "PINE": {
+        "prof": "woodcutting",
+        "color": "#513f2d"
+    },
+    "RICE": {
+        "prof": "farming",
+        "color": "#ffffff"
+    },
+    "AVO": {
+        "prof": "woodcutting",
+        "color": "#999551"
+    },
+    "MOLTEN": {
+        "prof": "mining",
+        "color": "#ff452e"
+    },
+    "SORGHUM": {
+        "prof": "farming",
+        "color": "#cf6f47"
+    },
+    "HEMP": {
+        "prof": "farming",
+        "color": "#4a5a16"
+    },
+    "SKY": {
+        "prof": "woodcutting",
+        "color": "#6d8897"
+    },
+    "STARFISH": {
+        "prof": "fishing",
+        "color": "#fdb06d"
+    },
+    "VOIDSTONE": {
+        "prof": "mining",
+        "color": "#dc7edb"
+    },
+    "DERNIC": {
+        "prof": "mining",
+        "color": "#4f227a"
+    },
+    "JUTE": {
+        "prof": "farming",
+        "color": "#e2b28d"
+    },
+    "MAPLE": {
+        "prof": "woodcutting",
+        "color": "#e7762d"
+    },
+    "STURGEON": {
+        "prof": "fishing",
+        "color": "#8a8ba0"
+    },
+    "TITANIUM": {
+        "prof": "mining",
+        "color": "#517194"
+    },
+    "CINNABAR": {
+        "prof": "mining",
+        "color": "#fa7479"
+    },
+    "HEATHER": {
+        "prof": "farming",
+        "color": "#7b518b"
+    },
+    "MAHSEER": {
+        "prof": "fishing",
+        "color": "#dba213"
+    },
+    "REDWOOD": {
+        "prof": "woodcutting",
+        "color": "#af392b"
+    }
+}

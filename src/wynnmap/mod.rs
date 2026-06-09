@@ -20,6 +20,10 @@ const ZOOM_MAX: f64 = 64.0;
 #[derive(Clone)]
 pub struct RelMousePos(pub RwSignal<Option<[i32; 2]>>);
 
+/// Current zoom level
+#[derive(Clone)]
+pub struct MapZoom(pub RwSignal<f64>);
+
 #[component]
 pub fn WynnMap(
     children: Children,
@@ -35,6 +39,7 @@ pub fn WynnMap(
 
     // the current zoom level
     let zoom = RwSignal::new(0.5);
+    provide_context(MapZoom(zoom));
 
     // are we currently transitioning? transitions can occur from zooming
     let transitioning = RwSignal::new(false);

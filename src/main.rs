@@ -9,7 +9,7 @@ use modes::{planning::PlanningMap, war::WarMap};
 use notfound::NotFound;
 use settings::provide_settings;
 
-use crate::sectimer::provide_second_timer;
+use crate::{modes::gather::GatherMap, sectimer::provide_second_timer};
 
 mod components;
 mod datasource;
@@ -41,6 +41,7 @@ pub fn App() -> impl IntoView {
             <Routes fallback=NotFound>
                 <Route path=path!("") view=WarMap />
                 <Route path=path!("plan") view=PlanningMap />
+                <Route path=path!("gather") view=GatherMap />
             </Routes>
         </Router>
 

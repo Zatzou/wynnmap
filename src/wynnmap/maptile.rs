@@ -11,13 +11,17 @@ use crate::{
 };
 
 #[component]
-pub fn MapTile(#[prop(into)] tile: Signal<MapTile>) -> impl IntoView {
+pub fn MapTile(
+    #[prop(into)] tile: Signal<MapTile>,
+    #[prop(default = false.into(), into)] grayscale: Signal<bool>,
+) -> impl IntoView {
     let location = move || tile.read().location;
 
     view! {
         <img
             src=tile.get().url
             class="wynnmap-tile"
+            class:grayscale=grayscale
             style:width=move || as_px(location().width())
             style:height=move || as_px(location().height())
             style:top=move || as_px(location().top_side())
@@ -27,7 +31,10 @@ pub fn MapTile(#[prop(into)] tile: Signal<MapTile>) -> impl IntoView {
 }
 
 #[component]
-pub fn MapTiles(#[prop(into)] tiles: Signal<Vec<MapTile>>) -> impl IntoView {
+pub fn MapTiles(
+    #[prop(into)] tiles: Signal<Vec<MapTile>>,
+    #[prop(default = false.into(), into)] grayscale: Signal<bool>,
+) -> impl IntoView {
     let show_non_main = use_toggle("show_non_main_maps", false);
 
     view! {
@@ -42,7 +49,7 @@ pub fn MapTiles(#[prop(into)] tiles: Signal<Vec<MapTile>>) -> impl IntoView {
                             show_non_main.get()
                         }
                     })
-                    .map(|tile| view! { <MapTile tile /> })
+                    .map(|tile| view! { <MapTile tile grayscale /> })
                     .collect_view()
             }}
         </div>
@@ -51,7 +58,9 @@ pub fn MapTiles(#[prop(into)] tiles: Signal<Vec<MapTile>>) -> impl IntoView {
 
 /// A component that displays the default map tiles fetched from the server.
 #[component]
-pub fn DefaultMapTiles() -> impl IntoView {
+pub fn DefaultMapTiles(
+    #[prop(default = false.into(), into)] grayscale: Signal<bool>,
+) -> impl IntoView {
     let dialogs = use_context::<Dialogs>().expect("Dialogs context not found");
     let tiles = RwSignal::new(Vec::new());
 
@@ -91,5 +100,5 @@ pub fn DefaultMapTiles() -> impl IntoView {
         }
     });
 
-    view! { <MapTiles tiles={tiles} /> }
+    view! { <MapTiles tiles={tiles} grayscale /> }
 }

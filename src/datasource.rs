@@ -14,6 +14,7 @@ use leptos_use::{
     UseWebSocketOptions, UseWebSocketReturn, core::ConnectionReadyState, use_websocket_with_options,
 };
 use wynnmap_types::{
+    gather::{GatherSpots, MatData},
     maptile::MapTile,
     terr::{MapState, TerrState, TerrTimestamps, Territory},
     ws::TerrSockMessage,
@@ -126,4 +127,21 @@ impl<T: serde::de::DeserializeOwned> Decoder<T> for WynnmapCodec {
     fn decode(val: &Self::Encoded) -> Result<T, Self::Error> {
         wynnmap_types::encoding::decode_data(val)
     }
+}
+
+pub async fn get_gather_nodes() -> Result<GatherSpots, gloo_net::Error> {
+    let resp: GatherSpots = Request::get("/api/v3/gather/nodes")
+        .send()
+        .await?
+        .json()
+        .await?;
+
+    Ok(resp)
+}
+
+pub async fn get_mat_data() -> Result<BTreeMap<Arc<str>, MatData>, gloo_net::Error> {
+    let resp: BTreeMap<Arc<str>, MatData> =
+        Request::get("/matdata.json").send().await?.json().await?;
+
+    Ok(resp)
 }
