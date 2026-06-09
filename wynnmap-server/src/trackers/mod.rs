@@ -1,3 +1,4 @@
+pub mod gather;
 pub mod guilds;
 pub mod images;
 pub mod territories;

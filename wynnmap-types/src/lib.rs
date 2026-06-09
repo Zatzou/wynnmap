@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 pub mod ws;
 
 pub mod encoding;
+pub mod gather;
 pub mod guild;
 pub mod maptile;
 pub mod resources;

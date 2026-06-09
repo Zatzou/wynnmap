@@ -5,6 +5,7 @@ use chrono::{DateTime, Utc};
 use opentelemetry::metrics::UpDownCounter;
 use tokio::sync::{RwLock, broadcast};
 use wynnmap_types::{
+    gather::GatherSpots,
     guild::Guild,
     maptile::MapTile,
     terr::{TerrState, TerrTimestamps, Territory},
@@ -43,4 +44,10 @@ pub struct TerritoryStateInner {
 
     pub expires: DateTime<Utc>,
     pub timestamps: TerrTimestamps,
+}
+
+#[derive(Debug, Default)]
+pub struct GatherState {
+    pub nodes: RwLock<Arc<GatherSpots>>,
+    pub etag: RwLock<Arc<str>>,
 }

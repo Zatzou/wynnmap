@@ -13,6 +13,7 @@ use tower_http::cors::{self, CorsLayer};
 use tower_http::services::{ServeDir, ServeFile};
 use tracing::info;
 
+use crate::trackers::gather::GatherSpotsTracker;
 use crate::trackers::guilds::GuildTracker;
 use crate::trackers::images::ImageTracker;
 use crate::trackers::territories::TerritoryTracker;
@@ -43,6 +44,7 @@ async fn main() {
     let img_state = ImageTracker::from_config(config.clone()).run();
     let guild_state = GuildTracker::with_config(&config).run();
     let terr_state = TerritoryTracker::with_config(&config, &guild_state).run();
+    let gather_state = GatherSpotsTracker::with_config(&config).run();
 
     let cors = CorsLayer::new()
         .allow_origin(cors::Any)
@@ -62,6 +64,7 @@ async fn main() {
                     "/v3",
                     Router::new()
                         .nest("/terr", api::v3::territories::router(terr_state))
+                        .nest("/gather", api::v3::gather::router(gather_state))
                         .fallback(api_404),
                 )
                 .fallback(api_404),
