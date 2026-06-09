@@ -5,7 +5,7 @@ use image::ImageReader;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use tokio::{sync::RwLock, task::JoinSet};
-use tracing::{Instrument, error, info_span};
+use tracing::{Instrument, error, info, info_span};
 use webp::Encoder;
 use wynnmap_types::{Region, maptile::MapTile};
 
@@ -114,13 +114,20 @@ impl ImageTracker {
             let mut tasks: JoinSet<Result<_, AnyError>> = JoinSet::new();
 
             for tile in chunk {
+                let etag = self
+                    .etag_cache
+                    .read()
+                    .await
+                    .get(&tile.name)
+                    .cloned()
+                    .unwrap_or_default();
                 let tile = tile.clone();
                 let self2 = self.clone();
                 tasks.spawn(
                     async move {
-                        let data = self2.download_image(&tile.url, &tile.name).await?;
+                        let data = self2.download_image(&tile.url, &etag).await?;
 
-                        if let Some(data) = data {
+                        if let (Some(data), etag) = data {
                             let img = if self2.config.images.use_webp {
                                 tokio::task::spawn_blocking(|| encode_image(data))
                                     .instrument(info_span!("encode_image"))
@@ -129,7 +136,7 @@ impl ImageTracker {
                                 data
                             };
 
-                            Ok(Some((tile.md5.clone(), img)))
+                            Ok(Some(((tile.md5.clone(), img), (tile.name.clone(), etag))))
                         } else {
                             Ok(None)
                         }
@@ -146,9 +153,14 @@ impl ImageTracker {
         }
 
         let mut maps_cache = self.state.map_cache.write().await;
+        let mut etags_cache = self.etag_cache.write().await;
 
         // add the images to the cache
-        for (name, img) in processed_images {
+        for ((name, img), (tname, t_etag)) in processed_images {
+            if let Some(etag) = t_etag {
+                etags_cache.insert(tname, etag.into());
+            }
+
             let etag = sha224_etag(&img);
             maps_cache.insert(name, (etag, img));
         }
@@ -185,41 +197,33 @@ impl ImageTracker {
         // replace the cache with the new data
         *maps = tiles;
 
+        info!("completed image update");
+
         Ok(())
     }
 
     #[tracing::instrument(skip(self), err(Debug))]
-    async fn download_image(&self, url: &str, name: &str) -> Result<Option<Bytes>, reqwest::Error> {
+    async fn download_image(
+        &self,
+        url: &str,
+        etag: &str,
+    ) -> Result<(Option<Bytes>, Option<String>), reqwest::Error> {
         let res = self
             .client
             .get(url)
-            .header(
-                "If-None-Match",
-                &*self
-                    .etag_cache
-                    .read()
-                    .await
-                    .get(name)
-                    .cloned()
-                    .unwrap_or_default(),
-            )
+            .header("If-None-Match", etag)
             .send()
             .await?;
 
         if res.status() == StatusCode::NOT_MODIFIED {
-            return Ok(None);
+            return Ok((None, None));
         }
 
-        if let Some(etag) = res.get_header("etag") {
-            self.etag_cache
-                .write()
-                .await
-                .insert(Arc::from("maps.json"), Arc::from(etag));
-        }
+        let recv_etag = res.get_header("etag").map(String::from);
 
         let data = res.bytes().await?;
 
-        Ok(Some(data))
+        Ok((Some(data), recv_etag))
     }
 }
 
