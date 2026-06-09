@@ -16,15 +16,20 @@ pub enum RequestError {
     Json(#[from] serde_json::Error),
 }
 
+pub fn user_agent_from_conf(config: &Config) -> String {
+    format!(
+        "{}/{} ({})",
+        env!("CARGO_PKG_NAME"),
+        env!("CARGO_PKG_VERSION"),
+        config.client.ua_contact
+    )
+}
+
 pub fn reqwest_client_from_conf(config: &Config) -> reqwest::Client {
     reqwest::Client::builder()
-        .user_agent(format!(
-            "{}/{} ({})",
-            env!("CARGO_PKG_NAME"),
-            env!("CARGO_PKG_VERSION"),
-            config.client.ua_contact
-        ))
-        .timeout(Duration::from_secs(10))
+        .user_agent(user_agent_from_conf(config))
+        .connect_timeout(Duration::from_secs(10))
+        .read_timeout(Duration::from_secs(10))
         .build()
         .unwrap()
 }
