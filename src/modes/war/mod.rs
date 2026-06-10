@@ -88,11 +88,12 @@ pub fn WarMap() -> impl IntoView {
 
     let SecondTimer(now) = expect_context();
     let data_age = Memo::new(move |_| {
-        if let Some(updated) = last_updated.read().updated {
-            now.read().signed_duration_since(updated)
-        } else {
-            TimeDelta::zero()
-        }
+        last_updated
+            .read()
+            .updated
+            .map_or_else(TimeDelta::zero, |updated| {
+                now.read().signed_duration_since(updated)
+            })
     });
 
     // Update the territory data every 10 minutes to ensure the map stays up to date

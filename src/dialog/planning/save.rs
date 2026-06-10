@@ -150,7 +150,7 @@ pub fn save_dialog(
                                 file_load_err,
                             ),
                             "lz4" => {
-                                decode::<formats::rueaes::RueaES>(&bytes, load_data, file_load_err)
+                                decode::<formats::rueaes::RueaES>(&bytes, load_data, file_load_err);
                             }
 
                             _ => file_load_err.set(Some(String::from("Unknown file extension"))),

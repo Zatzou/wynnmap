@@ -22,7 +22,7 @@ impl GatherNode {
         let dist_x = self.pos[0].abs_diff(point[0]);
         let dist_z = self.pos[1].abs_diff(point[1]);
 
-        let dist = f64::sqrt((dist_x.pow(2) + dist_z.pow(2)) as f64);
+        let dist = f64::from(dist_x.pow(2) + dist_z.pow(2)).sqrt();
 
         dist <= self.radius
     }
@@ -59,26 +59,15 @@ pub fn NodeRenderer(
 
         let hov = if let Some(pos) = mouse_rel.get() {
             match clusters.get() {
-                1 => clusters_far
-                    .read()
-                    .iter()
-                    .filter(|n| n.contains(pos))
-                    .cloned()
-                    .collect(),
-                2 => clusters_mid
-                    .read()
-                    .iter()
-                    .filter(|n| n.contains(pos))
-                    .cloned()
-                    .collect(),
-                3 => clusters_near
-                    .read()
-                    .iter()
-                    .filter(|n| n.contains(pos))
-                    .cloned()
-                    .collect(),
-                _ => Vec::new(),
+                1 => clusters_far,
+                2 => clusters_mid,
+                _ => clusters_near,
             }
+            .read()
+            .iter()
+            .filter(|n| n.contains(pos))
+            .cloned()
+            .collect()
         } else {
             Vec::new()
         };

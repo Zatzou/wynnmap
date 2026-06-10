@@ -97,7 +97,7 @@ fn xz_dist_to(lhs: [i32; 2], rhs: [i32; 2]) -> f64 {
     let dist_x = lhs[0].abs_diff(rhs[0]);
     let dist_z = lhs[1].abs_diff(rhs[1]);
 
-    f64::sqrt((dist_x.pow(2) + dist_z.pow(2)) as f64)
+    f64::from(dist_x.pow(2) + dist_z.pow(2)).sqrt()
 }
 
 fn cluster_midpoint(cluster: &[[i32; 2]]) -> [i32; 2] {
@@ -115,8 +115,8 @@ fn cluster_size(cluster: &[[i32; 2]]) -> f64 {
     let bottom_side = cluster.iter().map(|[_, z]| *z).min().unwrap_or_default();
     let top_side = cluster.iter().map(|[_, z]| *z).max().unwrap_or_default();
 
-    let width = left_side.abs_diff(right_side) as f64;
-    let height = bottom_side.abs_diff(top_side) as f64;
+    let width = f64::from(left_side.abs_diff(right_side));
+    let height = f64::from(bottom_side.abs_diff(top_side));
 
     f64::max(f64::max(width / 2.0, height / 2.0), 2.0)
 }

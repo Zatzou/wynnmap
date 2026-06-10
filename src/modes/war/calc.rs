@@ -38,8 +38,7 @@ pub fn TerrCalc(
         state
             .read_untracked()
             .get(&*name.read())
-            .map(|s| s.hq)
-            .unwrap_or_default(),
+            .is_some_and(|s| s.hq),
     );
 
     let damage = RwSignal::new(11);

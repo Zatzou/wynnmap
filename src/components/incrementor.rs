@@ -27,12 +27,12 @@ where
 {
     let increment = move |_| {
         if *value.read() != *max.read() {
-            value.update(|v| *v = (*v + 1.into()).min(max.get()))
+            value.update(|v| *v = (*v + 1.into()).min(max.get()));
         }
     };
     let decrement = move |_| {
         if *value.read() != *min.read() {
-            value.update(|v| *v = (*v - 1.into()).max(min.get()))
+            value.update(|v| *v = (*v - 1.into()).max(min.get()));
         }
     };
 
@@ -44,7 +44,7 @@ where
                     let val = ev.target().value();
 
                     if let Ok(v) = val.parse::<T>() {
-                        value.set(v.clamp(min.get(), max.get()))
+                        value.set(v.clamp(min.get(), max.get()));
                     }
                 }
                 on:click:target=move |ev| ev.target().select()

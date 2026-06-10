@@ -44,7 +44,6 @@ pub fn TerrView(
                 key=move |(k, _)| k.clone()
                 children=move |(name, terr)| {
                     let state = Memo::new({
-                        let name = name.clone();
                         move |_| state.read().get(&name).cloned().unwrap_or_default()
                     });
 

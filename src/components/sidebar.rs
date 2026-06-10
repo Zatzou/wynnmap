@@ -37,7 +37,7 @@ pub fn Sidebar(#[prop(optional)] children: Option<Children>) -> impl IntoView {
             <div class="settings-btn"
                 on:click={
                     move |_| {
-                        dialogs.add("settings", dialog::settings::settings_dialog)
+                        dialogs.add("settings", dialog::settings::settings_dialog);
                     }
                 }
             >

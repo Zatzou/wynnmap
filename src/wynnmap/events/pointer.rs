@@ -63,7 +63,7 @@ pub fn handlers(
             && diff[0] < 5
             && diff[1] < 5
         {
-            cb.run(relmousepos.get().unwrap_or_default())
+            cb.run(relmousepos.get().unwrap_or_default());
         }
     };
 

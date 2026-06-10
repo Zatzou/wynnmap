@@ -115,7 +115,7 @@ pub fn PlanningMap() -> impl IntoView {
                             <p>"Territories have changed since the creation of this share URL. This URL can no longer be decoded."</p>
                         },
                     )
-                })
+                });
             }
         }
     });
@@ -206,7 +206,7 @@ pub fn PlanningMap() -> impl IntoView {
                     let owner = Owner::new();
                     move |_| {
                         owner.with(move || {
-                            dialogs.add("manage_guilds", move || dialog::planning::manage_guilds(guilds))
+                            dialogs.add("manage_guilds", move || dialog::planning::manage_guilds(guilds));
                         });
                     }
                 }>
@@ -217,7 +217,7 @@ pub fn PlanningMap() -> impl IntoView {
                     let owner = Owner::new();
                     move |_| {
                         owner.with(move || {
-                            dialogs.add("save", move || dialog::planning::save_dialog(terrs.into(), guilds, owned))
+                            dialogs.add("save", move || dialog::planning::save_dialog(terrs.into(), guilds, owned));
                         });
                     }
                 }>
