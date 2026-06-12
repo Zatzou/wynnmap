@@ -25,7 +25,7 @@ pub fn fmt_time_long(time: TimeDelta) -> String {
 pub fn fmt_time_short(time: TimeDelta) -> String {
     match times(time) {
         (0, 0, 0, s) => format!("{s}s"),
-        (0, 0, m, s) => format!("{m}m {s}"),
+        (0, 0, m, s) => format!("{m}m {s}s"),
         (0, h, m, _) => format!("{h}h {m}m"),
         (d, h, _, _) => format!("{d}d {h}h"),
     }
