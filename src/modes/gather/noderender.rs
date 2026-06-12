@@ -34,9 +34,16 @@ pub fn NodeRenderer(
     data: RwSignal<BTreeMap<Arc<str>, MatData>>,
     mouse_pos: RwSignal<Option<[i32; 2]>>,
     hovered: RwSignal<Vec<GatherNode>>,
+    #[prop(into, optional)] hidden: Signal<Vec<Arc<str>>>
 ) -> impl IntoView {
     let RelMousePos(mouse_rel) = expect_context::<RelMousePos>();
     let MapZoom(zoom) = expect_context();
+
+    let style = Memo::new(move |_| {
+        let ids = hidden.read().iter().map(|n| format!("#{n}")).collect::<Vec<_>>().join(",");
+
+        format!("{ids}{{display: none;}}")
+    });
 
     let clusters_far = Memo::new(move |_| cluster_all(nodes.get(), 20.0, 10.0));
     let clusters_mid = Memo::new(move |_| cluster_all(nodes.get(), 10.0, 6.0));
@@ -76,26 +83,29 @@ pub fn NodeRenderer(
 
     view! {
         <svg style="position: absolute; overflow: visible" class:hidden=move || clusters.get() != 1>
+            <style>{style}</style>
             {move || clusters_far.get().into_iter().map(|cluster| {
                 let matdata = data.read().get(&cluster.res.name).cloned().unwrap_or_default();
                 view!{
-                    <circle cx={cluster.pos[0]} cy={cluster.pos[1]} r={cluster.radius} fill=matdata.color.clone() stroke=matdata.prof.color() stroke-width=5 />
+                    <circle cx={cluster.pos[0]} cy={cluster.pos[1]} r={cluster.radius} fill=matdata.color.clone() stroke=matdata.prof.color() stroke-width=5 id={cluster.res.name} />
                 }
             }).collect::<Vec<_>>()}
         </svg>
         <svg style="position: absolute; overflow: visible" class:hidden=move || clusters.get() != 2>
+            <style>{style}</style>
             {move || clusters_mid.get().into_iter().map(|cluster| {
                 let matdata = data.read().get(&cluster.res.name).cloned().unwrap_or_default();
                 view!{
-                    <circle cx={cluster.pos[0]} cy={cluster.pos[1]} r={cluster.radius} fill=matdata.color.clone() stroke=matdata.prof.color() stroke-width=2.5 />
+                    <circle cx={cluster.pos[0]} cy={cluster.pos[1]} r={cluster.radius} fill=matdata.color.clone() stroke=matdata.prof.color() stroke-width=2.5 id={cluster.res.name} />
                 }
             }).collect::<Vec<_>>()}
         </svg>
         <svg style="position: absolute; overflow: visible" class:hidden=move || clusters.get() != 3>
+            <style>{style}</style>
             {move || clusters_near.get().into_iter().map(|cluster| {
                 let matdata = data.read().get(&cluster.res.name).cloned().unwrap_or_default();
                 view!{
-                    <circle cx={cluster.pos[0]} cy={cluster.pos[1]} r={cluster.radius} fill=matdata.color.clone() stroke=matdata.prof.color() stroke-width=1 />
+                    <circle cx={cluster.pos[0]} cy={cluster.pos[1]} r={cluster.radius} fill=matdata.color.clone() stroke=matdata.prof.color() stroke-width=1 id={cluster.res.name} />
                 }
             }).collect::<Vec<_>>()}
         </svg>
