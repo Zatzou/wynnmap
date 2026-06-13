@@ -1,7 +1,7 @@
-use std::{collections::BTreeMap, time::Duration};
+use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 use leptos::{prelude::*, task::spawn_local};
-use wynnmap_types::gather::GatherSpots;
+use wynnmap_types::gather::{GatherSpots, MatData, Profession};
 
 use crate::{
     components::{checkbox::Checkbox, sidebar::Sidebar, sidecard::SideCard}, datasource, modes::gather::noderender::NodeRenderer, settings::use_toggle, wynnmap::{WynnMap, maptile::DefaultMapTiles}
@@ -15,7 +15,6 @@ pub fn GatherMap() -> impl IntoView {
     let nodes = RwSignal::new(GatherSpots::default());
     let data = RwSignal::new(BTreeMap::new());
     
-    let nodes_all = use_toggle("nodes_all", true);
     let nodes_crop = use_toggle("nodes_crop", true);
     let nodes_fish = use_toggle("nodes_fish", true);
     let nodes_ore = use_toggle("nodes_ore", true);
@@ -35,6 +34,9 @@ pub fn GatherMap() -> impl IntoView {
             }
         }
     };
+    let a = move || get_namelist(data.get());
+    let (sig_crop, sig_fish, sig_ore, sig_wood) = (RwSignal::new(a().0),RwSignal::new(a().1),RwSignal::new(a().2),RwSignal::new(a().3));
+    
 
     spawn_local(load_data(nodes));
 
@@ -76,16 +78,41 @@ pub fn GatherMap() -> impl IntoView {
 
         <Sidebar>
             <div class="flex-1 flex flex-col gap-2 p-2 text-lg">
-                <div>
-                    <Checkbox id="nodes_all" checked={nodes_all}>"Show all nodes"</Checkbox>
-                    <div class="flex flex-col gap-1 ml-6" class:opacity-50=nodes_all>
-                        <Checkbox id="nodes_crop" checked={nodes_crop} disabled=nodes_all>"Show crops"</Checkbox>
-                        <Checkbox id="nodes_fish" checked={nodes_fish} disabled=nodes_all>"Show fish"</Checkbox>
-                        <Checkbox id="nodes_ore"  checked={nodes_ore}  disabled=nodes_all>"Show ore"</Checkbox>
-                        <Checkbox id="nodes_wood" checked={nodes_wood} disabled=nodes_all>"Show wood"</Checkbox>
-                    </div>
+                <Checkbox id="nodes_crop" checked={nodes_crop}>"Crops"</Checkbox>
+                <div class="flex flex-col gap-1 ml-6">
+                    <For 
+                        each=move || sig_crop.get()
+                        key=|corp| corp.clone()
+                        children=move |_| {
+                            view! {
+                                corp
+                            }
+                        }
+                    />
+                </div>
+                <Checkbox id="nodes_fish" checked={nodes_fish}>"Fish"</Checkbox>
+                <div class="flex flex-col gap-1 ml-6">
+                </div>
+                <Checkbox id="nodes_ore" checked={nodes_ore}>"Ore"</Checkbox>
+                <div class="flex flex-col gap-1 ml-6">
+                </div>
+                <Checkbox id="nodes_wood" checked={nodes_wood}>"Wood"</Checkbox>
+                <div class="flex flex-col gap-1 ml-6">
                 </div>
             </div>
         </Sidebar>
     }
+}
+
+fn get_namelist(data: BTreeMap<Arc<str>, MatData>) -> (Vec<Arc<str>>,Vec<Arc<str>>,Vec<Arc<str>>,Vec<Arc<str>>) {
+    let (mut corp, mut fsh, mut roe, mut ood) = (Vec::new(),Vec::new(),Vec::new(),Vec::new());
+    for (name,mat) in data {
+        match mat.prof {
+            Profession::Mining => roe.push(name),
+            Profession::Woodcutting => ood.push(name),
+            Profession::Fishing => fsh.push(name),
+            Profession::Farming => corp.push(name),
+        }
+    }
+    (corp,fsh,roe,ood)
 }
