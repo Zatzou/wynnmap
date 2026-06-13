@@ -39,6 +39,10 @@ pub struct TerritoryTracker {
     bc_bytes: broadcast::Sender<Arc<Vec<u8>>>,
     terrs_updated: Gauge<i64>,
 
+    updated: Gauge<i64>,
+    changed: Gauge<i64>,
+    wynntick: Gauge<i64>,
+
     state: Arc<TerritoryState>,
 }
 
@@ -59,6 +63,10 @@ impl TerritoryTracker {
                 .i64_gauge("terrs_updated")
                 .with_description("Territories updated this cycle")
                 .build(),
+
+            updated: meter.i64_gauge("wynnmap.terrs.updated").build(),
+            changed: meter.i64_gauge("wynnmap.terrs.changed").build(),
+            wynntick: meter.i64_gauge("wynnmap.terrs.wynntick").build(),
 
             state: Arc::new(TerritoryState {
                 inner: Default::default(),
@@ -228,13 +236,19 @@ impl TerritoryTracker {
             let mut old_state = state.clone();
             mem::swap(&mut old_state, &mut lock.state);
 
-            lock.timestamps.updated = Some(Utc::now());
+            let now = Utc::now();
+            lock.timestamps.updated = Some(now);
+            self.updated.record(now.timestamp(), &[]);
 
             if old_state != lock.state {
                 lock.timestamps.changed = lock.timestamps.updated;
+                self.changed.record(now.timestamp(), &[]);
             }
 
             lock.timestamps.wynntick = wynntick;
+            if let Some(t) = wynntick {
+                self.wynntick.record(t.timestamp(), &[]);
+            }
 
             // return old owners for notifications
             (old_state, lock.timestamps)
