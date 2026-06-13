@@ -4,10 +4,7 @@ use leptos::{prelude::*, task::spawn_local};
 use wynnmap_types::gather::GatherSpots;
 
 use crate::{
-    components::{sidebar::Sidebar, sidecard::SideCard},
-    datasource,
-    modes::gather::noderender::NodeRenderer,
-    wynnmap::{WynnMap, maptile::DefaultMapTiles},
+    components::{checkbox::Checkbox, sidebar::Sidebar, sidecard::SideCard}, datasource, modes::gather::noderender::NodeRenderer, settings::use_toggle, wynnmap::{WynnMap, maptile::DefaultMapTiles}
 };
 
 mod clustering;
@@ -17,6 +14,12 @@ mod noderender;
 pub fn GatherMap() -> impl IntoView {
     let nodes = RwSignal::new(GatherSpots::default());
     let data = RwSignal::new(BTreeMap::new());
+    
+    let nodes_all = use_toggle("nodes_all", true);
+    let nodes_crop = use_toggle("nodes_crop", true);
+    let nodes_fish = use_toggle("nodes_fish", true);
+    let nodes_ore = use_toggle("nodes_ore", true);
+    let nodes_wood = use_toggle("nodes_wood", true);
 
     let load_data = move |nodes: RwSignal<_>| async move {
         match (
@@ -72,6 +75,17 @@ pub fn GatherMap() -> impl IntoView {
         </SideCard>
 
         <Sidebar>
+            <div class="flex-1 flex flex-col gap-2 p-2 text-lg">
+                <div>
+                    <Checkbox id="nodes_all" checked={nodes_all}>"Show all nodes"</Checkbox>
+                    <div class="flex flex-col gap-1 ml-6" class:opacity-50=nodes_all>
+                        <Checkbox id="nodes_crop" checked={nodes_crop} disabled=nodes_all>"Show crops"</Checkbox>
+                        <Checkbox id="nodes_fish" checked={nodes_fish} disabled=nodes_all>"Show fish"</Checkbox>
+                        <Checkbox id="nodes_ore"  checked={nodes_ore}  disabled=nodes_all>"Show ore"</Checkbox>
+                        <Checkbox id="nodes_wood" checked={nodes_wood} disabled=nodes_all>"Show wood"</Checkbox>
+                    </div>
+                </div>
+            </div>
         </Sidebar>
     }
 }
