@@ -238,16 +238,16 @@ impl TerritoryTracker {
 
             let now = Utc::now();
             lock.timestamps.updated = Some(now);
-            self.updated.record(now.timestamp(), &[]);
+            self.updated.record(now.timestamp_millis(), &[]);
 
             if old_state != lock.state {
                 lock.timestamps.changed = lock.timestamps.updated;
-                self.changed.record(now.timestamp(), &[]);
+                self.changed.record(now.timestamp_millis(), &[]);
             }
 
             lock.timestamps.wynntick = wynntick;
             if let Some(t) = wynntick {
-                self.wynntick.record(t.timestamp(), &[]);
+                self.wynntick.record(t.timestamp_millis(), &[]);
             }
 
             // return old owners for notifications
