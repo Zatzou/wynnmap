@@ -1,13 +1,10 @@
-use std::{collections::BTreeMap, time::Duration};
+use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 use leptos::{prelude::*, task::spawn_local};
-use wynnmap_types::gather::GatherSpots;
+use wynnmap_types::gather::{GatherSpots, MatData, Profession};
 
 use crate::{
-    components::{sidebar::Sidebar, sidecard::SideCard},
-    datasource,
-    modes::gather::noderender::NodeRenderer,
-    wynnmap::{WynnMap, maptile::DefaultMapTiles},
+    components::{checkbox::Checkbox, sidebar::Sidebar, sidecard::SideCard}, datasource, modes::gather::noderender::NodeRenderer, settings::use_toggle, wynnmap::{WynnMap, maptile::DefaultMapTiles}
 };
 
 mod clustering;
@@ -17,6 +14,11 @@ mod noderender;
 pub fn GatherMap() -> impl IntoView {
     let nodes = RwSignal::new(GatherSpots::default());
     let data = RwSignal::new(BTreeMap::new());
+    
+    let nodes_crop = use_toggle("nodes_crop", true);
+    let nodes_fish = use_toggle("nodes_fish", true);
+    let nodes_ore = use_toggle("nodes_ore", true);
+    let nodes_wood = use_toggle("nodes_wood", true);
 
     let load_data = move |nodes: RwSignal<_>| async move {
         match (
@@ -32,6 +34,47 @@ pub fn GatherMap() -> impl IntoView {
             }
         }
     };
+    let a = move || get_namelist(data.get());
+    let b = move || (RwSignal::new(a().0),RwSignal::new(a().1),RwSignal::new(a().2),RwSignal::new(a().3));
+    let sig_crop = move || b().0;
+    let sig_fish = move || b().1;
+    let sig_ore = move || b().2;
+    let sig_wood = move || b().3;
+
+    let crop_sigs_arr = move || sigs_arr_gen(sig_crop);
+    let fish_sigs_arr = move || sigs_arr_gen(sig_fish);
+    let ore_sigs_arr = move || sigs_arr_gen(sig_ore);
+    let wood_sigs_arr = move || sigs_arr_gen(sig_wood);
+
+    let filt = move || {
+        let corp = crop_sigs_arr();
+        let fsh = fish_sigs_arr();
+        let roe = ore_sigs_arr();
+        let ood = wood_sigs_arr();
+        let mut out_v: Vec<Arc<str>> = Vec::new();
+        for (name,hide) in corp {
+            if !hide.get() {
+                out_v.push(name);
+            }
+        }
+        for (name,hide) in fsh {
+            if !hide.get() {
+                out_v.push(name);
+            }
+        }
+        for (name,hide) in roe {
+            if !hide.get() {
+                out_v.push(name);
+            }
+        }
+        for (name,hide) in ood {
+            if !hide.get() {
+                out_v.push(name);
+            }
+        }
+        out_v
+    };
+    
 
     spawn_local(load_data(nodes));
 
@@ -57,7 +100,7 @@ pub fn GatherMap() -> impl IntoView {
         <WynnMap>
             <DefaultMapTiles grayscale=true />
 
-            <NodeRenderer nodes data mouse_pos hovered />
+            <NodeRenderer nodes data mouse_pos hovered hidden={filt} />
         </WynnMap>
 
         <SideCard hover=true>
@@ -72,6 +115,84 @@ pub fn GatherMap() -> impl IntoView {
         </SideCard>
 
         <Sidebar>
+            <div class="flex-1 flex flex-col gap-2 p-2 text-lg">
+                <Checkbox id="nodes_crop" checked={nodes_crop}>"Crops"</Checkbox>
+                <div class="flex flex-col gap-1 ml-6">
+                    <For 
+                        each=move || sig_crop().get()
+                        key=|corp| corp.clone()
+                        children=move |corp| {
+                            view! {
+                                <Checkbox id=corp.to_string() checked={crop_sigs_arr()[&corp]}>
+                                    {corp}
+                                </Checkbox>
+                            }
+                        }
+                    />
+                </div>
+                <Checkbox id="nodes_fish" checked={nodes_fish}>"Fish"</Checkbox>
+                <div class="flex flex-col gap-1 ml-6">
+                    <For 
+                        each=move || sig_fish().get()
+                        key=|corp| corp.clone()
+                        children=move |corp| {
+                            view! {
+                                <Checkbox id=corp.to_string() checked={fish_sigs_arr()[&corp]}>
+                                    {corp}
+                                </Checkbox>
+                            }
+                        }
+                    />
+                </div>
+                <Checkbox id="nodes_ore" checked={nodes_ore}>"Ore"</Checkbox>
+                <div class="flex flex-col gap-1 ml-6">
+                    <For 
+                        each=move || sig_ore().get()
+                        key=|corp| corp.clone()
+                        children=move |corp| {
+                            view! {
+                                <Checkbox id=corp.to_string() checked={ore_sigs_arr()[&corp]}>
+                                    {corp}
+                                </Checkbox>
+                            }
+                        }
+                    />
+                </div>
+                <Checkbox id="nodes_wood" checked={nodes_wood}>"Wood"</Checkbox>
+                <div class="flex flex-col gap-1 ml-6">
+                    <For 
+                        each=move || sig_wood().get()
+                        key=|corp| corp.clone()
+                        children=move |corp| {
+                            view! {
+                                <Checkbox id=corp.to_string() checked={wood_sigs_arr()[&corp]}>
+                                    {corp}
+                                </Checkbox>
+                            }
+                        }
+                    />
+                </div>
+            </div>
         </Sidebar>
     }
+}
+
+fn get_namelist(data: BTreeMap<Arc<str>, MatData>) -> (Vec<Arc<str>>,Vec<Arc<str>>,Vec<Arc<str>>,Vec<Arc<str>>) {
+    let (mut corp, mut fsh, mut roe, mut ood) = (Vec::new(),Vec::new(),Vec::new(),Vec::new());
+    for (name,mat) in data {
+        match mat.prof {
+            Profession::Mining => roe.push(name),
+            Profession::Woodcutting => ood.push(name),
+            Profession::Fishing => fsh.push(name),
+            Profession::Farming => corp.push(name),
+        }
+    }
+    (corp,fsh,roe,ood)
+}
+fn sigs_arr_gen(fnsig: impl Fn() -> RwSignal<Vec<Arc<str>>>) -> BTreeMap<Arc<str>,RwSignal<bool>> {
+    let mut map: BTreeMap<Arc<str>,RwSignal<bool>> = BTreeMap::new();
+    for i in fnsig().get() {
+        map.insert(i,RwSignal::new(true));
+    }
+    map
 }
