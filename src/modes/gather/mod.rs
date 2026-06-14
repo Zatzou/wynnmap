@@ -35,7 +35,19 @@ pub fn GatherMap() -> impl IntoView {
         }
     };
     let a = move || get_namelist(data.get());
-    let (sig_crop, sig_fish, sig_ore, sig_wood) = (RwSignal::new(a().0),RwSignal::new(a().1),RwSignal::new(a().2),RwSignal::new(a().3));
+    let b = move || (RwSignal::new(a().0),RwSignal::new(a().1),RwSignal::new(a().2),RwSignal::new(a().3));
+    let sig_crop = move || b().0;
+    let sig_fish = move || b().1;
+    let sig_ore = move || b().2;
+    let sig_wood = move || b().3;
+
+    let crop_sigs_arr = move || {
+        let mut map: BTreeMap<Arc<str>,RwSignal<bool>> = BTreeMap::new();
+        for i in sig_crop().get() {
+            map.insert(i,RwSignal::new(true));
+        }
+        map
+    };
     
 
     spawn_local(load_data(nodes));
@@ -81,11 +93,13 @@ pub fn GatherMap() -> impl IntoView {
                 <Checkbox id="nodes_crop" checked={nodes_crop}>"Crops"</Checkbox>
                 <div class="flex flex-col gap-1 ml-6">
                     <For 
-                        each=move || sig_crop.get()
+                        each=move || sig_crop().get()
                         key=|corp| corp.clone()
-                        children=move |_| {
+                        children=move |corp| {
                             view! {
-                                corp
+                                <Checkbox id=corp.to_string() checked={crop_sigs_arr()[&corp]}>
+                                    corp
+                                </Checkbox>
                             }
                         }
                     />
@@ -115,4 +129,9 @@ fn get_namelist(data: BTreeMap<Arc<str>, MatData>) -> (Vec<Arc<str>>,Vec<Arc<str
         }
     }
     (corp,fsh,roe,ood)
+}
+
+pub struct GatherNodeThing {
+    pub name: Arc<str>,
+    pub checked: RwSignal<bool>
 }

@@ -2,7 +2,7 @@ use leptos::prelude::*;
 
 #[component]
 pub fn Checkbox(
-    id: &'static str,
+    #[prop(into)] id: String,
     checked: RwSignal<bool>,
     #[prop(optional)] disabled: Option<RwSignal<bool>>,
     #[prop(optional)] children: Option<Children>,
