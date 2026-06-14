@@ -41,13 +41,10 @@ pub fn GatherMap() -> impl IntoView {
     let sig_ore = move || b().2;
     let sig_wood = move || b().3;
 
-    let crop_sigs_arr = move || {
-        let mut map: BTreeMap<Arc<str>,RwSignal<bool>> = BTreeMap::new();
-        for i in sig_crop().get() {
-            map.insert(i,RwSignal::new(true));
-        }
-        map
-    };
+    let crop_sigs_arr = move || sigs_arr_gen(sig_crop);
+    let fish_sigs_arr = move || sigs_arr_gen(sig_fish);
+    let ore_sigs_arr = move || sigs_arr_gen(sig_ore);
+    let wood_sigs_arr = move || sigs_arr_gen(sig_wood);
     
 
     spawn_local(load_data(nodes));
@@ -98,7 +95,7 @@ pub fn GatherMap() -> impl IntoView {
                         children=move |corp| {
                             view! {
                                 <Checkbox id=corp.to_string() checked={crop_sigs_arr()[&corp]}>
-                                    corp
+                                    {corp}
                                 </Checkbox>
                             }
                         }
@@ -106,12 +103,45 @@ pub fn GatherMap() -> impl IntoView {
                 </div>
                 <Checkbox id="nodes_fish" checked={nodes_fish}>"Fish"</Checkbox>
                 <div class="flex flex-col gap-1 ml-6">
+                    <For 
+                        each=move || sig_fish().get()
+                        key=|corp| corp.clone()
+                        children=move |corp| {
+                            view! {
+                                <Checkbox id=corp.to_string() checked={crop_sigs_arr()[&corp]}>
+                                    {corp}
+                                </Checkbox>
+                            }
+                        }
+                    />
                 </div>
                 <Checkbox id="nodes_ore" checked={nodes_ore}>"Ore"</Checkbox>
                 <div class="flex flex-col gap-1 ml-6">
+                    <For 
+                        each=move || sig_ore().get()
+                        key=|corp| corp.clone()
+                        children=move |corp| {
+                            view! {
+                                <Checkbox id=corp.to_string() checked={crop_sigs_arr()[&corp]}>
+                                    {corp}
+                                </Checkbox>
+                            }
+                        }
+                    />
                 </div>
                 <Checkbox id="nodes_wood" checked={nodes_wood}>"Wood"</Checkbox>
                 <div class="flex flex-col gap-1 ml-6">
+                    <For 
+                        each=move || sig_wood().get()
+                        key=|corp| corp.clone()
+                        children=move |corp| {
+                            view! {
+                                <Checkbox id=corp.to_string() checked={crop_sigs_arr()[&corp]}>
+                                    {corp}
+                                </Checkbox>
+                            }
+                        }
+                    />
                 </div>
             </div>
         </Sidebar>
@@ -130,8 +160,10 @@ fn get_namelist(data: BTreeMap<Arc<str>, MatData>) -> (Vec<Arc<str>>,Vec<Arc<str
     }
     (corp,fsh,roe,ood)
 }
-
-pub struct GatherNodeThing {
-    pub name: Arc<str>,
-    pub checked: RwSignal<bool>
+fn sigs_arr_gen(fnsig: impl Fn() -> RwSignal<Vec<Arc<str>>>) -> BTreeMap<Arc<str>,RwSignal<bool>> {
+    let mut map: BTreeMap<Arc<str>,RwSignal<bool>> = BTreeMap::new();
+    for i in fnsig().get() {
+        map.insert(i,RwSignal::new(true));
+    }
+    map
 }
