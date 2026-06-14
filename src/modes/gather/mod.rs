@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
-use leptos::{prelude::*, task::spawn_local};
+use leptos::{logging::log, prelude::*, task::spawn_local};
 use wynnmap_types::gather::{GatherSpots, MatData, Profession};
 
 use crate::{
@@ -47,27 +47,23 @@ pub fn GatherMap() -> impl IntoView {
     let wood_sigs_arr = move || sigs_arr_gen(sig_wood);
 
     let filt = move || {
-        let corp = crop_sigs_arr();
-        let fsh = fish_sigs_arr();
-        let roe = ore_sigs_arr();
-        let ood = wood_sigs_arr();
         let mut out_v: Vec<Arc<str>> = Vec::new();
-        for (name,hide) in corp {
+        for (name,hide) in crop_sigs_arr() {
             if !hide.get() {
                 out_v.push(name);
             }
         }
-        for (name,hide) in fsh {
+        for (name,hide) in fish_sigs_arr() {
             if !hide.get() {
                 out_v.push(name);
             }
         }
-        for (name,hide) in roe {
+        for (name,hide) in ore_sigs_arr() {
             if !hide.get() {
                 out_v.push(name);
             }
         }
-        for (name,hide) in ood {
+        for (name,hide) in wood_sigs_arr() {
             if !hide.get() {
                 out_v.push(name);
             }
@@ -96,11 +92,15 @@ pub fn GatherMap() -> impl IntoView {
     let mouse_pos = RwSignal::new(None);
     let hovered = RwSignal::new(Vec::new());
 
+    // Effect::new(move |_| {
+    //     log!("{:?}",crop_sigs_arr());
+    // });
+
     view! {
         <WynnMap>
             <DefaultMapTiles grayscale=true />
 
-            <NodeRenderer nodes data mouse_pos hovered hidden={filt} />
+            <NodeRenderer nodes data mouse_pos hovered hidden={move || filt()} />
         </WynnMap>
 
         <SideCard hover=true>
