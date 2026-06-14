@@ -45,6 +45,35 @@ pub fn GatherMap() -> impl IntoView {
     let fish_sigs_arr = move || sigs_arr_gen(sig_fish);
     let ore_sigs_arr = move || sigs_arr_gen(sig_ore);
     let wood_sigs_arr = move || sigs_arr_gen(sig_wood);
+
+    let filt = move || {
+        let corp = crop_sigs_arr();
+        let fsh = fish_sigs_arr();
+        let roe = ore_sigs_arr();
+        let ood = wood_sigs_arr();
+        let mut out_v: Vec<Arc<str>> = Vec::new();
+        for (name,hide) in corp {
+            if !hide.get() {
+                out_v.push(name);
+            }
+        }
+        for (name,hide) in fsh {
+            if !hide.get() {
+                out_v.push(name);
+            }
+        }
+        for (name,hide) in roe {
+            if !hide.get() {
+                out_v.push(name);
+            }
+        }
+        for (name,hide) in ood {
+            if !hide.get() {
+                out_v.push(name);
+            }
+        }
+        out_v
+    };
     
 
     spawn_local(load_data(nodes));
@@ -71,7 +100,7 @@ pub fn GatherMap() -> impl IntoView {
         <WynnMap>
             <DefaultMapTiles grayscale=true />
 
-            <NodeRenderer nodes data mouse_pos hovered />
+            <NodeRenderer nodes data mouse_pos hovered hidden={filt} />
         </WynnMap>
 
         <SideCard hover=true>
