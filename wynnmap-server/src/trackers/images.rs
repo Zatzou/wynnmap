@@ -73,7 +73,7 @@ impl ImageTracker {
         let tiles: Vec<WynntilsMapTile> = async {
             let res = self
                 .client
-                .get("https://cdn.wynntils.com/static/Reference/maps.json")
+                .get("https://raw.githubusercontent.com/Wynntils/Static-Storage/refs/heads/main/Reference/maps.json")
                 .header(
                     "If-None-Match",
                     &*self
@@ -210,7 +210,7 @@ impl ImageTracker {
     ) -> Result<(Option<Bytes>, Option<String>), reqwest::Error> {
         let res = self
             .client
-            .get(url)
+            .get(url.replace("cdn.wynntils.com/static", "raw.githubusercontent.com/Wynntils/Static-Storage/refs/heads/main"))
             .header("If-None-Match", etag)
             .send()
             .await?;
