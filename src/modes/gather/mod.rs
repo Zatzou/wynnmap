@@ -108,7 +108,7 @@ pub fn GatherMap() -> impl IntoView {
                         key=|corp| corp.clone()
                         children=move |corp| {
                             view! {
-                                <Checkbox id=corp.to_string() checked={crop_sigs_arr()[&corp]}>
+                                <Checkbox id=corp.to_string() checked={fish_sigs_arr()[&corp]}>
                                     {corp}
                                 </Checkbox>
                             }
@@ -122,7 +122,7 @@ pub fn GatherMap() -> impl IntoView {
                         key=|corp| corp.clone()
                         children=move |corp| {
                             view! {
-                                <Checkbox id=corp.to_string() checked={crop_sigs_arr()[&corp]}>
+                                <Checkbox id=corp.to_string() checked={ore_sigs_arr()[&corp]}>
                                     {corp}
                                 </Checkbox>
                             }
@@ -136,7 +136,7 @@ pub fn GatherMap() -> impl IntoView {
                         key=|corp| corp.clone()
                         children=move |corp| {
                             view! {
-                                <Checkbox id=corp.to_string() checked={crop_sigs_arr()[&corp]}>
+                                <Checkbox id=corp.to_string() checked={wood_sigs_arr()[&corp]}>
                                     {corp}
                                 </Checkbox>
                             }
