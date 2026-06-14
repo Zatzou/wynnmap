@@ -189,6 +189,7 @@ fn get_namelist(data: BTreeMap<Arc<str>, MatData>) -> (Vec<Arc<str>>,Vec<Arc<str
     }
     (corp,fsh,roe,ood)
 }
+/// Generates a Map of each kind of material with a bool signal
 fn sigs_arr_gen(fnsig: impl Fn() -> RwSignal<Vec<Arc<str>>>) -> BTreeMap<Arc<str>,RwSignal<bool>> {
     let mut map: BTreeMap<Arc<str>,RwSignal<bool>> = BTreeMap::new();
     for i in fnsig().get() {

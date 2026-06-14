@@ -9,7 +9,7 @@ pub fn Checkbox(
 ) -> impl IntoView {
     view! {
         <div class="checkbox">
-            <input id type="checkbox" bind:checked=checked disabled={move || if disabled.is_some() {disabled.unwrap().get()} else {false}}/>
+            <input id type="checkbox" bind:checked=checked disabled={move || if let Some(e) = disabled {e.get()} else {false}}/>
             <div class="checkmark">
                 <div/>
             </div>
