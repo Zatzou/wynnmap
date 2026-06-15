@@ -1,0 +1,52 @@
+.matsearch {
+    display: flex;
+    flex-direction: column;
+
+    @apply p-2 gap-2;
+
+    >.buttons {
+        display: grid;
+        grid-template-columns: auto auto;
+
+        @apply gap-2;
+
+        >button {
+            cursor: pointer;
+
+            @apply border border-neutral-600 hover:bg-neutral-700 p-2 rounded-md;
+        }
+    }
+
+    >input {
+        @apply border border-neutral-600 p-1 px-2 rounded-lg;
+    }
+}
+
+.mattoggles {
+    display: grid;
+    grid-template-columns: max-content auto auto auto;
+
+    @apply p-2;
+
+    >span:not(:first-of-type) {
+        text-align: right;
+    }
+
+    >.checkbox {
+        display: grid;
+        grid-column: 1 / 5;
+        grid-template-columns: subgrid;
+
+        >label {
+            display: grid;
+            grid-column: 2 / 5;
+            grid-template-columns: subgrid;
+
+            >:not(:first-child) {
+                text-align: right;
+
+                @apply text-neutral-400;
+            }
+        }
+    }
+}
