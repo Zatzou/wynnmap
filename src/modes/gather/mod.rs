@@ -113,17 +113,21 @@ pub fn GatherMap() -> impl IntoView {
                 <input type="text" placeholder="Search materials" bind:value=search_str/>
             </div>
             <div class="mattoggles">
-                <div/>
-                <span>"Material"</span>
-                <span>"Level"</span>
-                <span>"Count"</span>
-                <For
-                    each=move || toggles.get().into_iter().filter(move |t| t.mat.name.contains(&search_str.read().to_ascii_uppercase()))
-                    key=move |val| val.mat.clone()
-                    children=move |val| view! {
-                        <ToggleComponent toggle=val/>
-                    }
-                />
+                <div class="header">
+                    <div/>
+                    <span>"Material"</span>
+                    <span>"Level"</span>
+                    <span>"Count"</span>
+                </div>
+                <div class="rows">
+                    <For
+                        each=move || toggles.get().into_iter().filter(move |t| t.mat.name.contains(&search_str.read().to_ascii_uppercase()))
+                        key=move |val| val.mat.clone()
+                        children=move |val| view! {
+                            <ToggleComponent toggle=val/>
+                        }
+                    />
+                </div>
             </div>
         </Sidebar>
     }

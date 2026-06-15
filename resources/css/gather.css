@@ -2,7 +2,7 @@
     display: flex;
     flex-direction: column;
 
-    @apply p-2 gap-2;
+    @apply p-2 pb-0 gap-2;
 
     >.buttons {
         display: grid;
@@ -25,27 +25,43 @@
 .mattoggles {
     display: grid;
     grid-template-columns: max-content auto auto auto;
+    min-height: 0;
+    overflow: auto;
 
-    @apply p-2;
+    @apply px-2;
 
-    >span:not(:first-of-type) {
-        text-align: right;
-    }
-
-    >.checkbox {
+    >.header {
         display: grid;
         grid-column: 1 / 5;
         grid-template-columns: subgrid;
 
-        >label {
+        @apply bg-neutral-900;
+
+        >span:not(:first-of-type) {
+            text-align: right;
+        }
+    }
+
+    >.rows {
+        display: grid;
+        grid-column: 1 / 5;
+        grid-template-columns: subgrid;
+
+        >.checkbox {
             display: grid;
-            grid-column: 2 / 5;
+            grid-column: 1 / 5;
             grid-template-columns: subgrid;
 
-            >:not(:first-child) {
-                text-align: right;
+            >label {
+                display: grid;
+                grid-column: 2 / 5;
+                grid-template-columns: subgrid;
 
-                @apply text-neutral-400;
+                >:not(:first-child) {
+                    text-align: right;
+
+                    @apply text-neutral-400;
+                }
             }
         }
     }
