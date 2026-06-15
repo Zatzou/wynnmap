@@ -35,21 +35,6 @@ pub fn GatherMap() -> impl IntoView {
 
     spawn_local(load_data(nodes));
 
-    // Update the territory data every 10 minutes to ensure the map stays up to date
-    let data_updater = set_interval_with_handle(
-        move || {
-            spawn_local(load_data(nodes));
-        },
-        Duration::from_hours(1),
-    )
-    .ok();
-
-    on_cleanup(move || {
-        if let Some(i) = data_updater {
-            i.clear();
-        }
-    });
-
     let mouse_pos = RwSignal::new(None);
     let hovered = RwSignal::new(Vec::new());
 
