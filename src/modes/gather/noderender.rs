@@ -40,7 +40,7 @@ pub fn NodeRenderer(
     let MapZoom(zoom) = expect_context();
 
     let style = Memo::new(move |_| {
-        let ids = hidden.read().iter().map(|n| format!("#{n}")).collect::<Vec<_>>().join(",");
+        let ids = hidden.read().iter().map(|n| format!(".mat-{n}")).collect::<Vec<_>>().join(",");
 
         format!("{ids}{{display: none;}}")
     });
@@ -87,7 +87,7 @@ pub fn NodeRenderer(
             {move || clusters_far.get().into_iter().map(|cluster| {
                 let matdata = data.read().get(&cluster.res.name).cloned().unwrap_or_default();
                 view!{
-                    <circle cx={cluster.pos[0]} cy={cluster.pos[1]} r={cluster.radius} fill=matdata.color.clone() stroke=matdata.prof.color() stroke-width=5 id={cluster.res.name} />
+                    <circle cx={cluster.pos[0]} cy={cluster.pos[1]} r={cluster.radius} fill=matdata.color.clone() stroke=matdata.prof.color() stroke-width=5 class=format!("mat-{}", cluster.res.name) />
                 }
             }).collect::<Vec<_>>()}
         </svg>
@@ -96,7 +96,7 @@ pub fn NodeRenderer(
             {move || clusters_mid.get().into_iter().map(|cluster| {
                 let matdata = data.read().get(&cluster.res.name).cloned().unwrap_or_default();
                 view!{
-                    <circle cx={cluster.pos[0]} cy={cluster.pos[1]} r={cluster.radius} fill=matdata.color.clone() stroke=matdata.prof.color() stroke-width=2.5 id={cluster.res.name} />
+                    <circle cx={cluster.pos[0]} cy={cluster.pos[1]} r={cluster.radius} fill=matdata.color.clone() stroke=matdata.prof.color() stroke-width=2.5 class=format!("mat-{}", cluster.res.name) />
                 }
             }).collect::<Vec<_>>()}
         </svg>
@@ -105,7 +105,7 @@ pub fn NodeRenderer(
             {move || clusters_near.get().into_iter().map(|cluster| {
                 let matdata = data.read().get(&cluster.res.name).cloned().unwrap_or_default();
                 view!{
-                    <circle cx={cluster.pos[0]} cy={cluster.pos[1]} r={cluster.radius} fill=matdata.color.clone() stroke=matdata.prof.color() stroke-width=1 id={cluster.res.name} />
+                    <circle cx={cluster.pos[0]} cy={cluster.pos[1]} r={cluster.radius} fill=matdata.color.clone() stroke=matdata.prof.color() stroke-width=1 class=format!("mat-{}", cluster.res.name) />
                 }
             }).collect::<Vec<_>>()}
         </svg>
