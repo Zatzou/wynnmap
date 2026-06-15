@@ -5,15 +5,19 @@
 .checkbox {
     display: inline-flex;
     align-items: center;
+    position: relative;
 
     input {
         appearance: none;
-        position: relative;
 
         cursor: pointer;
         user-select: none;
 
         @apply mr-2 h-5 w-5 rounded-sm bg-neutral-700;
+    }
+
+    input:disabled {
+        @apply bg-neutral-600;
     }
 
     input:checked+.checkmark {
@@ -36,8 +40,17 @@
         }
     }
 
+    input:disabled+.checkmark>div {
+        @apply border-neutral-400;
+    }
+
+
     label {
         cursor: pointer;
         user-select: none;
+    }
+
+    input:disabled~label {
+        @apply text-neutral-400;
     }
 }
