@@ -42,11 +42,11 @@ static TOGGLES: LazyLock<Mutex<HashMap<Arc<str>, RwSignal<bool>>>> =
 ///
 /// * `name` - The name of the toggle setting.
 /// * `default` - The default value of the toggle setting.
-pub fn use_toggle(name: &'static str, default: bool) -> RwSignal<bool> {
+pub fn use_toggle(name: impl AsRef<str> + 'static, default: bool) -> RwSignal<bool> {
     let mut toggles = TOGGLES.lock().unwrap();
 
     // check if the signal already exists
-    if let Some(signal) = toggles.get(name) {
+    if let Some(signal) = toggles.get(name.as_ref()) {
         let signal = *signal;
 
         // check that the signal hasn't been disposed and if it has been then generate a new one
@@ -65,7 +65,7 @@ pub fn use_toggle(name: &'static str, default: bool) -> RwSignal<bool> {
     let option = settings
         .read_untracked()
         .toggles
-        .get(name)
+        .get(name.as_ref())
         .copied()
         .unwrap_or(default);
 
@@ -73,12 +73,15 @@ pub fn use_toggle(name: &'static str, default: bool) -> RwSignal<bool> {
     let signal = RwSignal::new(option);
 
     // insert the signal into the toggles map
-    toggles.insert(name.into(), signal);
+    toggles.insert(name.as_ref().into(), signal);
     drop(toggles);
 
     // create an effect to update the settings when the signal changes
     Effect::new(move || {
-        settings.write().toggles.insert(name.into(), signal.get());
+        settings
+            .write()
+            .toggles
+            .insert(name.as_ref().into(), signal.get());
     });
 
     signal
