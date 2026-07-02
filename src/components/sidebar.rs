@@ -12,9 +12,6 @@ pub fn Sidebar(#[prop(optional)] children: Option<Children>) -> impl IntoView {
     let show_sidebar = expect_context::<ShowSidebar>().0;
     let cur_path = use_location().pathname;
     let toggle_sidebar = move |_| show_sidebar.update(|s| *s = !*s);
-    Effect::new(move || {
-        console_log(&cur_path.get());
-    });
     view! {
         // sidebar open button
         <div on:click={toggle_sidebar} class="sidebar-btn">
