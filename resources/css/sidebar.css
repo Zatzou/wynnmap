@@ -46,6 +46,32 @@
         }
     }
 
+    >.switchmode {
+        >* {
+            padding-left: 0.25em;
+            padding-right: 0.25em;
+            margin-top: 2px;
+            margin-bottom: 2px;
+        }
+        >:not(:first-child) {
+            /*border-left: 1px solid;
+
+            @apply border-neutral-800;*/
+        }
+        >p {
+            >a {
+                @apply text-neutral-400
+            }
+            >a:hover {
+                @apply text-neutral-200
+            }
+            >a.cur {
+                @apply text-neutral-100
+            }
+        }
+
+    }
+
     >.content {
         flex-direction: column;
         flex-grow: 1;

@@ -1,4 +1,5 @@
-use leptos::prelude::*;
+use leptos::{leptos_dom::logging::console_log, prelude::*};
+use leptos_router::hooks::use_location;
 
 use crate::dialog::{self, Dialogs};
 
@@ -9,9 +10,11 @@ pub struct ShowSidebar(pub RwSignal<bool>);
 pub fn Sidebar(#[prop(optional)] children: Option<Children>) -> impl IntoView {
     let dialogs = expect_context::<Dialogs>();
     let show_sidebar = expect_context::<ShowSidebar>().0;
-
+    let cur_path = use_location().pathname;
     let toggle_sidebar = move |_| show_sidebar.update(|s| *s = !*s);
-
+    Effect::new(move || {
+        console_log(&cur_path.get());
+    });
     view! {
         // sidebar open button
         <div on:click={toggle_sidebar} class="sidebar-btn">
@@ -27,6 +30,13 @@ pub fn Sidebar(#[prop(optional)] children: Option<Children>) -> impl IntoView {
                 <div class="cursor-pointer" on:click=toggle_sidebar>
                     <lucide_leptos::X size=32/>
                 </div>
+            </div>
+
+            <div class="switchmode">
+                <p class="text-neutral-500"> "Switch: " </p>
+                <p> <a class:cur={move || {cur_path.get() == "/"}} href="/">"Main"</a> </p>
+                <p> <a class:cur={move || {cur_path.get() == "/plan"}} href="plan">"Planning"</a> </p>
+                <p> <a class:cur={move || {cur_path.get() == "/gather"}} href="gather">"Gathering"</a> </p> 
             </div>
 
             <div class="content">
