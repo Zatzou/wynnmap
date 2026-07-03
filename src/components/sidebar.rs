@@ -104,7 +104,7 @@ pub fn ModeswitchTitle(cur: Memo<String>) -> impl IntoView {
         match cur.get().as_str() {
             "/" => view! {<lucide_leptos::Swords size=24/>}.into_any(),
             "/plan" => view! {<lucide_leptos::LandPlot size=24/>}.into_any(),
-            "gather" => view! {<lucide_leptos::Axe size=24/>}.into_any(),
+            "/gather" => view! {<lucide_leptos::Axe size=24/>}.into_any(),
             _ => view! {<lucide_leptos::CircleQuestionMark size=24/>}.into_any()
         }
     };
