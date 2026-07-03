@@ -48,18 +48,11 @@
 
     .switchmode {
         >* {
-            padding-left: 0.25em;
-            padding-right: 0.25em;
             margin-top: 2px;
             margin-bottom: 2px;
         }
-        >:not(:first-child) {
-            /*border-left: 1px solid;
-
-            @apply border-neutral-800;*/
-        }
         >p {
-            margin-left: 1em;
+            @apply pl-6;
             >a {
                 @apply text-neutral-400
             }
