@@ -32,7 +32,6 @@ impl GatherNode {
 pub fn NodeRenderer(
     nodes: RwSignal<GatherSpots>,
     data: RwSignal<BTreeMap<Arc<str>, MatData>>,
-    mouse_pos: RwSignal<Option<[i32; 2]>>,
     hovered: RwSignal<Vec<GatherNode>>,
     #[prop(into, optional)] hidden: Signal<Vec<Arc<str>>>,
 ) -> impl IntoView {
@@ -67,8 +66,6 @@ pub fn NodeRenderer(
     });
 
     Effect::new(move || {
-        mouse_pos.set(mouse_rel.get());
-
         let hov = if let Some(pos) = mouse_rel.get() {
             match clusters.get() {
                 1 => clusters_far,

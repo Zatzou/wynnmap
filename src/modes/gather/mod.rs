@@ -8,7 +8,7 @@ use crate::{
     datasource,
     modes::gather::noderender::NodeRenderer,
     settings::use_toggle,
-    wynnmap::{WynnMap, maptile::WithDefaultMapTiles},
+    wynnmap::{WynnMap, context::RelMousePos, maptile::WithDefaultMapTiles},
 };
 
 mod clustering;
@@ -36,7 +36,7 @@ pub fn GatherMap() -> impl IntoView {
 
     spawn_local(load_data(nodes));
 
-    let mouse_pos = RwSignal::new(None);
+    let RelMousePos(mouse_rel) = expect_context();
     let hovered = RwSignal::new(Vec::new());
 
     let toggles = RwSignal::new(Vec::new());
@@ -90,12 +90,12 @@ pub fn GatherMap() -> impl IntoView {
         <WynnMap>
             <WithDefaultMapTiles grayscale=true />
 
-            <NodeRenderer nodes data mouse_pos hovered hidden={hidelist} />
+            <NodeRenderer nodes data hovered hidden={hidelist} />
         </WynnMap>
 
         <SideCard hover=true>
             <div>
-                <span>"X: "{move || mouse_pos.get().map(|p| p[0])}" / Y: "{move || mouse_pos.get().map(|p| p[1])}</span>
+                <span>"X: "{move || mouse_rel.get().map(|p| p[0])}" / Y: "{move || mouse_rel.get().map(|p| p[1])}</span>
             </div>
             {move || hovered.get().into_iter().map(|node| view!{
                 <div>
