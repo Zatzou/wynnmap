@@ -1,10 +1,7 @@
 use leptos::prelude::*;
 use leptos_router::hooks::use_location;
 
-use crate::{
-    dialog::{self, Dialogs},
-    settings::use_toggle,
-};
+use crate::dialog::{self, Dialogs};
 
 #[derive(Clone)]
 pub struct ShowSidebar(pub RwSignal<bool>);
@@ -61,11 +58,11 @@ pub fn Sidebar(#[prop(optional)] children: Option<Children>) -> impl IntoView {
 
 #[component]
 pub fn Modeswitch() -> impl IntoView {
-    let toggle_modeswitch = use_toggle("modeswitch", false);
+    let toggle_modeswitch = RwSignal::new(false);
     let cur_path = use_location().pathname;
+
     view! {
         <div class="flex flex-col">
-            // <hr class="border-neutral-600" />
             <div class="flex justify-between items-center text-xl pl-2 pr-2 py-1 cursor-pointer" on:click={move |_| toggle_modeswitch.set(!toggle_modeswitch.get())}>
                 <div class="flex flex-row items-center pt-0.5 pb-0.5 gap-1">
                     <ModeswitchTitle cur=cur_path />
@@ -77,15 +74,15 @@ pub fn Modeswitch() -> impl IntoView {
             <div class="flex flex-col overflow-y-auto shrink min-h-0 text-xl switchmode " class:hidden={move || !toggle_modeswitch.get()}>
                 <a href="/" class="flex flex-row gap-1 pl-2 items-center" class:hidden={move || {cur_path.get() == "/"}}>
                     <lucide_leptos::Swords size=24/>
-                    <h2> "Main mode" </h2>
+                    <h2>"War mode"</h2>
                 </a>
                 <a href="plan" class="flex flex-row gap-1 pl-2 items-center" class:hidden={move || {cur_path.get() == "/plan"}}>
                     <lucide_leptos::LandPlot size=24/>
-                    <h2> "Planning mode" </h2>
+                    <h2>"Planning mode"</h2>
                 </a>
                 <a href="gather" class="flex flex-row gap-1 pl-2 items-center" class:hidden={move || {cur_path.get() == "/gather"}}>
                     <lucide_leptos::Axe size=24/>
-                    <h2> "Gathering mode" </h2>
+                    <h2>"Gather mode"</h2>
                 </a>
 
 
@@ -97,7 +94,7 @@ pub fn Modeswitch() -> impl IntoView {
 #[component]
 pub fn ModeswitchTitle(cur: Memo<String>) -> impl IntoView {
     let cur_title = move || match cur.get().as_str() {
-        "/" => "Main mode",
+        "/" => "War mode",
         "/plan" => "Planning mode",
         "/gather" => "Gather mode",
         _ => "??? Mode",
