@@ -46,12 +46,41 @@
         }
     }
 
-    .switchmode {
-        >* {
-            @apply pt-1 pb-1
+    >.modeswitcher {
+        display: flex;
+        flex-direction: column;
+        user-select: none;
+
+        >.title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+
+            @apply text-xl p-2;
         }
-        >a:hover {
-            @apply bg-neutral-600
+
+        >hr {
+            @apply border-neutral-600;
+        }
+
+        >.options {
+            display: flex;
+            flex-direction: column;
+
+            @apply text-xl;
+
+            >* {
+                @apply py-1;
+            }
+
+            >a:hover {
+                @apply bg-neutral-600;
+            }
+        }
+
+        .hidden {
+            display: none;
         }
     }
 

@@ -1,5 +1,5 @@
 use leptos::prelude::*;
-use leptos_router::hooks::use_location;
+use leptos_router::{components::A, hooks::use_location};
 
 use crate::dialog::{self, Dialogs};
 
@@ -57,47 +57,50 @@ pub fn Sidebar(#[prop(optional)] children: Option<Children>) -> impl IntoView {
 }
 
 #[component]
-pub fn Modeswitch() -> impl IntoView {
+fn Modeswitch() -> impl IntoView {
     let toggle_modeswitch = RwSignal::new(false);
     let cur_path = use_location().pathname;
 
     view! {
-        <div class="flex flex-col">
-            <div class="flex justify-between items-center text-xl pl-2 pr-2 py-1 cursor-pointer" on:click={move |_| toggle_modeswitch.set(!toggle_modeswitch.get())}>
-                <div class="flex flex-row items-center pt-0.5 pb-0.5 gap-1">
+        <div class="modeswitcher">
+            <div class="title" on:click=move |_| toggle_modeswitch.update(|s| *s = !*s)>
+                <div class="flex flex-row gap-1 items-center">
                     <ModeswitchTitle cur=cur_path />
                 </div>
                 <Show when=move || !toggle_modeswitch.get()><lucide_leptos::ChevronDown size=24/></Show>
                 <Show when=move || toggle_modeswitch.get()><lucide_leptos::ChevronUp size=24/></Show>
             </div>
-            <hr class="border-neutral-600" class:hidden={move || !toggle_modeswitch.get()}/>
-            <div class="flex flex-col overflow-y-auto shrink min-h-0 text-xl switchmode " class:hidden={move || !toggle_modeswitch.get()}>
-                <a href="/" class="flex flex-row gap-1 pl-2 items-center" class:hidden={move || {cur_path.get() == "/"}}>
-                    <lucide_leptos::Swords size=24/>
-                    <h2>"War mode"</h2>
-                </a>
-                <a href="plan" class="flex flex-row gap-1 pl-2 items-center" class:hidden={move || {cur_path.get() == "/plan"}}>
-                    <lucide_leptos::LandPlot size=24/>
-                    <h2>"Planning mode"</h2>
-                </a>
-                <a href="gather" class="flex flex-row gap-1 pl-2 items-center" class:hidden={move || {cur_path.get() == "/gather"}}>
-                    <lucide_leptos::Axe size=24/>
-                    <h2>"Gather mode"</h2>
-                </a>
 
+            <hr class:hidden=move || !toggle_modeswitch.get()/>
 
+            <div class="options" class:hidden=move || !toggle_modeswitch.get()>
+                <ModeswitchItem location="/" hide=move || cur_path.get() == "/"/>
+                <ModeswitchItem location="/plan" hide=move || cur_path.get() == "/plan"/>
+                <ModeswitchItem location="/gather" hide=move || cur_path.get() == "/gather"/>
             </div>
         </div>
     }
 }
 
 #[component]
-pub fn ModeswitchTitle(cur: Memo<String>) -> impl IntoView {
+fn ModeswitchItem(
+    #[prop(into)] location: Signal<String>,
+    #[prop(into)] hide: Signal<bool>,
+) -> impl IntoView {
+    view! {
+        <A href=move || location.get() attr:class="flex flex-row gap-1 pl-2 items-center" class:hidden=hide>
+            <ModeswitchTitle cur=location/>
+        </A>
+    }
+}
+
+#[component]
+fn ModeswitchTitle(#[prop(into)] cur: Signal<String>) -> impl IntoView {
     let cur_title = move || match cur.get().as_str() {
         "/" => "War mode",
         "/plan" => "Planning mode",
         "/gather" => "Gather mode",
-        _ => "??? Mode",
+        _ => "Unknown mode",
     };
     let cur_icon = move || match cur.get().as_str() {
         "/" => view! {<lucide_leptos::Swords size=24/>}.into_any(),
@@ -107,6 +110,6 @@ pub fn ModeswitchTitle(cur: Memo<String>) -> impl IntoView {
     };
 
     view! {
-        {cur_icon} {move || cur_title}
+        {cur_icon} {cur_title}
     }
 }
