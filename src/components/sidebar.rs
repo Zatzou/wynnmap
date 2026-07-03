@@ -1,7 +1,10 @@
-use leptos::{leptos_dom::logging::console_log, prelude::*};
+use leptos::prelude::*;
 use leptos_router::hooks::use_location;
 
-use crate::{dialog::{self, Dialogs}, settings::use_toggle};
+use crate::{
+    dialog::{self, Dialogs},
+    settings::use_toggle,
+};
 
 #[derive(Clone)]
 pub struct ShowSidebar(pub RwSignal<bool>);
@@ -84,29 +87,26 @@ pub fn Modeswitch() -> impl IntoView {
                     <lucide_leptos::Axe size=24/>
                     <h2> "Gathering mode" </h2>
                 </a>
-                
-                
+
+
             </div>
         </div>
     }
 }
+
 #[component]
 pub fn ModeswitchTitle(cur: Memo<String>) -> impl IntoView {
-    let cur_title = move || {
-        match cur.get().as_str() {
-            "/" => "Main mode",
-            "/plan" => "Planning mode",
-            "/gather" => "Gather mode",
-            _ => "??? Mode"
-        }
+    let cur_title = move || match cur.get().as_str() {
+        "/" => "Main mode",
+        "/plan" => "Planning mode",
+        "/gather" => "Gather mode",
+        _ => "??? Mode",
     };
-    let cur_icon = move || {
-        match cur.get().as_str() {
-            "/" => view! {<lucide_leptos::Swords size=24/>}.into_any(),
-            "/plan" => view! {<lucide_leptos::LandPlot size=24/>}.into_any(),
-            "/gather" => view! {<lucide_leptos::Axe size=24/>}.into_any(),
-            _ => view! {<lucide_leptos::CircleQuestionMark size=24/>}.into_any()
-        }
+    let cur_icon = move || match cur.get().as_str() {
+        "/" => view! {<lucide_leptos::Swords size=24/>}.into_any(),
+        "/plan" => view! {<lucide_leptos::LandPlot size=24/>}.into_any(),
+        "/gather" => view! {<lucide_leptos::Axe size=24/>}.into_any(),
+        _ => view! {<lucide_leptos::CircleQuestionMark size=24/>}.into_any(),
     };
 
     view! {
