@@ -64,7 +64,7 @@ pub fn Modeswitch() -> impl IntoView {
         <div class="flex flex-col">
             // <hr class="border-neutral-600" />
             <div class="flex justify-between items-center text-xl pl-2 py-1 cursor-pointer" on:click={move |_| toggle_modeswitch.set(!toggle_modeswitch.get())}>
-                <div class="flex flex-row gap-1 items-center">
+                <div class="flex flex-row items-center">
                     <ModeswitchTitle cur=cur_path />
                 </div>
                 <Show when=move || !toggle_modeswitch.get()><lucide_leptos::ChevronUp size=24/></Show>

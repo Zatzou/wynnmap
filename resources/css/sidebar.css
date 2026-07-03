@@ -48,7 +48,7 @@
 
     .switchmode {
         >* {
-            @apply pt-1 pb-1
+            @apply pt-0.5 pb-0.5
         }
         >a:hover {
             @apply bg-neutral-600
