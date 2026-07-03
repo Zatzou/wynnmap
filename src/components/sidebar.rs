@@ -63,18 +63,16 @@ pub fn Modeswitch() -> impl IntoView {
     view! {
         <div class="flex flex-col">
             // <hr class="border-neutral-600" />
-            <div class="flex justify-between items-center text-xl p-2 py-1 cursor-pointer" on:click={move |_| toggle_modeswitch.set(!toggle_modeswitch.get())}>
+            <div class="flex justify-between items-center text-xl pl-2 py-1 cursor-pointer" on:click={move |_| toggle_modeswitch.set(!toggle_modeswitch.get())}>
                 <h2>{move || switch_title(cur_path.get())}</h2>
                 <Show when=move || !toggle_modeswitch.get()><lucide_leptos::ChevronUp size=24/></Show>
                 <Show when=move || toggle_modeswitch.get()><lucide_leptos::ChevronDown size=24/></Show>
             </div>
-            <div class="overflow-y-auto shrink min-h-0" class:hidden={move || !toggle_modeswitch.get()}>
-                // <hr class="border-neutral-600"/>
-                <div class="switchmode">
-                    <p> <a class:hidden={move || {cur_path.get() == "/"}} href="/">"Main"</a> </p>
-                    <p> <a class:hidden={move || {cur_path.get() == "/plan"}} href="plan">"Planning"</a> </p>
-                    <p> <a class:hidden={move || {cur_path.get() == "/gather"}} href="gather">"Gathering"</a> </p> 
-                </div>
+            <div class="overflow-y-auto shrink min-h-0 text-xl switchmode" class:hidden={move || !toggle_modeswitch.get()}>
+                <hr class="border-neutral-600"/>
+                <h2> <a class:hidden={move || {cur_path.get() == "/"}} href="/">"Main"</a> </h2>
+                <h2> <a class:hidden={move || {cur_path.get() == "/plan"}} href="plan">"Planning"</a> </h2>
+                <h2> <a class:hidden={move || {cur_path.get() == "/gather"}} href="gather">"Gathering"</a> </h2>
             </div>
         </div>
     }

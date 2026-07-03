@@ -48,16 +48,15 @@
 
     .switchmode {
         >* {
-            margin-top: 2px;
+
             margin-bottom: 2px;
         }
-        >p {
-            @apply pl-6;
+        >h2 {
             >a {
-                @apply text-neutral-400
+                @apply text-neutral-400 pl-2;
             }
             >a:hover {
-                @apply text-neutral-200
+                @apply bg-neutral-600
             }
             >a.cur {
                 @apply text-neutral-100
