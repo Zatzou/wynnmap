@@ -61,7 +61,7 @@ pub fn Modeswitch() -> impl IntoView {
     let toggle_modeswitch = use_toggle("modeswitch", false);
     let cur_path = use_location().pathname;
     view! {
-        <div class="flex flex-col min-h-0">
+        <div class="flex flex-col">
             // <hr class="border-neutral-600" />
             <div class="flex justify-between items-center text-xl p-2 py-1 cursor-pointer" on:click={move |_| toggle_modeswitch.set(!toggle_modeswitch.get())}>
                 <h2>{move || switch_title(cur_path.get())}</h2>
