@@ -64,25 +64,52 @@ pub fn Modeswitch() -> impl IntoView {
         <div class="flex flex-col">
             // <hr class="border-neutral-600" />
             <div class="flex justify-between items-center text-xl pl-2 py-1 cursor-pointer" on:click={move |_| toggle_modeswitch.set(!toggle_modeswitch.get())}>
-                <h2>{move || switch_title(cur_path.get())}</h2>
+                <div class="flex flex-row gap-1 items-center">
+                    <ModeswitchTitle cur=cur_path />
+                </div>
                 <Show when=move || !toggle_modeswitch.get()><lucide_leptos::ChevronUp size=24/></Show>
                 <Show when=move || toggle_modeswitch.get()><lucide_leptos::ChevronDown size=24/></Show>
             </div>
-            <div class="overflow-y-auto shrink min-h-0 text-xl switchmode" class:hidden={move || !toggle_modeswitch.get()}>
-                <hr class="border-neutral-600"/>
-                <h2> <a class:hidden={move || {cur_path.get() == "/"}} href="/">"Main"</a> </h2>
-                <h2> <a class:hidden={move || {cur_path.get() == "/plan"}} href="plan">"Planning"</a> </h2>
-                <h2> <a class:hidden={move || {cur_path.get() == "/gather"}} href="gather">"Gathering"</a> </h2>
+            <hr class="border-neutral-600" class:hidden={move || !toggle_modeswitch.get()}/>
+            <div class="flex flex-col overflow-y-auto shrink min-h-0 text-xl switchmode " class:hidden={move || !toggle_modeswitch.get()}>
+                <a href="/" class="flex flex-row gap-1 pl-2 items-center" class:hidden={move || {cur_path.get() == "/"}}>
+                    <lucide_leptos::Swords size=24/>
+                    <h2> "Main" </h2>
+                </a>
+                <a href="plan" class="flex flex-row gap-1 pl-2 items-center" class:hidden={move || {cur_path.get() == "/plan"}}>
+                    <lucide_leptos::LandPlot size=24/>
+                    <h2> "Planning" </h2>
+                </a>
+                <a href="gather" class="flex flex-row gap-1 pl-2 items-center" class:hidden={move || {cur_path.get() == "/gather"}}>
+                    <lucide_leptos::Axe size=24/>
+                    <h2> "Gathering" </h2>
+                </a>
+                
+                
             </div>
         </div>
     }
 }
+#[component]
+pub fn ModeswitchTitle(cur: Memo<String>) -> impl IntoView {
+    let cur_title = move || {
+        match cur.get().as_str() {
+            "/" => "War mode",
+            "/plan" => "Planning mode",
+            "/gather" => "Gather nodes mode",
+            _ => "??? Mode"
+        }
+    };
+    let cur_icon = move || {
+        match cur.get().as_str() {
+            "/" => view! {<lucide_leptos::Swords size=24/>}.into_any(),
+            "/plan" => view! {<lucide_leptos::LandPlot size=24/>}.into_any(),
+            "gather" => view! {<lucide_leptos::Axe size=24/>}.into_any(),
+            _ => view! {<lucide_leptos::CircleQuestionMark size=24/>}.into_any()
+        }
+    };
 
-pub fn switch_title(cur: String) -> &'static str {
-    match cur.as_str() {
-        "/" => "War mode",
-        "/plan" => "Planning mode",
-        "/gather" => "Gather nodes mode",
-        _ => "??? Mode"
+    view! {
+        {cur_icon} {move || cur_title}
     }
 }

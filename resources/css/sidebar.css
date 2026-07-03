@@ -48,21 +48,11 @@
 
     .switchmode {
         >* {
-
-            margin-bottom: 2px;
+            @apply pt-1 pb-1
         }
-        >h2 {
-            >a {
-                @apply text-neutral-400 pl-2;
-            }
-            >a:hover {
-                @apply bg-neutral-600
-            }
-            >a.cur {
-                @apply text-neutral-100
-            }
+        >a:hover {
+            @apply bg-neutral-600
         }
-
     }
 
     >.content {
