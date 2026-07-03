@@ -9,7 +9,9 @@ use modes::{planning::PlanningMap, war::WarMap};
 use notfound::NotFound;
 use settings::provide_settings;
 
-use crate::{modes::gather::GatherMap, sectimer::provide_second_timer};
+use crate::{
+    modes::gather::GatherMap, sectimer::provide_second_timer, wynnmap::context::MapContextProvider,
+};
 
 mod components;
 mod datasource;
@@ -37,14 +39,16 @@ pub fn App() -> impl IntoView {
     provide_context(ShowSidebar(RwSignal::new(false)));
 
     view! {
-        <Router>
-            <Routes fallback=NotFound>
-                <Route path=path!("") view=WarMap />
-                <Route path=path!("plan") view=PlanningMap />
-                <Route path=path!("gather") view=GatherMap />
-            </Routes>
-        </Router>
+        <MapContextProvider>
+            <Router>
+                <Routes fallback=NotFound>
+                    <Route path=path!("") view=WarMap />
+                    <Route path=path!("plan") view=PlanningMap />
+                    <Route path=path!("gather") view=GatherMap />
+                </Routes>
+            </Router>
 
-        <DialogRenderer />
+            <DialogRenderer />
+        </MapContextProvider>
     }
 }

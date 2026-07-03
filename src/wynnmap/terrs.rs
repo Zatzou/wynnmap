@@ -11,7 +11,7 @@ use crate::{
     sectimer::SecondTimer,
     settings::use_toggle,
     util::{as_px, fmt_time_short},
-    wynnmap::RelMousePos,
+    wynnmap::context::RelMousePos,
 };
 
 #[component]

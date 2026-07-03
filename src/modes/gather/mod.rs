@@ -8,7 +8,7 @@ use crate::{
     datasource,
     modes::gather::noderender::NodeRenderer,
     settings::use_toggle,
-    wynnmap::{WynnMap, maptile::DefaultMapTiles},
+    wynnmap::{WynnMap, maptile::WithDefaultMapTiles},
 };
 
 mod clustering;
@@ -88,7 +88,7 @@ pub fn GatherMap() -> impl IntoView {
 
     view! {
         <WynnMap>
-            <DefaultMapTiles grayscale=true />
+            <WithDefaultMapTiles grayscale=true />
 
             <NodeRenderer nodes data mouse_pos hovered hidden={hidelist} />
         </WynnMap>

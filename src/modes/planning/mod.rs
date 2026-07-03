@@ -16,7 +16,7 @@ use crate::{
     datasource,
     dialog::{self, Dialogs, info::info_dialog},
     settings::use_toggle,
-    wynnmap::{WynnMap, conns::Connections, maptile::DefaultMapTiles, terrs::TerrView},
+    wynnmap::{WynnMap, conns::Connections, maptile::WithDefaultMapTiles, terrs::TerrView},
 };
 
 #[component]
@@ -165,7 +165,7 @@ pub fn PlanningMap() -> impl IntoView {
 
     view! {
         <WynnMap onclick=onclick>
-            <DefaultMapTiles />
+            <WithDefaultMapTiles />
 
             // conns
             <Show when={move || show_conns.get()}>

@@ -1,14 +1,7 @@
-use std::time::Duration;
-
-use leptos::{prelude::*, task::spawn_local};
+use leptos::prelude::*;
 use wynnmap_types::maptile::MapTile;
 
-use crate::{
-    datasource,
-    dialog::{Dialogs, info::info_dialog},
-    settings::use_toggle,
-    util::as_px,
-};
+use crate::{settings::use_toggle, util::as_px, wynnmap::context::DefaultMapTiles};
 
 #[component]
 pub fn MapTile(
@@ -58,47 +51,10 @@ pub fn MapTiles(
 
 /// A component that displays the default map tiles fetched from the server.
 #[component]
-pub fn DefaultMapTiles(
+pub fn WithDefaultMapTiles(
     #[prop(default = false.into(), into)] grayscale: Signal<bool>,
 ) -> impl IntoView {
-    let dialogs = use_context::<Dialogs>().expect("Dialogs context not found");
-    let tiles = RwSignal::new(Vec::new());
-
-    let load_tiles = move |tiles: RwSignal<_>| async move {
-        match datasource::load_map_tiles().await {
-            Ok(data) => tiles.set(data),
-            Err(err) => {
-                if !dialogs.contains("err_maptiles") {
-                    dialogs.add("err_maptiles", move || {
-                        info_dialog(
-                            String::from("Failed to load map tiles"),
-                            view! {
-                                <p>"An error occured while loading api data"</p>
-                                <pre class="p-2 bg-neutral-800 rounded my-1">{format!("{err:?}")}</pre>
-                            },
-                        )
-                    });
-                }
-            }
-        }
-    };
-
-    spawn_local(load_tiles(tiles));
-
-    // Update the map tiles every hour to ensure they stay up to date
-    let map_tile_updater = set_interval_with_handle(
-        move || {
-            spawn_local(load_tiles(tiles));
-        },
-        Duration::from_hours(1),
-    )
-    .ok();
-
-    on_cleanup(move || {
-        if let Some(i) = map_tile_updater {
-            i.clear();
-        }
-    });
+    let DefaultMapTiles(tiles) = expect_context();
 
     view! { <MapTiles tiles={tiles} grayscale /> }
 }

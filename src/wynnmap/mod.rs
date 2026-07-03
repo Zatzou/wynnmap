@@ -1,11 +1,12 @@
 use leptos::prelude::*;
 
 use crate::wynnmap::{
+    context::MapPosition,
     events::{mouse::MouseEventHandlers, pointer::PointerEventHandlers, touch::TouchEventHandlers},
-    util::get_viewport_middle,
 };
 
 pub mod conns;
+pub mod context;
 mod events;
 pub mod maptile;
 pub mod terrs;
@@ -16,14 +17,6 @@ const ZOOM_MIN: f64 = 0.0625;
 /// The maximum zoom level
 const ZOOM_MAX: f64 = 64.0;
 
-/// Mouse position on the map atlas
-#[derive(Clone)]
-pub struct RelMousePos(pub RwSignal<Option<[i32; 2]>>);
-
-/// Current zoom level
-#[derive(Clone)]
-pub struct MapZoom(pub RwSignal<f64>);
-
 #[component]
 pub fn WynnMap(
     children: Children,
@@ -32,14 +25,7 @@ pub fn WynnMap(
     // is the map being moved currently
     let moving = RwSignal::new(false);
 
-    // position of the map
-    let screen_middle = get_viewport_middle();
-    // use the midpoint to position the map so that it is centered
-    let position = RwSignal::new([100.0 + screen_middle[0], 1200.0 + screen_middle[1]]);
-
-    // the current zoom level
-    let zoom = RwSignal::new(0.5);
-    provide_context(MapZoom(zoom));
+    let MapPosition { position, zoom } = expect_context();
 
     // are we currently transitioning? transitions can occur from zooming
     let transitioning = RwSignal::new(false);

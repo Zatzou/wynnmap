@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use web_sys::PointerEvent;
 
-use crate::wynnmap::{RelMousePos, util::zip_map};
+use crate::wynnmap::{context::RelMousePos, util::zip_map};
 
 pub struct PointerEventHandlers<PM, PD, PU, PL>
 where
@@ -28,8 +28,7 @@ pub fn handlers(
     impl Fn(PointerEvent) + Copy + 'static,
 > {
     // use pointer events to handle clicks on the map
-    let relmousepos = RwSignal::new(None);
-    provide_context(RelMousePos(relmousepos));
+    let RelMousePos(relmousepos) = expect_context();
 
     let pointermove = move |e: PointerEvent| {
         if !moving.get() {

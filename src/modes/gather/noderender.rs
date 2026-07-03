@@ -5,7 +5,7 @@ use wynnmap_types::gather::{GatherSpots, MatData, Material};
 
 use crate::{
     modes::gather::clustering::cluster_all,
-    wynnmap::{MapZoom, RelMousePos},
+    wynnmap::context::{MapPosition, RelMousePos},
 };
 
 #[derive(Clone, PartialEq)]
@@ -34,13 +34,18 @@ pub fn NodeRenderer(
     data: RwSignal<BTreeMap<Arc<str>, MatData>>,
     mouse_pos: RwSignal<Option<[i32; 2]>>,
     hovered: RwSignal<Vec<GatherNode>>,
-    #[prop(into, optional)] hidden: Signal<Vec<Arc<str>>>
+    #[prop(into, optional)] hidden: Signal<Vec<Arc<str>>>,
 ) -> impl IntoView {
-    let RelMousePos(mouse_rel) = expect_context::<RelMousePos>();
-    let MapZoom(zoom) = expect_context();
+    let RelMousePos(mouse_rel) = expect_context();
+    let MapPosition { zoom, .. } = expect_context();
 
     let style = Memo::new(move |_| {
-        let ids = hidden.read().iter().map(|n| format!(".mat-{n}")).collect::<Vec<_>>().join(",");
+        let ids = hidden
+            .read()
+            .iter()
+            .map(|n| format!(".mat-{n}"))
+            .collect::<Vec<_>>()
+            .join(",");
 
         format!("{ids}{{display: none;}}")
     });
