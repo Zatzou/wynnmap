@@ -19,7 +19,7 @@ gloo-net = { version = "0.7", default-features = false, features = [
     "json",
 ] }
 leptos = { version = "0.8", features = ["csr"] }
-leptos-use = { version = "0.18", default-features = false, features = [
+leptos-use = { version = "0.19", default-features = false, features = [
     "use_websocket",
     "use_event_source",
 ] }
@@ -47,7 +47,7 @@ lucide-leptos = { version = "3.11", features = [
     "arrows",
     "text",
     "files",
-    "tools"
+    "tools",
 ] }
 
 [profile.release]
