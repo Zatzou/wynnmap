@@ -7,7 +7,30 @@ use leptos::prelude::*;
 use wynnmap_types::terr::TerrState;
 
 #[component]
-pub fn Gleaderboard(#[prop(into)] state: Signal<BTreeMap<Arc<str>, TerrState>>) -> impl IntoView {
+pub fn Gleaderboard(
+    #[prop(into)] state: Signal<BTreeMap<Arc<str>, TerrState>>,
+    #[prop(into, default = RwSignal::new(true))] show_guild_leaderboard: RwSignal<bool>,
+) -> impl IntoView {
+    view! {
+        <div class="gleaderboard">
+            <hr/>
+            <div class="title" on:click={move |_| show_guild_leaderboard.update(|s| *s = !*s)}>
+                <h2>"Guild leaderboard"</h2>
+                <Show when=move || !show_guild_leaderboard.get()><lucide_leptos::ChevronUp size=24/></Show>
+                <Show when=move || show_guild_leaderboard.get()><lucide_leptos::ChevronDown size=24/></Show>
+            </div>
+            <div class="content" class:hidden={move || !show_guild_leaderboard.get()}>
+                <hr/>
+                <GleaderboardContent state/>
+            </div>
+        </div>
+    }
+}
+
+#[component]
+fn GleaderboardContent(
+    #[prop(into)] state: Signal<BTreeMap<Arc<str>, TerrState>>,
+) -> impl IntoView {
     let guild_leaderboard = move || {
         let mut guilds = HashMap::new();
 
@@ -28,7 +51,7 @@ pub fn Gleaderboard(#[prop(into)] state: Signal<BTreeMap<Arc<str>, TerrState>>) 
     };
 
     view! {
-        <div class="gleaderboard">
+        <div class="content-inner">
             <For
                 each=move || guild_leaderboard().into_iter()
                 key=|(k, v)| (k.clone(), *v)

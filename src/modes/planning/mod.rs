@@ -226,18 +226,7 @@ pub fn PlanningMap() -> impl IntoView {
             </div>
 
             // guild leaderboard
-            <div class="flex flex-col min-h-0">
-                <hr class="border-neutral-600" />
-                <div class="flex justify-between items-center text-xl p-2 py-1 cursor-pointer" on:click={move |_| show_guild_leaderboard.set(!show_guild_leaderboard.get())}>
-                    <h2>"Guild leaderboard"</h2>
-                    <Show when=move || !show_guild_leaderboard.get()><lucide_leptos::ChevronUp size=24/></Show>
-                    <Show when=move || show_guild_leaderboard.get()><lucide_leptos::ChevronDown size=24/></Show>
-                </div>
-                <div class="overflow-y-auto shrink min-h-0" class:hidden={move || !show_guild_leaderboard.get()}>
-                    <hr class="border-neutral-600"/>
-                    <Gleaderboard state={mapowneds}/>
-                </div>
-            </div>
+            <Gleaderboard state={mapowneds} show_guild_leaderboard/>
         </Sidebar>
 
         // selected terr info

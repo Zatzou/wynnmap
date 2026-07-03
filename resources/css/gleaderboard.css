@@ -1,31 +1,66 @@
 .gleaderboard {
-    display: grid;
-    grid-template-columns: min-content min-content auto auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 
-    background-color: black;
+    hr {
+        @apply border-neutral-600;
+    }
 
-    .glrow {
-        display: contents;
+    >.title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
 
-        * {
-            background-color: rgba(var(--col), 0.3);
-        }
+        @apply text-xl p-2 py-1 hover:bg-neutral-700;
+    }
 
-        *:first-child {
-            height: 1lh;
-            width: 0.5lh;
+    >.content {
+        overflow-y: auto;
+        flex-shrink: 1;
+        min-height: 0;
 
-            background-color: rgb(var(--col));
-        }
+        >.content-inner {
+            display: grid;
+            grid-template-columns: min-content min-content auto auto;
 
-        *:nth-child(2) {
-            text-align: right;
-            @apply px-1 font-mono;
-        }
+            background-color: black;
 
-        *:last-child {
-            text-align: right;
-            @apply pr-2;
+            .glrow {
+                display: contents;
+
+                * {
+                    background-color: rgba(var(--col), 0.3);
+                }
+
+                *:first-child {
+                    height: 1lh;
+                    width: 0.5lh;
+
+                    background-color: rgb(var(--col));
+                }
+
+                *:nth-child(2) {
+                    text-align: right;
+                    @apply px-1 font-mono;
+                }
+
+                *:last-child {
+                    text-align: right;
+                    @apply pr-2;
+                }
+            }
+
+            .glrow:hover {
+                * {
+                    background-color: rgba(var(--col), 0.7);
+                }
+
+                *:first-child {
+                    background-color: rgb(var(--col));
+                }
+            }
         }
     }
 }
