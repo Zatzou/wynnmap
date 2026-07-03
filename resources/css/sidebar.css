@@ -46,7 +46,7 @@
         }
     }
 
-    >.switchmode {
+    .switchmode {
         >* {
             padding-left: 0.25em;
             padding-right: 0.25em;
@@ -59,6 +59,7 @@
             @apply border-neutral-800;*/
         }
         >p {
+            margin-left: 1em;
             >a {
                 @apply text-neutral-400
             }
