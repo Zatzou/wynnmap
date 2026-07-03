@@ -33,7 +33,7 @@ fn update_settings(settings: Settings) {
 }
 
 /// The static variable for storing the toggle signals which are currently in use.
-static TOGGLES: LazyLock<Mutex<HashMap<Arc<str>, RwSignal<bool>>>> =
+static TOGGLES: LazyLock<Mutex<HashMap<Arc<str>, ArcRwSignal<bool>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
 /// A function that retrieves a signal for a given toggle setting. If the signal or setting doesn't yet exist it will be created with the given default value.
@@ -47,12 +47,12 @@ pub fn use_toggle(name: impl AsRef<str> + 'static, default: bool) -> RwSignal<bo
 
     // check if the signal already exists
     if let Some(signal) = toggles.get(name.as_ref()) {
-        let signal = *signal;
+        let signal = signal.clone();
 
         // check that the signal hasn't been disposed and if it has been then generate a new one
         if !signal.is_disposed() {
             drop(toggles);
-            return signal;
+            return signal.into();
         }
     }
 
@@ -70,19 +70,22 @@ pub fn use_toggle(name: impl AsRef<str> + 'static, default: bool) -> RwSignal<bo
         .unwrap_or(default);
 
     // create a new signal with the value from the settings
-    let signal = RwSignal::new(option);
+    let signal = ArcRwSignal::new(option);
 
     // insert the signal into the toggles map
-    toggles.insert(name.as_ref().into(), signal);
+    toggles.insert(name.as_ref().into(), signal.clone());
     drop(toggles);
 
     // create an effect to update the settings when the signal changes
-    Effect::new(move || {
-        settings
-            .write()
-            .toggles
-            .insert(name.as_ref().into(), signal.get());
+    Effect::new({
+        let signal = signal.clone();
+        move || {
+            settings
+                .write()
+                .toggles
+                .insert(name.as_ref().into(), signal.get());
+        }
     });
 
-    signal
+    signal.into()
 }

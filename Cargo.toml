@@ -47,6 +47,7 @@ lucide-leptos = { version = "3.11", features = [
     "arrows",
     "text",
     "files",
+    "tools"
 ] }
 
 [profile.release]

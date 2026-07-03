@@ -46,6 +46,15 @@
         }
     }
 
+    .switchmode {
+        >* {
+            @apply pt-1 pb-1
+        }
+        >a:hover {
+            @apply bg-neutral-600
+        }
+    }
+
     >.content {
         flex-direction: column;
         flex-grow: 1;
