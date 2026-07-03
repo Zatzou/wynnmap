@@ -57,7 +57,7 @@
             align-items: center;
             cursor: pointer;
 
-            @apply text-xl p-2;
+            @apply text-xl p-2 hover:bg-neutral-700;
         }
 
         >hr {
@@ -75,7 +75,7 @@
             }
 
             >a:hover {
-                @apply bg-neutral-600;
+                @apply bg-neutral-700;
             }
         }
 
@@ -94,7 +94,7 @@
     >.settings-btn {
         align-items: center;
         cursor: pointer;
-        @apply p-2 gap-2;
+        @apply p-2 gap-2 hover:bg-neutral-700;
 
         h2 {
             @apply text-xl;
