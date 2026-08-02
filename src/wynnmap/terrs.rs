@@ -1,5 +1,6 @@
 use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
+use jiff::Timestamp;
 use leptos::prelude::*;
 use wynnmap_types::{
     resources::BaseResGen,
@@ -153,10 +154,10 @@ fn ResIcons(terr: Signal<BaseResGen>) -> impl IntoView {
 }
 
 #[component]
-fn TerrTimer(#[prop(into)] acquired: Signal<chrono::DateTime<chrono::Utc>>) -> impl IntoView {
+fn TerrTimer(#[prop(into)] acquired: Signal<Timestamp>) -> impl IntoView {
     let SecondTimer(now) = expect_context::<SecondTimer>();
 
-    let time = Memo::new(move |_| now.read().signed_duration_since(acquired.read()));
+    let time = Memo::new(move |_| now.read().duration_since(*acquired.read()));
 
     let timestr = move || fmt_time_short(time.get());
 
@@ -171,11 +172,9 @@ fn TerrTimer(#[prop(into)] acquired: Signal<chrono::DateTime<chrono::Utc>>) -> i
 
 /// The component rendering the attack timer border for territories which are on attack cooldown.
 #[component]
-fn AttackBorder(#[prop(into)] acquired: Signal<chrono::DateTime<chrono::Utc>>) -> impl IntoView {
-    let now = chrono::Utc::now();
-    let time = now
-        .signed_duration_since(acquired.read_untracked())
-        .num_milliseconds();
+fn AttackBorder(#[prop(into)] acquired: Signal<Timestamp>) -> impl IntoView {
+    let now = Timestamp::now();
+    let time = now.duration_since(*acquired.read_untracked()).as_millis() as i64;
 
     let (time, set_time) = signal(time);
 

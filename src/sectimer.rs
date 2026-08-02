@@ -1,18 +1,18 @@
 use std::time::Duration;
 
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use leptos::prelude::*;
 
 /// The current time updated once a second
 #[derive(Clone)]
-pub struct SecondTimer(pub RwSignal<DateTime<Utc>>);
+pub struct SecondTimer(pub RwSignal<Timestamp>);
 
 pub fn provide_second_timer() {
-    let signal = RwSignal::new(Utc::now());
+    let signal = RwSignal::new(Timestamp::now());
 
     let timer = set_interval_with_handle(
         move || {
-            signal.set(Utc::now());
+            signal.set(Timestamp::now());
         },
         Duration::from_secs(1),
     )

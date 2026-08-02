@@ -3,7 +3,7 @@ use std::{
     sync::Arc,
 };
 
-use chrono::{FixedOffset, Utc};
+use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -61,7 +61,7 @@ pub struct TerrOwner {
     /// The guild which is the owner
     pub guild: Guild,
     /// The time when they acquired the territory if known
-    pub acquired: Option<chrono::DateTime<chrono::Utc>>,
+    pub acquired: Option<Timestamp>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -72,9 +72,9 @@ pub struct MapState {
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct TerrTimestamps {
-    pub updated: Option<chrono::DateTime<Utc>>,
-    pub changed: Option<chrono::DateTime<Utc>>,
-    pub wynntick: Option<chrono::DateTime<FixedOffset>>,
+    pub updated: Option<Timestamp>,
+    pub changed: Option<Timestamp>,
+    pub wynntick: Option<Timestamp>,
 }
 
 /// Structure representing the state information of the guild
@@ -83,7 +83,7 @@ pub struct TerrState {
     /// Current owner of the territory
     pub guild: Guild,
     /// The time when they acquired the territory if known
-    pub acquired: Option<chrono::DateTime<chrono::Utc>>,
+    pub acquired: Option<Timestamp>,
     /// Whether or not this territory is the current guilds hq
     pub hq: bool,
     /// Treasury level
@@ -145,7 +145,7 @@ pub struct CompactState {
     #[serde(rename = "g")]
     guild: Option<CompactGuild>,
     #[serde(rename = "a")]
-    acquired: Option<Option<chrono::DateTime<chrono::Utc>>>,
+    acquired: Option<Option<Timestamp>>,
     #[serde(rename = "h")]
     hq: Option<bool>,
     #[serde(rename = "t")]

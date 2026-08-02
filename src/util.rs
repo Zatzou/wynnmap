@@ -1,18 +1,18 @@
 use std::fmt::Display;
 
-use chrono::TimeDelta;
+use jiff::SignedDuration;
 
-const fn times(time: TimeDelta) -> (i64, i64, i64, i64) {
-    let days = time.num_days();
-    let hours = time.num_hours() % 24;
-    let minutes = time.num_minutes() % 60;
-    let seconds = time.num_seconds() % 60;
+const fn times(time: SignedDuration) -> (i64, i64, i64, i64) {
+    let days = time.as_hours() / 24;
+    let hours = time.as_hours() % 24;
+    let minutes = time.as_mins() % 60;
+    let seconds = time.as_secs() % 60;
 
     (days, hours, minutes, seconds)
 }
 
 /// Format times in a long format eg. (1d 12h 15m 30s)
-pub fn fmt_time_long(time: TimeDelta) -> String {
+pub fn fmt_time_long(time: SignedDuration) -> String {
     match times(time) {
         (0, 0, 0, s) => format!("{s}s"),
         (0, 0, m, s) => format!("{m}m {s}"),
@@ -22,7 +22,7 @@ pub fn fmt_time_long(time: TimeDelta) -> String {
 }
 
 /// Format times in a short format eg. (1d 12h) (12h 15m) (15m 30s)
-pub fn fmt_time_short(time: TimeDelta) -> String {
+pub fn fmt_time_short(time: SignedDuration) -> String {
     match times(time) {
         (0, 0, 0, s) => format!("{s}s"),
         (0, 0, m, s) => format!("{m}m {s}s"),

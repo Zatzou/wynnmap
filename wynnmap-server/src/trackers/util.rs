@@ -1,7 +1,7 @@
 use std::{fmt::Debug, time::Duration};
 
 use axum::http::HeaderValue;
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use reqwest::header::AsHeaderName;
 use serde::de::DeserializeOwned;
 use tracing::error;
@@ -34,13 +34,13 @@ pub fn reqwest_client_from_conf(config: &Config) -> reqwest::Client {
         .unwrap()
 }
 
-pub fn parse_header_datetime(header: Option<&HeaderValue>) -> Option<DateTime<Utc>> {
+pub fn parse_header_datetime(header: Option<&HeaderValue>) -> Option<Timestamp> {
     header
         .map(HeaderValue::to_str)
         .and_then(Result::ok)
-        .map(DateTime::parse_from_rfc2822)
+        .map(jiff::fmt::rfc2822::parse)
         .and_then(Result::ok)
-        .map(|d| d.to_utc())
+        .map(|d| d.timestamp())
 }
 
 pub trait ResponseExt {
@@ -48,7 +48,7 @@ pub trait ResponseExt {
 
     fn get_header(&self, key: impl AsHeaderName) -> Option<&str>;
 
-    fn expires(&self) -> Option<DateTime<Utc>>;
+    fn expires(&self) -> Option<Timestamp>;
 }
 
 impl ResponseExt for reqwest::Response {
@@ -77,7 +77,7 @@ impl ResponseExt for reqwest::Response {
             .and_then(Result::ok)
     }
 
-    fn expires(&self) -> Option<DateTime<Utc>> {
+    fn expires(&self) -> Option<Timestamp> {
         parse_header_datetime(self.headers().get("expires"))
     }
 }

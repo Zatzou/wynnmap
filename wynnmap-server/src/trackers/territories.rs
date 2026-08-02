@@ -5,7 +5,7 @@ use std::{
     time::Duration,
 };
 
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use opentelemetry::{global, metrics::Gauge};
 use serde::Deserialize;
 use tokio::{
@@ -96,13 +96,13 @@ impl TerritoryTracker {
                 let waittime = match res {
                     Ok(expires) => {
                         if let Some(exp) = expires {
-                            let now = Utc::now();
+                            let now = Timestamp::now();
 
-                            let diff = exp.signed_duration_since(now);
+                            let diff = exp.duration_since(now);
 
                             tokio::time::sleep_until(
                                 Instant::now()
-                                    + diff.to_std().unwrap_or_default()
+                                    + diff.try_into().unwrap_or_default()
                                     + Duration::from_secs(1),
                             )
                             .await;
@@ -151,7 +151,7 @@ impl TerritoryTracker {
     async fn query_territories(
         &self,
         notify_send: mpsc::Sender<TerrSockMessage>,
-    ) -> Result<Option<DateTime<Utc>>, AnyError> {
+    ) -> Result<Option<Timestamp>, AnyError> {
         let (data, expires, wynntick) = async {
             let res = self
                 .client
@@ -162,7 +162,7 @@ impl TerritoryTracker {
             let expires = res.expires();
             let wynntick = res
                 .get_header("territorylasttick")
-                .and_then(|t| DateTime::parse_from_str(t, "%Y-%m-%d %H:%M:%S%.f%:z").ok());
+                .and_then(|t| t.parse().ok());
             let data: BTreeMap<Arc<str>, WynnTerritory> = res.parse_json().await?;
 
             Ok::<_, util::RequestError>((data, expires, wynntick))
@@ -226,7 +226,7 @@ impl TerritoryTracker {
             // update territories
             if lock.territories != territories {
                 lock.territories = territories;
-                lock.territories_modified = Utc::now();
+                lock.territories_modified = Timestamp::now();
             }
 
             // update etag values
@@ -236,18 +236,18 @@ impl TerritoryTracker {
             let mut old_state = state.clone();
             mem::swap(&mut old_state, &mut lock.state);
 
-            let now = Utc::now();
+            let now = Timestamp::now();
             lock.timestamps.updated = Some(now);
-            self.updated.record(now.timestamp_millis(), &[]);
+            self.updated.record(now.as_millisecond(), &[]);
 
             if old_state != lock.state {
                 lock.timestamps.changed = lock.timestamps.updated;
-                self.changed.record(now.timestamp_millis(), &[]);
+                self.changed.record(now.as_millisecond(), &[]);
             }
 
             lock.timestamps.wynntick = wynntick;
             if let Some(t) = wynntick {
-                self.wynntick.record(t.timestamp_millis(), &[]);
+                self.wynntick.record(t.as_millisecond(), &[]);
             }
 
             // return old owners for notifications
@@ -292,7 +292,7 @@ impl TerritoryTracker {
 #[derive(Deserialize, Clone)]
 struct WynnTerritory {
     guild: WynnGuild,
-    acquired: Option<DateTime<Utc>>,
+    acquired: Option<Timestamp>,
     location: Region,
     #[serde(default)]
     hq: bool,

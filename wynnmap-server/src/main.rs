@@ -3,7 +3,8 @@ use std::path::PathBuf;
 use axum::http::Method;
 use axum::response::IntoResponse;
 use axum::{Json, Router, middleware};
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
+use jiff::fmt::rfc2822::DateTimePrinter;
 use reqwest::StatusCode;
 use state::ImageState;
 use tokio::net::TcpListener;
@@ -97,8 +98,10 @@ async fn api_404() -> impl IntoResponse {
 }
 
 /// Format a date into the format that http headers expect which is rfc 2822 with "+0000" replaced to "GMT"
-pub fn header_date(dt: impl Into<DateTime<Utc>>) -> String {
+pub fn header_date(dt: impl Into<Timestamp>) -> String {
     let dt = dt.into();
 
-    dt.to_rfc2822().replace("+0000", "GMT")
+    DateTimePrinter::new()
+        .timestamp_to_rfc9110_string(&dt)
+        .unwrap_or_default()
 }

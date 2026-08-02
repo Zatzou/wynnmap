@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, time::Duration};
 
-use chrono::TimeDelta;
+use jiff::SignedDuration;
 use leptos::{prelude::*, task::spawn_local};
 use wynnmap_types::terr::TerrTimestamps;
 
@@ -91,8 +91,8 @@ pub fn WarMap() -> impl IntoView {
         last_updated
             .read()
             .updated
-            .map_or_else(TimeDelta::zero, |updated| {
-                now.read().signed_duration_since(updated)
+            .map_or(SignedDuration::ZERO, |updated| {
+                now.read().duration_since(updated)
             })
     });
 
@@ -155,7 +155,7 @@ pub fn WarMap() -> impl IntoView {
         } else {None}}
 
         // outdated data warning
-        {move || if *data_age.read() > TimeDelta::minutes(10) {
+        {move || if *data_age.read() > SignedDuration::from_mins(10) {
             Some(view! {
                 <div class="fixed bottom-4 right-4 bg-neutral-900 text-white rounded-md w-sm p-2">
                     <h1 class="text-2xl">"Warning: territory data is outdated"</h1>

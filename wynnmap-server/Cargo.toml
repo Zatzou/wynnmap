@@ -6,11 +6,11 @@ edition = "2024"
 [dependencies]
 axum = { version = "0.8", features = ["ws"] }
 base64 = "0.23"
-chrono = { version = "0.4", features = ["serde"] }
 crc32fast = "1"
 etag = "4"
 futures = "0.3"
 image = { version = "0.25", default-features = false, features = ["png"] }
+jiff = { version = "0.2", features = ["serde"] }
 opentelemetry = "0.32"
 opentelemetry-otlp = { version = "0.32", features = [
     "grpc-tonic",

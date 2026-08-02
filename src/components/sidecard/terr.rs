@@ -97,7 +97,7 @@ pub fn GuildInfo(#[prop(into)] state: Signal<TerrState>) -> impl IntoView {
         state
             .read()
             .acquired
-            .map(|acq| now.read().signed_duration_since(acq))
+            .map(|acq| now.read().duration_since(acq))
     });
 
     view! {

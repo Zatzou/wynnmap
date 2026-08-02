@@ -3,6 +3,7 @@ use std::{
     sync::Arc,
 };
 
+use jiff::Timestamp;
 use leptos::prelude::{ArcRwSignal, GetUntracked};
 use serde::{Deserialize, Serialize};
 use wynnmap_types::{Region, guild::Guild, terr::Territory};
@@ -60,7 +61,7 @@ impl DataConvert for RueaES {
         Self {
             type_: String::from("state_save"),
             version: String::from("1.1"),
-            timestamp: chrono::Utc::now().to_rfc3339(),
+            timestamp: Timestamp::now().to_string(),
             tick: 0,
             territories: terrs2,
             guilds: guilds2,

@@ -1,7 +1,7 @@
 use std::{collections::BTreeMap, sync::Arc};
 
 use axum::body::Bytes;
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use opentelemetry::metrics::UpDownCounter;
 use tokio::sync::{RwLock, broadcast};
 use wynnmap_types::{
@@ -38,11 +38,11 @@ pub struct TerritoryState {
 pub struct TerritoryStateInner {
     pub territories: BTreeMap<Arc<str>, Territory>,
     pub territories_etag: Arc<str>,
-    pub territories_modified: DateTime<Utc>,
+    pub territories_modified: Timestamp,
 
     pub state: BTreeMap<Arc<str>, TerrState>,
 
-    pub expires: DateTime<Utc>,
+    pub expires: Timestamp,
     pub timestamps: TerrTimestamps,
 }
 
