@@ -60,7 +60,7 @@ pub struct MapState {
     pub timestamps: TerrTimestamps,
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TerrTimestamps {
     pub updated: Option<Timestamp>,
     pub changed: Option<Timestamp>,
@@ -171,11 +171,11 @@ impl CompactState {
         let guild = CompactGuild::from_diff(new.guild, &old.guild);
 
         let res = [
-            CompactState::diff(new.resources.emerald, &old.resources.emerald).map(|r| r.into()),
-            CompactState::diff(new.resources.ore, &old.resources.ore).map(|r| r.into()),
-            CompactState::diff(new.resources.crop, &old.resources.crop).map(|r| r.into()),
-            CompactState::diff(new.resources.fish, &old.resources.fish).map(|r| r.into()),
-            CompactState::diff(new.resources.wood, &old.resources.wood).map(|r| r.into()),
+            CompactState::diff(new.resources.emerald, &old.resources.emerald).map(Into::into),
+            CompactState::diff(new.resources.ore, &old.resources.ore).map(Into::into),
+            CompactState::diff(new.resources.crop, &old.resources.crop).map(Into::into),
+            CompactState::diff(new.resources.fish, &old.resources.fish).map(Into::into),
+            CompactState::diff(new.resources.wood, &old.resources.wood).map(Into::into),
         ];
 
         let has_res = res[0].is_some()
@@ -188,8 +188,8 @@ impl CompactState {
             guild: guild.has_some().then_some(guild),
             acquired: CompactState::diff(new.acquired, &old.acquired),
             hq: CompactState::diff(new.hq, &old.hq),
-            treasury: CompactState::diff(new.treasury, &old.treasury).map(|t| t.into()),
-            defences: CompactState::diff(new.defences, &old.defences).map(|t| t.into()),
+            treasury: CompactState::diff(new.treasury, &old.treasury).map(Into::into),
+            defences: CompactState::diff(new.defences, &old.defences).map(Into::into),
             resources: has_res.then_some(res),
         }
     }

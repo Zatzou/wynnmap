@@ -34,7 +34,7 @@ fn GleaderboardContent(
     let guild_leaderboard = move || {
         let mut guilds = HashMap::new();
 
-        for (_, v) in state.read().iter() {
+        for v in state.read().values() {
             let guild = v.guild.clone();
             let terr = guilds.entry(guild).or_insert(0);
             *terr += 1;

@@ -55,7 +55,7 @@ pub fn GatherMap() -> impl IntoView {
                         .iter()
                         .filter(|s| s.resource == n)
                         .count(),
-                })
+                });
             }
         });
     });
@@ -65,7 +65,7 @@ pub fn GatherMap() -> impl IntoView {
 
         for toggle in toggles.read().iter() {
             if !toggle.toggle.get() {
-                list.push(toggle.mat.name.clone())
+                list.push(toggle.mat.name.clone());
             }
         }
 
@@ -158,7 +158,7 @@ fn titlecase(name: impl AsRef<str>) -> String {
         None => String::new(),
         Some(f) => f
             .to_uppercase()
-            .chain(c.flat_map(|c| c.to_lowercase()))
+            .chain(c.flat_map(char::to_lowercase))
             .collect(),
     }
 }

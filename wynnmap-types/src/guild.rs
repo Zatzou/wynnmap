@@ -40,11 +40,7 @@ impl Guild {
     #[inline]
     pub fn get_color(&self) -> (u8, u8, u8) {
         if let Some(col) = &self.color {
-            let col = if let Some(s) = col.strip_prefix("#") {
-                s
-            } else {
-                col
-            };
+            let col = col.strip_prefix("#").map_or(col.as_ref(), |s| s);
 
             // parse the hex color ignoring any alpha values which are set
             match col.len() {

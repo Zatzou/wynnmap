@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, sync::Arc};
+use std::{collections::BTreeMap, fmt::Write, sync::Arc};
 
 use leptos::prelude::*;
 use leptos_use::{UseWindowSizeReturn, use_window_size};
@@ -162,20 +162,20 @@ fn build_paths(clusters: &[GatherNode], min_r: f64) -> Vec<(Arc<str>, String)> {
         let [cx, cy] = c.pos.map(f64::from);
         let r = c.rad(min_r);
 
-        by_mat
-            .entry(c.res.name.clone())
-            .or_default()
-            .push_str(&format!(
-                "M{} {}a{} {} 0 1 0 {} 0a{} {} 0 1 0 {} 0z",
-                cx - r,
-                cy,
-                r,
-                r,
-                r * 2.0,
-                r,
-                r,
-                r * -2.0
-            ));
+        let entry = by_mat.entry(c.res.name.clone()).or_default();
+
+        let _ = write!(
+            entry,
+            "M{} {}a{} {} 0 1 0 {} 0a{} {} 0 1 0 {} 0z",
+            cx - r,
+            cy,
+            r,
+            r,
+            r * 2.0,
+            r,
+            r,
+            r * -2.0
+        );
 
         *counts.entry(c.res.name.clone()).or_default() += c.count;
     }
