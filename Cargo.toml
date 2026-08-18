@@ -21,6 +21,7 @@ leptos = { version = "0.8", features = ["csr"] }
 leptos-use = { version = "0.19", default-features = false, features = [
     "use_websocket",
     "use_event_source",
+    "use_window_size",
 ] }
 leptos_router = "0.8"
 serde = { version = "1", features = ["derive", "rc"] }

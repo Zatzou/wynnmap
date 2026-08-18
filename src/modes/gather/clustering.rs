@@ -1,21 +1,18 @@
-use std::collections::{BTreeMap, btree_map::Entry};
+use std::collections::BTreeMap;
 
 use wynnmap_types::gather::GatherSpots;
 
 use crate::modes::gather::noderender::GatherNode;
 
-pub fn cluster_all(data: GatherSpots, max_d: f64, min_r: f64) -> Vec<GatherNode> {
+pub fn cluster_all(data: &GatherSpots, max_d: f64) -> Vec<GatherNode> {
+    let max_d_sq = max_d.powi(2) as u32;
     let mut pos_by_type: BTreeMap<usize, Vec<[i32; 2]>> = BTreeMap::new();
 
-    for spot in data.spots {
-        match pos_by_type.entry(spot.resource) {
-            Entry::Vacant(entry) => {
-                entry.insert(vec![[spot.pos[0], spot.pos[2]]]);
-            }
-            Entry::Occupied(mut entry) => {
-                entry.get_mut().push([spot.pos[0], spot.pos[2]]);
-            }
-        }
+    for spot in &data.spots {
+        pos_by_type
+            .entry(spot.resource)
+            .or_default()
+            .push([spot.pos[0], spot.pos[2]]);
     }
 
     let mut clusters = Vec::new();
@@ -33,14 +30,14 @@ pub fn cluster_all(data: GatherSpots, max_d: f64, min_r: f64) -> Vec<GatherNode>
             })
             .next()
         {
-            let cluster = cluster(p, &nodes, &mut visited, max_d);
+            let cluster = cluster(p, &nodes, &mut visited, max_d_sq);
 
             let mid = cluster_midpoint(&cluster);
             let r = cluster_size(&cluster);
 
             clusters.push(GatherNode {
                 pos: mid,
-                radius: r.max(min_r),
+                radius: r,
 
                 count: cluster.len(),
                 res: data.resources[type_id].clone(),
@@ -61,12 +58,12 @@ fn cluster(
     start: [i32; 2],
     points: &[[i32; 2]],
     visited: &mut [bool],
-    max_d: f64,
+    max_d_sq: u32,
 ) -> Vec<[i32; 2]> {
     let mut set = Vec::with_capacity(points.len());
     set.push(start);
 
-    if max_d < 10.0 {
+    if max_d_sq < 5_u32.pow(2) {
         return set;
     }
 
@@ -77,7 +74,7 @@ fn cluster(
             .iter()
             .zip(visited.iter_mut())
             .filter(|(_, v)| !**v)
-            .filter(|(p, _)| xz_dist_to(pos, **p) <= max_d)
+            .filter(|(p, _)| sq_xz_dist_to(pos, **p) <= max_d_sq)
             .map(|(p, v)| {
                 *v = !*v;
                 p
@@ -93,13 +90,15 @@ fn cluster(
     set
 }
 
-fn xz_dist_to(lhs: [i32; 2], rhs: [i32; 2]) -> f64 {
+#[inline]
+const fn sq_xz_dist_to(lhs: [i32; 2], rhs: [i32; 2]) -> u32 {
     let dist_x = lhs[0].abs_diff(rhs[0]);
     let dist_z = lhs[1].abs_diff(rhs[1]);
 
-    f64::from(dist_x.pow(2) + dist_z.pow(2)).sqrt()
+    dist_x.pow(2) + dist_z.pow(2)
 }
 
+#[inline]
 fn cluster_midpoint(cluster: &[[i32; 2]]) -> [i32; 2] {
     let count = cluster.len() as i32;
 
@@ -109,6 +108,7 @@ fn cluster_midpoint(cluster: &[[i32; 2]]) -> [i32; 2] {
     [x, z]
 }
 
+#[inline]
 fn cluster_size(cluster: &[[i32; 2]]) -> f64 {
     let left_side = cluster.iter().map(|[x, _]| *x).min().unwrap_or_default();
     let right_side = cluster.iter().map(|[x, _]| *x).max().unwrap_or_default();
@@ -118,5 +118,5 @@ fn cluster_size(cluster: &[[i32; 2]]) -> f64 {
     let width = f64::from(left_side.abs_diff(right_side));
     let height = f64::from(bottom_side.abs_diff(top_side));
 
-    f64::max(f64::max(width / 2.0, height / 2.0), 2.0)
+    f64::max(width / 2.0, height / 2.0)
 }
