@@ -22,6 +22,7 @@ pub enum WynnTier {
 }
 
 impl Display for WynnTier {
+    #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -39,6 +40,7 @@ impl Display for WynnTier {
 
 impl WynnTier {
     /// Return the hex color generally used for this tier
+    #[inline]
     pub const fn color(&self) -> &'static str {
         match self {
             WynnTier::VeryLow => "#00AA00",  // dark green
@@ -50,6 +52,7 @@ impl WynnTier {
     }
 
     /// Get the tier based on a defence number calculated by the calculator
+    #[inline]
     pub const fn from_defnum(num: i32) -> Self {
         match num {
             41.. => Self::VeryHigh,
@@ -61,6 +64,7 @@ impl WynnTier {
     }
 
     /// Get the tier based on seconds a territory has been held
+    #[inline]
     pub const fn from_time_held(time: SignedDuration) -> Self {
         let seconds = time.as_secs();
 
@@ -89,6 +93,7 @@ pub(crate) enum CompactTier {
 }
 
 impl From<CompactTier> for WynnTier {
+    #[inline]
     fn from(value: CompactTier) -> Self {
         match value {
             CompactTier::VeryLow => Self::VeryLow,
@@ -101,6 +106,7 @@ impl From<CompactTier> for WynnTier {
 }
 
 impl From<WynnTier> for CompactTier {
+    #[inline]
     fn from(value: WynnTier) -> Self {
         match value {
             WynnTier::VeryLow => Self::VeryLow,

@@ -54,16 +54,6 @@ pub fn find_externals(
     externals
 }
 
-#[deprecated]
-/// Structure representing a territory owner and the time when they acquired the territory
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash, Default)]
-pub struct TerrOwner {
-    /// The guild which is the owner
-    pub guild: Guild,
-    /// The time when they acquired the territory if known
-    pub acquired: Option<Timestamp>,
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct MapState {
     pub terrs: BTreeMap<Arc<str>, TerrState>,
@@ -95,6 +85,7 @@ pub struct TerrState {
 }
 
 impl TerrState {
+    #[inline]
     pub fn apply_diff(&mut self, diff: CompactState) {
         if let Some(guild) = diff.guild {
             self.guild.apply_diff(guild);

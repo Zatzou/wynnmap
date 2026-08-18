@@ -20,6 +20,7 @@ pub struct Region {
 }
 
 impl Region {
+    #[inline]
     pub const fn left_side(&self) -> i32 {
         if self.start[0] < self.end[0] {
             self.start[0]
@@ -28,6 +29,7 @@ impl Region {
         }
     }
 
+    #[inline]
     pub const fn right_side(&self) -> i32 {
         if self.start[0] > self.end[0] {
             self.start[0]
@@ -36,6 +38,7 @@ impl Region {
         }
     }
 
+    #[inline]
     pub const fn top_side(&self) -> i32 {
         if self.start[1] < self.end[1] {
             self.start[1]
@@ -44,6 +47,7 @@ impl Region {
         }
     }
 
+    #[inline]
     pub const fn bottom_side(&self) -> i32 {
         if self.start[1] > self.end[1] {
             self.start[1]
@@ -52,28 +56,34 @@ impl Region {
         }
     }
 
+    #[inline]
     pub const fn width(&self) -> u32 {
         self.start[0].abs_diff(self.end[0]) + 1
     }
 
+    #[inline]
     pub const fn height(&self) -> u32 {
         self.start[1].abs_diff(self.end[1]) + 1
     }
 
     /// calculate midpoint on x (horizontal scale)
+    #[inline]
     pub const fn midpoint_x(&self) -> i32 {
         i32::midpoint(self.start[0], self.end[0])
     }
 
     /// calculate midpoint on z (vertical scale)
+    #[inline]
     pub const fn midpoint_y(&self) -> i32 {
         i32::midpoint(self.start[1], self.end[1])
     }
 
+    #[inline]
     pub const fn get_midpoint(&self) -> [i32; 2] {
         [self.midpoint_x(), self.midpoint_y()]
     }
 
+    #[inline]
     pub const fn contains(&self, [x, y]: [i32; 2]) -> bool {
         x >= self.left_side()
             && x <= self.right_side()

@@ -22,6 +22,7 @@ pub struct Guild {
 }
 
 impl Default for Guild {
+    #[inline]
     fn default() -> Self {
         Self {
             uuid: None,
@@ -36,6 +37,7 @@ impl Guild {
     /// Get the color of this guild
     ///
     /// This function falls back to calculate the color if no color is given
+    #[inline]
     pub fn get_color(&self) -> (u8, u8, u8) {
         if let Some(col) = &self.color {
             let col = if let Some(s) = col.strip_prefix("#") {
@@ -61,6 +63,7 @@ impl Guild {
     }
 
     /// Get the hex color of this guild
+    #[inline]
     pub fn hex_color(&self) -> String {
         // reformat the color since wynntils appears to give some odd colors
         let col = self.get_color();
@@ -71,6 +74,7 @@ impl Guild {
     /// Calculate the guild color using the wynntils crc32 method
     ///
     /// This gives the default guild color which wynntils would assign a given guild
+    #[inline]
     pub fn calculate_color(&self) -> (u8, u8, u8) {
         let mut hasher = Hasher::new();
         hasher.update(self.name.as_bytes());
@@ -81,6 +85,7 @@ impl Guild {
         (bytes[1], bytes[2], bytes[3])
     }
 
+    #[inline]
     pub(crate) fn apply_diff(&mut self, diff: CompactGuild) {
         if let Some(uuid) = diff.uuid {
             self.uuid = uuid;

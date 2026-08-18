@@ -25,42 +25,52 @@ pub struct BaseResGen {
 }
 
 impl BaseResGen {
+    #[inline]
     pub const fn has_emerald(&self) -> bool {
         self.emerald > 9000
     }
 
+    #[inline]
     pub const fn has_ore(&self) -> bool {
         self.ore != 0
     }
 
+    #[inline]
     pub const fn has_crop(&self) -> bool {
         self.crop != 0
     }
 
+    #[inline]
     pub const fn has_fish(&self) -> bool {
         self.fish != 0
     }
 
+    #[inline]
     pub const fn has_wood(&self) -> bool {
         self.wood != 0
     }
 
+    #[inline]
     pub const fn has_double_ore(&self) -> bool {
         self.ore >= 7200
     }
 
+    #[inline]
     pub const fn has_double_crop(&self) -> bool {
         self.crop >= 7200
     }
 
+    #[inline]
     pub const fn has_double_fish(&self) -> bool {
         self.fish >= 7200
     }
 
+    #[inline]
     pub const fn has_double_wood(&self) -> bool {
         self.wood >= 7200
     }
 
+    #[inline]
     pub const fn has_res(&self) -> (bool, bool, bool, bool, bool) {
         (
             self.has_emerald(),
@@ -71,6 +81,7 @@ impl BaseResGen {
         )
     }
 
+    #[inline]
     pub const fn has_double_res(&self) -> (bool, bool, bool, bool) {
         (
             self.has_double_crop(),
@@ -98,12 +109,14 @@ pub struct ResourceValues {
 }
 
 impl From<ResourceValues> for (i32, i32, i32) {
+    #[inline]
     fn from(value: ResourceValues) -> Self {
         (value.generation, value.stored, value.limit)
     }
 }
 
 impl From<(i32, i32, i32)> for ResourceValues {
+    #[inline]
     fn from((g, s, l): (i32, i32, i32)) -> Self {
         Self {
             generation: g,

@@ -40,6 +40,7 @@ pub enum Profession {
 }
 
 impl Profession {
+    #[inline]
     pub const fn color(&self) -> &'static str {
         match self {
             Profession::Mining => "#AA0000",
