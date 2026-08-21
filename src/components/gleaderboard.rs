@@ -16,8 +16,8 @@ pub fn Gleaderboard(
             <hr/>
             <div class="title" on:click={move |_| show_guild_leaderboard.update(|s| *s = !*s)}>
                 <h2>"Guild leaderboard"</h2>
-                <Show when=move || !show_guild_leaderboard.get()><lucide_leptos::ChevronUp size=24/></Show>
-                <Show when=move || show_guild_leaderboard.get()><lucide_leptos::ChevronDown size=24/></Show>
+                <Show when=move || !show_guild_leaderboard.get()><icons::ChevronUp size=24/></Show>
+                <Show when=move || show_guild_leaderboard.get()><icons::ChevronDown size=24/></Show>
             </div>
             <div class="content" class:hidden={move || !show_guild_leaderboard.get()}>
                 <hr/>

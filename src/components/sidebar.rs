@@ -14,7 +14,7 @@ pub fn Sidebar(#[prop(optional)] children: Option<Children>) -> impl IntoView {
     view! {
         // sidebar open button
         <div on:click={toggle_sidebar} class="sidebar-btn">
-            <lucide_leptos::Menu size=32/>
+            <icons::Menu size=32/>
         </div>
 
         <div class="sidebar" class:closed={move || !show_sidebar.get()}>
@@ -24,7 +24,7 @@ pub fn Sidebar(#[prop(optional)] children: Option<Children>) -> impl IntoView {
 
                 // close button
                 <div class="cursor-pointer" on:click=toggle_sidebar>
-                    <lucide_leptos::X size=32/>
+                    <icons::X size=32/>
                 </div>
             </div>
 
@@ -42,7 +42,7 @@ pub fn Sidebar(#[prop(optional)] children: Option<Children>) -> impl IntoView {
                     }
                 }
             >
-                <lucide_leptos::Settings size=24/>
+                <icons::Settings size=24/>
                 <h2>"Settings"</h2>
             </div>
 
@@ -67,8 +67,8 @@ fn Modeswitch() -> impl IntoView {
                 <div class="flex flex-row gap-1 items-center">
                     <ModeswitchTitle cur=cur_path />
                 </div>
-                <Show when=move || !toggle_modeswitch.get()><lucide_leptos::ChevronDown size=24/></Show>
-                <Show when=move || toggle_modeswitch.get()><lucide_leptos::ChevronUp size=24/></Show>
+                <Show when=move || !toggle_modeswitch.get()><icons::ChevronDown size=24/></Show>
+                <Show when=move || toggle_modeswitch.get()><icons::ChevronUp size=24/></Show>
             </div>
 
             <hr class:hidden=move || !toggle_modeswitch.get()/>
@@ -103,10 +103,10 @@ fn ModeswitchTitle(#[prop(into)] cur: Signal<String>) -> impl IntoView {
         _ => "Unknown mode",
     };
     let cur_icon = move || match cur.get().as_str() {
-        "/" => view! {<lucide_leptos::Swords size=24/>}.into_any(),
-        "/plan" => view! {<lucide_leptos::LandPlot size=24/>}.into_any(),
-        "/gather" => view! {<lucide_leptos::Axe size=24/>}.into_any(),
-        _ => view! {<lucide_leptos::CircleQuestionMark size=24/>}.into_any(),
+        "/" => view! {<icons::Swords size=24/>}.into_any(),
+        "/plan" => view! {<icons::LandPlot size=24/>}.into_any(),
+        "/gather" => view! {<icons::Axe size=24/>}.into_any(),
+        _ => ().into_any(),
     };
 
     view! {

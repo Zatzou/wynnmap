@@ -80,7 +80,7 @@ pub fn manage_guilds(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>) -> impl IntoView
                                                     }
                                                 }
                                             >
-                                                <lucide_leptos::SquarePen size=24/>
+                                                <icons::SquarePen size=24/>
                                             </div>
 
                                             // delete button
@@ -92,7 +92,7 @@ pub fn manage_guilds(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>) -> impl IntoView
                                                     }
                                                 }
                                             >
-                                                <lucide_leptos::Trash size=24/>
+                                                <icons::Trash size=24/>
                                             </div>
                                         </td>
                                     </tr>

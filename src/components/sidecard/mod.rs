@@ -20,7 +20,7 @@ pub fn SideCard(
         <div class="sidecard" class:hover={hover}>
             {move || on_close.map(|f| view!{
                 <div class="cursor-pointer absolute top-2 right-2 m-0" on:click={move |_| f.run(())}>
-                    <lucide_leptos::X size=32/>
+                    <icons::X size=32/>
                 </div>
             })}
             <div class="content">

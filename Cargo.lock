@@ -1278,6 +1278,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "icons"
+version = "0.1.0"
+dependencies = [
+ "leptos",
+]
+
+[[package]]
 name = "icu_collections"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1802,15 +1809,6 @@ name = "lru-slab"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "112b39cec0b298b6c1999fee3e31427f74f676e4cb9879ed1a121b43661a4154"
-
-[[package]]
-name = "lucide-leptos"
-version = "3.31.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "debc06b189cd36d5447b8495a0cfc3121cf84cfa6ffd6f92ad82181f145a2e21"
-dependencies = [
- "leptos",
-]
 
 [[package]]
 name = "lz4_flex"
@@ -3956,11 +3954,11 @@ dependencies = [
  "gloo-file",
  "gloo-net 0.7.0",
  "gloo-storage",
+ "icons",
  "jiff",
  "leptos",
  "leptos-use",
  "leptos_router",
- "lucide-leptos",
  "lz4_flex",
  "rmp-serde",
  "serde",

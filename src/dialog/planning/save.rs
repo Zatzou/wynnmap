@@ -182,7 +182,7 @@ pub fn save_dialog(
                     <input type="text" class="grow border-1 border-neutral-600 p-1 px-2 rounded-l-lg" value={sharestring} readonly onfocus="this.select()"/>
                     <button class="border-1 border-l-0 border-neutral-600 p-1 px-2 rounded-r-lg hover:bg-neutral-700 flex gap-1" on:click={copystring}>
                         "Copy"
-                        <lucide_leptos::Clipboard size=24/>
+                        <icons::Clipboard size=24/>
                     </button>
                 </div>
 

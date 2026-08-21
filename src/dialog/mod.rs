@@ -107,7 +107,7 @@ pub fn DialogCloseButton(#[prop(optional)] children: Option<Children>) -> impl I
     } else {
         view! {
             <div class="cursor-pointer" on:click=close>
-                <lucide_leptos::X size=32/>
+                <icons::X size=32/>
             </div>
         }
         .into_any()
