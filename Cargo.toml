@@ -46,5 +46,5 @@ jiff = { version = "0.2", features = ["js", "serde"] }
 
 [profile.release]
 lto = true
-opt-level = "z"
+opt-level = 3
 strip = true
