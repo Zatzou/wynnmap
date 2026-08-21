@@ -87,7 +87,7 @@ pub fn handlers(
                 // calculate centerpoint for zoom
                 let center = zip_map(new1, new2, |a, b| f64::from(a + b) / 2.0);
 
-                apply_zoom(position, zoom, center, delta);
+                apply_zoom(position, zoom, center, delta / 300.0);
             }
             _ => {}
         }
