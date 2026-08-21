@@ -1,7 +1,7 @@
 use leptos::prelude::*;
-use web_sys::{TouchEvent, TouchList};
+use web_sys::{Touch, TouchEvent, TouchList};
 
-use crate::wynnmap::util::{apply_zoom_compensation, calculate_new_zoom};
+use crate::wynnmap::util::{apply_zoom, zip_map};
 
 pub struct TouchEventHandlers<TS, TM>
 where
@@ -50,18 +50,20 @@ pub fn handlers(
         // match the number of touches to determine if it's a drag or zoom
         match tpos.read()[..] {
             // drag
-            [tpos] => {
+            [old_pos] => {
                 // new delta
                 let touch = tl.get(0).unwrap();
-                let npos = [touch.client_x(), touch.client_y()];
+                let new_pos = touch_pos(&touch);
+
+                let delta = zip_map(new_pos, old_pos, |n, o| n - o).map(f64::from);
 
                 position.update(|[x, y]| {
-                    *x += f64::from(npos[0] - tpos[0]);
-                    *y += f64::from(npos[1] - tpos[1]);
+                    *x += delta[0];
+                    *y += delta[1];
                 });
             }
             // zoom
-            [t1, t2] => {
+            [old1, old2] => {
                 // disable will-change to prevent flickering
                 moving.set(false);
 
@@ -69,33 +71,23 @@ pub fn handlers(
                 let touch1 = tl.get(0).unwrap();
                 let touch2 = tl.get(1).unwrap();
 
-                let npos = (
-                    (touch1.client_x(), touch1.client_y()),
-                    (touch2.client_x(), touch2.client_y()),
-                );
+                // new positions
+                let [new1, new2] = [touch_pos(&touch1), touch_pos(&touch2)];
 
-                // calculate the distance between the touches
-                let dist =
-                    f64::from((npos.0.0 - npos.1.0).pow(2) + (npos.0.1 - npos.1.1).pow(2)).sqrt();
+                let dist = |[x1, y1]: [i32; 2], [x2, y2]: [i32; 2]| {
+                    f64::from((x1 - x2).pow(2) + (y1 - y2).pow(2)).sqrt()
+                };
 
-                // calculate the distance between the touches before the zoom
-                let opos = f64::from((t1[0] - t2[0]).pow(2) + (t1[1] - t2[1]).pow(2)).sqrt();
+                let dist_old = dist(old1, old2);
+                let dist_new = dist(new1, new2);
 
                 // calculate the delta
-                let delta = dist - opos;
+                let delta = dist_new - dist_old;
 
-                // calculate the new zoom level
-                let old_zoom = zoom.get();
-                let new_zoom = calculate_new_zoom(old_zoom, delta / 300.0);
+                // calculate centerpoint for zoom
+                let center = zip_map(new1, new2, |a, b| f64::from(a + b) / 2.0);
 
-                zoom.set(new_zoom);
-
-                let mpos = [
-                    f64::from(npos.0.0 + npos.1.0) / 2.0,
-                    f64::from(npos.0.1 + npos.1.1) / 2.0,
-                ];
-
-                apply_zoom_compensation(mpos, old_zoom, new_zoom, position);
+                apply_zoom(position, zoom, center, delta);
             }
             _ => {}
         }
@@ -119,8 +111,13 @@ fn get_touch_positions(tl: &TouchList) -> Vec<[i32; 2]> {
     for i in 0..tl.length() {
         let touch = tl.get(i).unwrap();
 
-        positions.push([touch.client_x(), touch.client_y()]);
+        positions.push(touch_pos(&touch));
     }
 
     positions
+}
+
+#[inline]
+fn touch_pos(touch: &Touch) -> [i32; 2] {
+    [touch.client_x(), touch.client_y()]
 }

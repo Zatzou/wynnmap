@@ -1,22 +1,23 @@
 use leptos::{ev, prelude::*};
 use web_sys::KeyboardEvent;
 
-use crate::wynnmap::util::{apply_zoom_compensation, calculate_new_zoom, get_viewport_middle};
+use crate::wynnmap::util::{apply_zoom, apply_zoom_compensation, get_viewport_middle};
 
 pub fn handlers(position: RwSignal<[f64; 2]>, zoom: RwSignal<f64>, transitioning: RwSignal<bool>) {
     let onkeydown = move |e: KeyboardEvent| {
         match e.key().as_str() {
             // 0 key - reset zoom
             "0" => {
-                let oldzoom = zoom.get();
+                let old_zoom = zoom.get();
+                let new_zoom = 0.5;
                 // reset the zoom
-                zoom.set(0.5);
+                zoom.set(new_zoom);
 
                 // perform zoom compensation
                 // get middle point of the screen
-                let mpos = get_viewport_middle();
+                let center = get_viewport_middle();
                 // calculate the zoom compensation
-                apply_zoom_compensation(mpos, oldzoom, 0.5, position);
+                apply_zoom_compensation(center, old_zoom, new_zoom, position);
 
                 // do transition
                 transitioning.set(true);
@@ -35,32 +36,20 @@ pub fn handlers(position: RwSignal<[f64; 2]>, zoom: RwSignal<f64>, transitioning
             }
             // plus key - zoom in
             "+" => {
-                let oldzoom = zoom.get();
-
-                // calculate the new zoom level
-                let newzoom = calculate_new_zoom(oldzoom, 0.3);
-                zoom.set(newzoom);
-
                 // get middle point of the screen
-                let mpos = get_viewport_middle();
-                // apply the zoom compensation
-                apply_zoom_compensation(mpos, oldzoom, newzoom, position);
+                let center = get_viewport_middle();
+                // apply the zoom
+                apply_zoom(position, zoom, center, 0.3);
 
                 // do transition
                 transitioning.set(true);
             }
             // minus key - zoom out
             "-" => {
-                let oldzoom = zoom.get();
-
-                // calculate the new zoom level
-                let newzoom = calculate_new_zoom(oldzoom, -0.3);
-                zoom.set(newzoom);
-
                 // get middle point of the screen
-                let mpos = get_viewport_middle();
-                // apply the zoom compensation
-                apply_zoom_compensation(mpos, oldzoom, newzoom, position);
+                let center = get_viewport_middle();
+                // apply the zoom
+                apply_zoom(position, zoom, center, -0.3);
 
                 // do transition
                 transitioning.set(true);

@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use web_sys::{MouseEvent, WheelEvent};
 
-use crate::wynnmap::util::{apply_zoom_compensation, calculate_new_zoom};
+use crate::wynnmap::util::apply_zoom;
 
 pub struct MouseEventHandlers<MM, SM, EM, WH>
 where
@@ -69,12 +69,7 @@ pub fn handlers(
         let mpos = mousepos.get().map(f64::from);
 
         // calculate the new zoom level
-        let old_zoom = zoom.get();
-        let new_zoom = calculate_new_zoom(old_zoom, -e.delta_y() / 300.0);
-
-        zoom.set(new_zoom);
-
-        apply_zoom_compensation(mpos, old_zoom, new_zoom, position);
+        apply_zoom(position, zoom, mpos, -e.delta_y() / 300.0);
     };
 
     MouseEventHandlers {
