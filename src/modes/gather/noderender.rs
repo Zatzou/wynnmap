@@ -6,6 +6,7 @@ use wynnmap_types::gather::{GatherSpots, MatData, Material};
 
 use crate::{
     modes::gather::clustering::cluster_all,
+    util::zip_map,
     wynnmap::context::{MapPosition, RelMousePos},
 };
 
@@ -33,14 +34,15 @@ impl GatherNode {
         dist <= self.rad(min_r).powi(2)
     }
 
-    fn within_area(&self, start: [f64; 2], end: [f64; 2], margin: f64) -> bool {
+    #[inline]
+    fn within_area(&self, start: [f64; 2], end: [f64; 2]) -> bool {
         let [x, y] = self.pos.map(f64::from);
         let r = self.radius;
 
-        x + r >= start[0] - margin
-            && x - r <= end[0] + margin
-            && y + r >= start[1] - margin
-            && y - r <= end[1]
+        x.algebraic_add(r) >= start[0]
+            && x.algebraic_sub(r) <= end[0]
+            && y.algebraic_add(r) >= start[1]
+            && y.algebraic_sub(r) <= end[1]
     }
 }
 
@@ -109,23 +111,20 @@ pub fn NodeRenderer(
 
     let clusters = Memo::new(move |_| cluster_all(&nodes.read(), current_setting.read().max_d));
 
-    let culled = move || {
+    let cull_pos = move || {
         let zoom = zoom.get();
 
-        let start = map_pos.get().map(|p| -p / zoom);
-        let end = [
-            start[0] + width.get() / zoom,
-            start[1] + height.get() / zoom,
-        ];
-
-        clusters
+        let start = map_pos
             .get()
-            .into_iter()
-            .filter(|node| node.within_area(start, end, 10.0 / zoom))
-            .collect::<Vec<_>>()
+            .map(|p| p.algebraic_mul(-1.0).algebraic_div(zoom));
+        let end = zip_map(start, [width.get(), height.get()], |s, x| {
+            s.algebraic_add(x.algebraic_div(zoom))
+        });
+
+        (start, end)
     };
 
-    let paths = move || build_paths(&culled(), current_setting.read().min_r);
+    let paths = move || build_paths(&clusters.read(), current_setting.read().min_r, cull_pos());
 
     Effect::new(move || {
         let hov = if let Some(pos) = mouse_rel.get() {
@@ -147,48 +146,54 @@ pub fn NodeRenderer(
             {move || paths().into_iter().map(|(mat_name, path)| {
                 let matdata = data.read().get(&mat_name).cloned().unwrap_or_default();
                 view!{
-                    <path d=path fill=matdata.color.clone() stroke=matdata.prof.color() stroke-width=move || current_setting.read().stroke_w class=format!("mat-{}", mat_name) />
+                    <path
+                        d=path
+                        fill=matdata.color.clone()
+                        stroke=matdata.prof.color()
+                        stroke-width=move || current_setting.read().stroke_w
+                        class=format!("mat-{}", mat_name)
+                    />
                 }
             }).collect::<Vec<_>>()}
         </svg>
     }
 }
 
-fn build_paths(clusters: &[GatherNode], min_r: f64) -> Vec<(Arc<str>, String)> {
-    let mut by_mat: BTreeMap<Arc<str>, String> = BTreeMap::new();
-    let mut counts: BTreeMap<Arc<str>, usize> = BTreeMap::new();
+fn build_paths(
+    clusters: &[GatherNode],
+    min_r: f64,
+    (cull_start, cull_end): ([f64; 2], [f64; 2]),
+) -> Vec<(Arc<str>, String)> {
+    let mut by_mat: BTreeMap<&Arc<str>, (String, usize)> = BTreeMap::new();
 
-    for c in clusters {
-        let [cx, cy] = c.pos.map(f64::from);
+    for c in clusters
+        .iter()
+        .filter(|node| node.within_area(cull_start, cull_end))
+    {
+        let [cx, cy] = c.pos;
         let r = c.rad(min_r);
 
-        let entry = by_mat.entry(c.res.name.clone()).or_default();
+        let (pathstr, count) = by_mat.entry(&c.res.name).or_default();
 
         let _ = write!(
-            entry,
+            pathstr,
             "M{} {}a{} {} 0 1 0 {} 0a{} {} 0 1 0 {} 0z",
-            cx - r,
+            f64::from(cx).algebraic_sub(r),
             cy,
             r,
             r,
-            r * 2.0,
+            r.algebraic_mul(2.0),
             r,
             r,
-            r * -2.0
+            r.algebraic_mul(-2.0)
         );
 
-        *counts.entry(c.res.name.clone()).or_default() += c.count;
+        *count += c.count;
     }
 
-    let mut counts: Vec<_> = counts.into_iter().collect();
-    counts.sort_by_key(|(_, c)| *c);
-    counts.reverse();
+    let mut out: Vec<_> = by_mat.into_iter().collect();
+    out.sort_by_key(|(_, c)| c.1);
+    out.reverse();
 
-    let mut out = Vec::new();
-
-    for (name, _) in counts {
-        out.push(by_mat.remove_entry(&name).unwrap());
-    }
-
-    out
+    out.into_iter().map(|(k, (v, _))| (k.clone(), v)).collect()
 }
