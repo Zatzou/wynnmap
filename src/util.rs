@@ -35,3 +35,13 @@ pub fn fmt_time_short(time: SignedDuration) -> String {
 pub fn as_px(px: impl Display) -> String {
     format!("{px}px")
 }
+
+/// Map over 2 arrays
+#[inline]
+pub fn zip_map<T1: Copy, T2: Copy, O, const N: usize>(
+    lhs: [T1; N],
+    rhs: [T2; N],
+    mut f: impl FnMut(T1, T2) -> O,
+) -> [O; N] {
+    std::array::from_fn(|i| f(lhs[i], rhs[i]))
+}

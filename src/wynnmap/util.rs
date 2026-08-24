@@ -1,6 +1,9 @@
 use leptos::prelude::*;
 
-use crate::wynnmap::{ZOOM_MAX, ZOOM_MIN};
+use crate::{
+    util::zip_map,
+    wynnmap::{ZOOM_MAX, ZOOM_MIN},
+};
 
 /// Calculate the new zoom level based on the current zoom level and the delta and clamp it to the min and max zoom levels
 #[inline]
@@ -59,14 +62,4 @@ pub fn get_viewport_middle() -> [f64; 2] {
     let height = window.inner_height().unwrap().as_f64().unwrap();
 
     [width / 2.0, height / 2.0]
-}
-
-/// Map over 2 arrays
-#[inline]
-pub fn zip_map<T1: Copy, T2: Copy, O, const N: usize>(
-    lhs: [T1; N],
-    rhs: [T2; N],
-    mut f: impl FnMut(T1, T2) -> O,
-) -> [O; N] {
-    std::array::from_fn(|i| f(lhs[i], rhs[i]))
 }

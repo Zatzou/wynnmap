@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use web_sys::{Touch, TouchEvent, TouchList};
 
-use crate::wynnmap::util::{apply_zoom, zip_map};
+use crate::{util::zip_map, wynnmap::util::apply_zoom};
 
 pub struct TouchEventHandlers<TS, TM>
 where

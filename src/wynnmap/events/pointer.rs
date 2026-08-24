@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use web_sys::PointerEvent;
 
-use crate::wynnmap::{context::RelMousePos, util::zip_map};
+use crate::{util::zip_map, wynnmap::context::RelMousePos};
 
 pub struct PointerEventHandlers<PM, PD, PU, PL>
 where
