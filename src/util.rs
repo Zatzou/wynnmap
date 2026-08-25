@@ -15,7 +15,7 @@ const fn times(time: SignedDuration) -> (i64, i64, i64, i64) {
 pub fn fmt_time_long(time: SignedDuration) -> String {
     match times(time) {
         (0, 0, 0, s) => format!("{s}s"),
-        (0, 0, m, s) => format!("{m}m {s}"),
+        (0, 0, m, s) => format!("{m}m {s}s"),
         (0, h, m, s) => format!("{h}h {m}m {s}s"),
         (d, h, m, s) => format!("{d}d {h}h {m}m {s}s"),
     }
