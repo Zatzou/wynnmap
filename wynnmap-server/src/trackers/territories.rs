@@ -305,11 +305,16 @@ struct WynnTerritory {
 impl From<WynnTerritory> for Territory {
     fn from(t: WynnTerritory) -> Self {
         let rescount = |rt| {
-            t.resources
+            let (base, actual) = t
+                .resources
                 .iter()
                 .find(|r| r.kind == rt)
-                .map(|r| r.base_gen)
-                .unwrap_or(0)
+                .map(|r| (r.base_gen, r.generation))
+                .unwrap_or((0, 0));
+
+            // fix for the wynn api returning incorrect base generation values
+            // zero the false base gen value based on the actual generation values
+            base.min(actual)
         };
 
         Self {
