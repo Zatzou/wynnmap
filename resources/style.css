@@ -1,6 +1,7 @@
 @font-face {
     font-family: "Roboto";
-    src: url("./Roboto-VariableFont_wdth,wght.ttf") format("truetype-variations");
+    font-display: optional;
+    src: url("/Roboto-VariableFont_wdth,wght.ttf") format("truetype-variations");
 }
 
 @import "./css/html.css";
