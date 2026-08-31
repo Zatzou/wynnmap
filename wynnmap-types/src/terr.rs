@@ -42,9 +42,7 @@ pub fn find_externals(
 
         for ext in exts {
             if let Some(external) = territories.get(&ext) {
-                for territory in &external.connections {
-                    externals.insert(territory.clone());
-                }
+                externals.append(&mut external.connections.clone());
             }
         }
     }
