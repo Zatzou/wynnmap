@@ -149,7 +149,7 @@ impl ShareUrlData {
 pub struct V1Guild {
     name: String,
     prefix: String,
-    color: (u8, u8, u8),
+    color: [u8; 3],
 }
 
 impl From<Guild> for V1Guild {
@@ -172,7 +172,7 @@ impl From<V1Guild> for Guild {
             prefix: Arc::from(value.prefix),
             color: Some(Arc::from(format!(
                 "#{:02X}{:02X}{:02X}",
-                value.color.0, value.color.1, value.color.2
+                value.color[0], value.color[1], value.color[2]
             ))),
         }
     }

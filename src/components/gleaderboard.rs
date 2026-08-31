@@ -57,7 +57,7 @@ fn GleaderboardContent(
                 key=|(k, v)| (k.clone(), *v)
                 children=move |(k, v)| {
                     let col = k.get_color();
-                    let col = format!("{}, {}, {}", col.0, col.1, col.2);
+                    let col = format!("{}, {}, {}", col[0], col[1], col[2]);
                     let name = k.name.clone();
                     let link = move || format!("https://wynncraft.com/stats/guild/{}", name.clone());
 

@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use crc32fast::Hasher;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -38,7 +37,7 @@ impl Guild {
     ///
     /// This function falls back to calculate the color if no color is given
     #[inline]
-    pub fn get_color(&self) -> (u8, u8, u8) {
+    pub fn get_color(&self) -> [u8; 3] {
         if let Some(col) = &self.color {
             let col = col.strip_prefix("#").map_or(col.as_ref(), |s| s);
 
@@ -48,7 +47,7 @@ impl Guild {
                 6 | 8 => {
                     let parse = |s| u8::from_str_radix(s, 16).unwrap_or(0);
 
-                    (parse(&col[0..2]), parse(&col[2..4]), parse(&col[4..6]))
+                    [parse(&col[0..2]), parse(&col[2..4]), parse(&col[4..6])]
                 }
                 // else calculate the color
                 _ => self.calculate_color(),
@@ -64,21 +63,17 @@ impl Guild {
         // reformat the color since wynntils appears to give some odd colors
         let col = self.get_color();
 
-        format!("#{:02X}{:02X}{:02X}", col.0, col.1, col.2)
+        format!("#{:02X}{:02X}{:02X}", col[0], col[1], col[2])
     }
 
     /// Calculate the guild color using the wynntils crc32 method
     ///
     /// This gives the default guild color which wynntils would assign a given guild
     #[inline]
-    pub fn calculate_color(&self) -> (u8, u8, u8) {
-        let mut hasher = Hasher::new();
-        hasher.update(self.name.as_bytes());
-        let hash = hasher.finalize();
+    pub fn calculate_color(&self) -> [u8; 3] {
+        let [_, r, g, b] = crc32fast::hash(self.name.as_bytes()).to_be_bytes();
 
-        let bytes: Vec<u8> = hash.to_ne_bytes().into_iter().rev().collect();
-
-        (bytes[1], bytes[2], bytes[3])
+        [r, g, b]
     }
 
     #[inline]

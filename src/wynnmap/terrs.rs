@@ -65,7 +65,7 @@ pub fn Territory(
 ) -> impl IntoView {
     let col_rgb = move || {
         let col = state.read().guild.get_color();
-        format!("{} {} {}", col.0, col.1, col.2)
+        format!("{} {} {}", col[0], col[1], col[2])
     };
 
     // toggles for showing territory parts
