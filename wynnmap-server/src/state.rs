@@ -5,6 +5,7 @@ use jiff::Timestamp;
 use opentelemetry::metrics::UpDownCounter;
 use tokio::sync::{RwLock, broadcast};
 use wynnmap_types::{
+    drops::ItemDrops,
     gather::GatherSpots,
     guild::Guild,
     maptile::MapTile,
@@ -49,5 +50,11 @@ pub struct TerritoryStateInner {
 #[derive(Debug, Default)]
 pub struct GatherState {
     pub nodes: RwLock<Arc<GatherSpots>>,
+    pub etag: RwLock<Arc<str>>,
+}
+
+#[derive(Debug, Default)]
+pub struct DropsState {
+    pub drops: RwLock<Arc<ItemDrops>>,
     pub etag: RwLock<Arc<str>>,
 }

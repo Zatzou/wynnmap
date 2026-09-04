@@ -10,7 +10,9 @@ use notfound::NotFound;
 use settings::provide_settings;
 
 use crate::{
-    modes::gather::GatherMap, sectimer::provide_second_timer, wynnmap::context::MapContextProvider,
+    modes::{drops::DropsMap, gather::GatherMap},
+    sectimer::provide_second_timer,
+    wynnmap::context::MapContextProvider,
 };
 
 mod components;
@@ -45,6 +47,7 @@ pub fn App() -> impl IntoView {
                     <Route path=path!("") view=WarMap />
                     <Route path=path!("plan") view=PlanningMap />
                     <Route path=path!("gather") view=GatherMap />
+                    <Route path=path!("drops") view=DropsMap />
                 </Routes>
             </Router>
 

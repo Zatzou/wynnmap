@@ -13,12 +13,32 @@ use leptos::{
 use leptos_use::{
     UseWebSocketOptions, UseWebSocketReturn, core::ConnectionReadyState, use_websocket_with_options,
 };
+use serde::de::DeserializeOwned;
+use thiserror::Error;
 use wynnmap_types::{
     gather::{GatherSpots, MatData},
     maptile::MapTile,
     terr::{MapState, TerrState, TerrTimestamps, Territory},
     ws::TerrSockMessage,
 };
+
+#[derive(Debug, Error)]
+pub enum NetworkError {
+    #[error("{0}")]
+    GlooNet(#[from] gloo_net::Error),
+    #[error("{0} {1}")]
+    BadStatus(u16, String),
+}
+
+pub async fn load_json<T: DeserializeOwned>(url: impl AsRef<str>) -> Result<T, NetworkError> {
+    let res = Request::get(url.as_ref()).send().await?;
+
+    if (200..=299).contains(&res.status().into()) {
+        Ok(res.json().await?)
+    } else {
+        Err(NetworkError::BadStatus(res.status(), res.status_text()))
+    }
+}
 
 pub async fn load_map_tiles() -> Result<Vec<MapTile>, gloo_net::Error> {
     let r = Request::get("/api/v1/images/maps.json").send().await?;

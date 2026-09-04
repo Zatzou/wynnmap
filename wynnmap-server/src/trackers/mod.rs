@@ -1,3 +1,4 @@
+pub mod drops;
 pub mod gather;
 pub mod guilds;
 pub mod images;

@@ -1,0 +1,58 @@
+.dropsearch {
+    display: flex;
+    flex-direction: column;
+
+    @apply p-2 gap-2;
+
+    >input {
+        @apply border border-neutral-600 p-1 px-2 rounded-lg;
+    }
+}
+
+.dropsearchres {
+    display: flex;
+    flex-direction: column;
+
+    >div {
+        cursor: pointer;
+        @apply p-2 hover:bg-neutral-700
+    }
+}
+
+.dropsiteminfo {
+    display: flex;
+    flex-direction: column;
+
+    >*:not(:last-child) {
+        border-bottom: 1px solid;
+
+        @apply border-neutral-600;
+    }
+
+    >.backbtn {
+        align-items: center;
+        cursor: pointer;
+        @apply p-2 gap-2 hover:bg-neutral-700;
+
+        h2 {
+            @apply text-xl;
+        }
+    }
+
+    >.info {
+        @apply p-2;
+
+        h2 {
+            @apply text-xl;
+        }
+    }
+
+    >.dropsources {
+        display: flex;
+        flex-direction: column;
+
+        >.source {
+            @apply p-2;
+        }
+    }
+}

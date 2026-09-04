@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 pub mod ws;
 
+pub mod drops;
 pub mod encoding;
 pub mod gather;
 pub mod guild;
