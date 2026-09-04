@@ -63,10 +63,7 @@ pub fn Territory(
     #[prop(into)] state: Signal<TerrState>,
     #[prop(optional)] hide_timers: bool,
 ) -> impl IntoView {
-    let col_rgb = move || {
-        let col = state.read().guild.get_color();
-        format!("{} {} {}", col[0], col[1], col[2])
-    };
+    let col_rgb = move || state.read().guild.get_color().to_rgb_values();
 
     // toggles for showing territory parts
     let show_gtag = use_toggle("terrs_show_guildtag", true);

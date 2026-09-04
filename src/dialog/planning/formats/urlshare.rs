@@ -154,7 +154,7 @@ pub struct V1Guild {
 
 impl From<Guild> for V1Guild {
     fn from(value: Guild) -> Self {
-        let col = value.get_color();
+        let col = value.get_color().into();
 
         Self {
             name: value.name.to_string(),

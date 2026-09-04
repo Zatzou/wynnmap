@@ -31,7 +31,7 @@
                 display: contents;
 
                 * {
-                    background-color: rgba(var(--col), 0.3);
+                    background-color: rgb(var(--col) / 0.3);
                 }
 
                 *:first-child {
@@ -54,7 +54,7 @@
 
             .glrow:hover {
                 * {
-                    background-color: rgba(var(--col), 0.7);
+                    background-color: rgb(var(--col) / 0.7);
                 }
 
                 *:first-child {
