@@ -74,8 +74,8 @@ impl GatherSpotsTracker {
             }
 
             let mut types = types.into_iter().collect::<Vec<_>>();
-            // types.sort_by_key(|r| r.name.clone());
             types.sort_by_key(|r| (r.level, r.name.clone()));
+
             types
         };
 
