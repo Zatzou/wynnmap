@@ -1,5 +1,8 @@
 use leptos::{prelude::*, task::spawn_local};
-use wynnmap_types::drops::{Item, ItemDrops};
+use wynnmap_types::{
+    color::Color,
+    drops::{Item, ItemDrops},
+};
 
 use crate::{
     components::{sidebar::Sidebar, sidecard::SideCard},
@@ -105,10 +108,18 @@ fn ItemSelected(selected: Item, back: impl Fn() + 'static) -> impl IntoView {
             </div>
 
             <div class="dropsources">
-                {selected.dropped_by.into_iter().map(|(name, locations)| view! {
-                    <div class="source">
-                        {name}
-                    </div>
+                {selected.dropped_by.into_iter().map(|(name, locations)| {
+                    let col = Color::from_hash(name.as_bytes()).to_rgb_values();
+
+                    view! {
+                        <div class="source" style:--col=col>
+                            <div/>
+                            <div>
+                                <span>{name}</span>
+                                <span>{locations.len()}</span>
+                            </div>
+                        </div>
+                    }
                 }).collect::<Vec<_>>()}
             </div>
         </div>

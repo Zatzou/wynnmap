@@ -48,11 +48,35 @@
     }
 
     >.dropsources {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: min-content auto auto;
+
+        background-color: black;
 
         >.source {
-            @apply p-2;
+            display: grid;
+            grid-column: 1/4;
+            grid-template-columns: subgrid;
+
+            background-color: rgb(var(--col) / 0.4);
+
+            >div:first-child {
+                width: 0.5lh;
+
+                background-color: rgb(var(--col));
+            }
+
+            >div:last-child {
+                display: grid;
+                grid-column: 2/4;
+                grid-template-columns: subgrid;
+
+                @apply p-2;
+
+                >span:last-child {
+                    text-align: right;
+                }
+            }
         }
     }
 }

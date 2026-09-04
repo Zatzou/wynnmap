@@ -20,8 +20,8 @@ pub fn SpotRenderer(selected_item: RwSignal<Option<Item>>) -> impl IntoView {
                 key=move |(name, locations)| (name.clone(), locations.clone())
                 children=move |(name, locations)| {
                     let col = Color::from_hash(name.as_bytes());
-                    let fill = col.to_rgb_with_alpha(0.5);
-                    let stroke = col.to_rgb();
+                    let fill = col.to_rgb_with_alpha(0.4);
+                    let stroke = col.to_hex();
 
                     locations.into_iter().map(|loc| {
                         let [x, _, y] = loc.location;
