@@ -22,7 +22,7 @@ pub fn SpotRenderer(selected_item: RwSignal<Option<Item>>) -> impl IntoView {
             >
                 {locations.into_iter().map(|loc| {
                     let [x, _, y] = loc.location;
-                    let r = loc.radius;
+                    let r = loc.radius.max(5);
 
                     view! {
                         <circle cx=x cy=y r=r fill="red" stroke="black" />
