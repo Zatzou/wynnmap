@@ -63,7 +63,7 @@ async fn get_image(
             let resp_headers = [
                 (header::CONTENT_TYPE, mime),
                 (header::ETAG, &format!("\"{name}\"")),
-                (header::CACHE_CONTROL, "public, max-age=86400, immutable"),
+                (header::CACHE_CONTROL, "public, max-age=2592000, immutable"),
             ];
 
             if check_etag(&headers, etag) {

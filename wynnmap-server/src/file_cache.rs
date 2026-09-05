@@ -28,7 +28,7 @@ pub async fn file_cache_control(req: Request, next: Next) -> Response<Body> {
             "text/css" | "text/javascript" | "application/wasm" | "font/ttf" => {
                 parts.headers.insert(
                     header::CACHE_CONTROL,
-                    header::HeaderValue::from_static("public, max-age=604800"),
+                    header::HeaderValue::from_static("public, max-age=2592000"),
                 );
             }
 
