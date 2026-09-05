@@ -77,6 +77,7 @@ fn Modeswitch() -> impl IntoView {
                 <ModeswitchItem location="/" hide=move || cur_path.get() == "/"/>
                 <ModeswitchItem location="/plan" hide=move || cur_path.get() == "/plan"/>
                 <ModeswitchItem location="/gather" hide=move || cur_path.get() == "/gather"/>
+                <ModeswitchItem location="/drops" hide=move || cur_path.get() == "/drops"/>
             </div>
         </div>
     }
@@ -100,12 +101,14 @@ fn ModeswitchTitle(#[prop(into)] cur: Signal<String>) -> impl IntoView {
         "/" => "War mode",
         "/plan" => "Planning mode",
         "/gather" => "Gather mode",
+        "/drops" => "Item Drops",
         _ => "Unknown mode",
     };
     let cur_icon = move || match cur.get().as_str() {
         "/" => view! {<icons::Swords size=24/>}.into_any(),
         "/plan" => view! {<icons::LandPlot size=24/>}.into_any(),
         "/gather" => view! {<icons::Axe size=24/>}.into_any(),
+        "/drops" => view! {<icons::ToolCase size=24/>}.into_any(),
         _ => ().into_any(),
     };
 
