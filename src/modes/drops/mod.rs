@@ -30,6 +30,7 @@ pub fn DropsMap() -> impl IntoView {
 
     spawn_local(load_data());
 
+    let search_str = RwSignal::new(String::new());
     let selected_item = RwSignal::new(None::<Item>);
 
     view! {
@@ -45,7 +46,7 @@ pub fn DropsMap() -> impl IntoView {
             {move || if let Some(selected) = selected_item.get() {
                 view! { <ItemSelected selected back=move || selected_item.set(None)/> }.into_any()
             } else {
-                view! { <DropSearch itemdrops selected_item/> }.into_any()
+                view! { <DropSearch itemdrops selected_item search_str/> }.into_any()
             }}
         </Sidebar>
     }
@@ -55,9 +56,8 @@ pub fn DropsMap() -> impl IntoView {
 fn DropSearch(
     itemdrops: RwSignal<ItemDrops>,
     selected_item: RwSignal<Option<Item>>,
+    search_str: RwSignal<String>,
 ) -> impl IntoView {
-    let search_str = RwSignal::new(String::new());
-
     let results = Memo::new(move |_| {
         let search = search_str.get().to_ascii_lowercase();
 
