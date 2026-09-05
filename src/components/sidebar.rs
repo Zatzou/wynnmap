@@ -48,7 +48,7 @@ pub fn Sidebar(#[prop(optional)] children: Option<Children>) -> impl IntoView {
 
             // bottom text
             <div>
-                <h2 class="text-neutral-500 p-1 px-2">
+                <h2 class="text-neutral-400 p-1 px-2">
                     <a class="underline" href="https://github.com/Zatzou/wynnmap" target="_blank">"Wynnmap"</a>" "{env!("CARGO_PKG_VERSION")}
                 </h2>
             </div>
