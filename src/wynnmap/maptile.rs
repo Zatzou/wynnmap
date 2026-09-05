@@ -4,17 +4,13 @@ use wynnmap_types::maptile::MapTile;
 use crate::{settings::use_toggle, util::as_px, wynnmap::context::DefaultMapTiles};
 
 #[component]
-pub fn MapTile(
-    #[prop(into)] tile: Signal<MapTile>,
-    #[prop(default = false.into(), into)] grayscale: Signal<bool>,
-) -> impl IntoView {
+pub fn MapTile(#[prop(into)] tile: Signal<MapTile>) -> impl IntoView {
     let location = move || tile.read().location;
 
     view! {
         <img
             src=tile.get().url
             class="wynnmap-tile"
-            class:grayscale=grayscale
             style:width=move || as_px(location().width())
             style:height=move || as_px(location().height())
             style:top=move || as_px(location().top_side())
@@ -31,7 +27,7 @@ pub fn MapTiles(
     let show_non_main = use_toggle("show_non_main_maps", false);
 
     view! {
-        <div class="wynnmap-tiles">
+        <div class="wynnmap-tiles" class:tiles-grayscale=grayscale>
             {move || {
                 tiles.get()
                     .into_iter()
@@ -42,7 +38,7 @@ pub fn MapTiles(
                             show_non_main.get()
                         }
                     })
-                    .map(|tile| view! { <MapTile tile grayscale /> })
+                    .map(|tile| view! { <MapTile tile /> })
                     .collect_view()
             }}
         </div>

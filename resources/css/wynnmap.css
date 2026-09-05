@@ -34,6 +34,10 @@
     user-select: none;
 }
 
+.wynnmap-tiles.tiles-grayscale {
+    filter: grayscale(1) contrast(0.8) brightness(0.4);
+}
+
 .wynnmap-tile {
     position: fixed;
     max-width: unset;
