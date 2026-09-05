@@ -43,6 +43,8 @@ icon!(ChevronUp { <path d="m18 15-6-6-6 6" /> });
 
 icon!(ChevronDown { <path d="m6 9 6 6 6-6" /> });
 
+icon!(ChevronLeft { <path d="m15 18-6-6 6-6"/> });
+
 icon!(Swords {
     <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
     <line x1="13" x2="19" y1="19" y2="13" />

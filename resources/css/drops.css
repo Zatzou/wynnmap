@@ -30,8 +30,10 @@
     }
 
     >.backbtn {
+        display: flex;
         align-items: center;
         cursor: pointer;
+
         @apply p-2 gap-2 hover:bg-neutral-700;
 
         h2 {

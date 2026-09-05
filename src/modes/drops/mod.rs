@@ -99,6 +99,7 @@ fn ItemSelected(selected: Item, back: impl Fn() + 'static) -> impl IntoView {
     view! {
         <div class="dropsiteminfo">
             <div class="backbtn" on:click=move |_| back()>
+                <icons::ChevronLeft/>
                 <h2>"Back"</h2>
             </div>
 
