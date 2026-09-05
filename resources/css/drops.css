@@ -19,6 +19,15 @@
     }
 }
 
+.dropsearch-hint {
+    display: flex;
+    flex-direction: column;
+
+    text-align: center;
+
+    @apply text-neutral-300;
+}
+
 .dropsiteminfo {
     display: flex;
     flex-direction: column;

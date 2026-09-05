@@ -58,7 +58,7 @@ fn DropSearch(
 ) -> impl IntoView {
     let search_str = RwSignal::new(String::new());
 
-    let results = move || {
+    let results = Memo::new(move |_| {
         let search = search_str.get().to_ascii_lowercase();
 
         if !search.is_empty() {
@@ -72,7 +72,7 @@ fn DropSearch(
         } else {
             Vec::new()
         }
-    };
+    });
 
     view! {
         <div class="dropsearch">
@@ -80,7 +80,7 @@ fn DropSearch(
         </div>
         <div class="dropsearchres">
             <For
-                each=results
+                each=move || results.get()
                 key=move |item| item.name.clone()
                 children=move |item| {
                     view! {
@@ -91,6 +91,12 @@ fn DropSearch(
                 }
             />
         </div>
+        <Show when=move || results.read().is_empty()>
+            <div class="dropsearch-hint">
+                <p>"Start typing to search"</p>
+                <p>"Only items with known drop locations are included"</p>
+            </div>
+        </Show>
     }
 }
 

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 pub type ItemDrops = Vec<Item>;
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Item {
     pub name: Arc<str>,
     pub kind: Arc<str>,
