@@ -91,3 +91,20 @@
         }
     }
 }
+
+.sidecard .dropinfocard {
+    display: flex;
+    flex-direction: row;
+
+    padding: 0 !important;
+
+    >div:first-child {
+        width: 0.5lh;
+
+        background-color: rgb(var(--col));
+    }
+
+    >div:last-child {
+        @apply p-2
+    }
+}
