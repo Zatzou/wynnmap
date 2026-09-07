@@ -11,7 +11,6 @@ use serde::Deserialize;
 use tokio::{
     select,
     sync::{RwLock, broadcast, mpsc},
-    time::Instant,
 };
 use tracing::{Instrument, error, info_span};
 use uuid::Uuid;
@@ -100,14 +99,7 @@ impl TerritoryTracker {
 
                             let diff = exp.duration_since(now);
 
-                            tokio::time::sleep_until(
-                                Instant::now()
-                                    + diff.try_into().unwrap_or_default()
-                                    + Duration::from_secs(1),
-                            )
-                            .await;
-
-                            Duration::from_secs(0)
+                            diff.try_into().unwrap_or_default()
                         } else {
                             Duration::from_mins(1)
                         }
