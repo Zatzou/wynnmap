@@ -44,11 +44,15 @@ async fn terr_list(
     let resp_headers = [
         (
             header::CACHE_CONTROL,
-            String::from("public, max-age=10, immutable, must-revalidate"),
+            String::from("public, max-age=10, must-revalidate"),
         ),
-        (header::ETAG, format!("\"{etag}\"")),
+        (
+            header::AGE,
+            (10 - Timestamp::now().duration_until(expires).as_secs()).to_string(),
+        ),
         (header::EXPIRES, header_date(expires)),
         (header::LAST_MODIFIED, header_date(modified)),
+        (header::ETAG, format!("\"{etag}\"")),
     ];
 
     if check_etag(&headers, &etag) {
@@ -68,7 +72,7 @@ async fn map_state(State(state): State<Arc<TerritoryState>>) -> impl IntoRespons
     let resp_headers = [
         (
             header::CACHE_CONTROL,
-            String::from("public, max-age=10, immutable, must-revalidate"),
+            String::from("public, max-age=10, must-revalidate"),
         ),
         (
             header::AGE,
