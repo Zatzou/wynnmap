@@ -5,7 +5,8 @@ use std::{
     time::Duration,
 };
 
-use jiff::{SignedDuration, Timestamp};
+use axum::response::sse::Event;
+use jiff::Timestamp;
 use opentelemetry::{global, metrics::Gauge};
 use serde::Deserialize;
 use tokio::{
@@ -50,8 +51,18 @@ impl TerritoryTracker {
         let client = util::reqwest_client_from_conf(config);
 
         let (bc_bytes_s, bc_bytes_r) = broadcast::channel(100);
+        let (bc_events, _bc_events_r) = broadcast::channel(100);
 
         let meter = global::meter("wynnmap-server");
+
+        {
+            let bc_events = bc_events.clone();
+            let _bc_counter = meter
+                .i64_observable_up_down_counter("active_broadcast_receivers")
+                .with_callback(move |observer| {
+                    observer.observe(bc_events.receiver_count() as i64, &[])
+                });
+        }
 
         Self {
             client,
@@ -75,6 +86,7 @@ impl TerritoryTracker {
                     .i64_up_down_counter("active-ws-sessions")
                     .with_description("Active websocket sessions")
                     .build(),
+                bc_events,
             }),
         }
     }
@@ -97,7 +109,7 @@ impl TerritoryTracker {
                         if let Some(exp) = expires {
                             let now = Timestamp::now();
 
-                            let diff = exp.duration_since(now) + SignedDuration::from_millis(500);
+                            let diff = exp.duration_since(now);
 
                             diff.try_into().unwrap_or_default()
                         } else {
@@ -151,7 +163,8 @@ impl TerritoryTracker {
                 .send()
                 .await?;
 
-            let expires = res.expires();
+            // add 1s buffer to prevent querying before the data refreshes
+            let expires = res.expires().map(|exp| exp + Duration::from_secs(1));
             let wynntick = res
                 .get_header("territorylasttick")
                 .and_then(|t| t.parse().ok());
@@ -249,9 +262,10 @@ impl TerritoryTracker {
         // send broadcasts to notify websockets
         if !old_state.is_empty() {
             async {
+                // ws
                 let mut updateds = BTreeMap::new();
 
-                for (tname, new) in state {
+                for (tname, new) in state.clone() {
                     let old = old_state.get(&tname);
 
                     if let Some(old) = old
@@ -270,6 +284,31 @@ impl TerritoryTracker {
                         .send(TerrSockMessage::Update(updateds, timestamps))
                         .await?;
                 }
+
+                // sse
+                let mut updateds = BTreeMap::new();
+
+                for (name, new) in state {
+                    let old = old_state.get(&name);
+
+                    if let Some(old) = old
+                        && old != &new
+                    {
+                        updateds.insert(name, new);
+                    } else if old.is_none() {
+                        updateds.insert(name, new);
+                    }
+                }
+
+                if !updateds.is_empty() {
+                    self.state
+                        .bc_events
+                        .send(Event::default().event("terr").json_data(updateds)?)?;
+                }
+
+                self.state
+                    .bc_events
+                    .send(Event::default().event("ts").json_data(timestamps)?)?;
 
                 Ok::<(), AnyError>(())
             }

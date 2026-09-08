@@ -81,7 +81,7 @@ pub fn WarMap() -> impl IntoView {
 
     spawn_local(load_owners());
 
-    datasource::ws_terr_updates(state, last_updated);
+    datasource::sse_terr_updates(state, last_updated);
 
     let hovered = RwSignal::new(None);
     let selected = RwSignal::new(None);

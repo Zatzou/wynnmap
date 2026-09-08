@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, sync::Arc};
 
-use axum::body::Bytes;
+use axum::{body::Bytes, response::sse::Event};
 use jiff::Timestamp;
 use opentelemetry::metrics::UpDownCounter;
 use tokio::sync::{RwLock, broadcast};
@@ -33,6 +33,8 @@ pub struct TerritoryState {
     /// A broadcast receiver for encoded territory updates
     pub bc_bytes: Arc<broadcast::Receiver<Arc<Vec<u8>>>>,
     pub ws_conns: UpDownCounter<i64>,
+
+    pub bc_events: broadcast::Sender<Event>,
 }
 
 #[derive(Debug, Default)]

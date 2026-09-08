@@ -8,12 +8,13 @@ use axum::{
         ws::{Message, WebSocket},
     },
     http::{HeaderMap, header},
-    response::IntoResponse,
+    response::{IntoResponse, Sse, sse::Event},
     routing::get,
 };
 use jiff::Timestamp;
 use reqwest::StatusCode;
 use tokio::{select, sync::broadcast, time::timeout};
+use tokio_stream::wrappers::BroadcastStream;
 use wynnmap_types::terr::MapState;
 
 use crate::{AnyError, etag::check_etag, header_date, state::TerritoryState};
@@ -23,6 +24,7 @@ pub fn router(state: Arc<TerritoryState>) -> axum::Router {
         .route("/list", get(terr_list))
         .route("/state", get(map_state))
         .route("/state/ws", get(ws_handler))
+        .route("/state/sse", get(sse_handler))
         .with_state(state)
 }
 
@@ -145,4 +147,10 @@ async fn handle_socket(
     }
 
     Ok(())
+}
+
+async fn sse_handler(State(state): State<Arc<TerritoryState>>) -> Sse<BroadcastStream<Event>> {
+    let bc_channel = &state.bc_events;
+
+    Sse::new(BroadcastStream::new(bc_channel.subscribe()))
 }
