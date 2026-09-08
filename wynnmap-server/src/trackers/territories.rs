@@ -115,12 +115,12 @@ impl TerritoryTracker {
 
                             diff.try_into().unwrap_or_default()
                         } else {
-                            Duration::from_mins(1)
+                            Duration::from_secs(10)
                         }
                     }
                     Err(e) => {
                         error!(error = ?e, "Error occured while querying territories");
-                        Duration::from_mins(10)
+                        Duration::from_mins(1)
                     }
                 };
 
