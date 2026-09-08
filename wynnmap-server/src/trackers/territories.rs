@@ -62,7 +62,8 @@ impl TerritoryTracker {
                 .i64_observable_up_down_counter("active_broadcast_receivers")
                 .with_callback(move |observer| {
                     observer.observe(bc_events.receiver_count() as i64, &[])
-                });
+                })
+                .build();
         }
 
         Self {
