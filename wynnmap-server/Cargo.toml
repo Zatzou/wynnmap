@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-axum = { version = "0.8", features = ["ws"] }
+axum = { version = "0.8", features = ["http2"] }
 base64 = "0.23"
 crc32fast = "1"
 etag = "4"
