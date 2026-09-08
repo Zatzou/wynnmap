@@ -5,7 +5,7 @@ use std::{
     time::Duration,
 };
 
-use jiff::Timestamp;
+use jiff::{SignedDuration, Timestamp};
 use opentelemetry::{global, metrics::Gauge};
 use serde::Deserialize;
 use tokio::{
@@ -97,7 +97,7 @@ impl TerritoryTracker {
                         if let Some(exp) = expires {
                             let now = Timestamp::now();
 
-                            let diff = exp.duration_since(now);
+                            let diff = exp.duration_since(now) + SignedDuration::from_millis(500);
 
                             diff.try_into().unwrap_or_default()
                         } else {
