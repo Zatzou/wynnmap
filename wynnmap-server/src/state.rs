@@ -34,7 +34,7 @@ pub struct TerritoryState {
     pub bc_bytes: Arc<broadcast::Receiver<Arc<Vec<u8>>>>,
     pub ws_conns: UpDownCounter<i64>,
 
-    pub bc_events: broadcast::Sender<Event>,
+    pub bc_events: Arc<broadcast::Sender<Event>>,
 }
 
 #[derive(Debug, Default)]

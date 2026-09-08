@@ -51,7 +51,8 @@ impl TerritoryTracker {
         let client = util::reqwest_client_from_conf(config);
 
         let (bc_bytes_s, bc_bytes_r) = broadcast::channel(100);
-        let (bc_events, _bc_events_r) = broadcast::channel(100);
+        let (bc_events, _) = broadcast::channel(100);
+        let bc_events = Arc::new(bc_events);
 
         let meter = global::meter("wynnmap-server");
 
