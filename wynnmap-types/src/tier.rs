@@ -2,7 +2,6 @@ use std::fmt::Display;
 
 use jiff::SignedDuration;
 use serde::{Deserialize, Serialize};
-use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(
     Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Default, PartialOrd, Ord,
@@ -78,42 +77,6 @@ impl WynnTier {
             Self::High
         } else {
             Self::VeryHigh
-        }
-    }
-}
-
-#[repr(u8)]
-#[derive(Clone, Debug, Deserialize_repr, Serialize_repr, PartialEq)]
-pub(crate) enum CompactTier {
-    VeryLow = 0,
-    Low = 1,
-    Medium = 2,
-    High = 3,
-    VeryHigh = 4,
-}
-
-impl From<CompactTier> for WynnTier {
-    #[inline]
-    fn from(value: CompactTier) -> Self {
-        match value {
-            CompactTier::VeryLow => Self::VeryLow,
-            CompactTier::Low => Self::Low,
-            CompactTier::Medium => Self::Medium,
-            CompactTier::High => Self::High,
-            CompactTier::VeryHigh => Self::VeryHigh,
-        }
-    }
-}
-
-impl From<WynnTier> for CompactTier {
-    #[inline]
-    fn from(value: WynnTier) -> Self {
-        match value {
-            WynnTier::VeryLow => Self::VeryLow,
-            WynnTier::Low => Self::Low,
-            WynnTier::Medium => Self::Medium,
-            WynnTier::High => Self::High,
-            WynnTier::VeryHigh => Self::VeryHigh,
         }
     }
 }

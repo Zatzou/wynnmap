@@ -6,8 +6,5 @@ edition = "2024"
 [dependencies]
 crc32fast = "1"
 jiff = { version = "0.2", features = ["serde"] }
-rmp-serde = "1.3"
 serde = { version = "1", features = ["derive", "rc"] }
-serde_repr = "0.1"
 uuid = { version = "1", features = ["serde"] }
-zstd = "0.14"

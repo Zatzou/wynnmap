@@ -9,19 +9,15 @@ use axum::response::sse::Event;
 use jiff::Timestamp;
 use opentelemetry::{global, metrics::Gauge};
 use serde::Deserialize;
-use tokio::{
-    select,
-    sync::{RwLock, broadcast, mpsc},
-};
+use tokio::sync::{RwLock, broadcast};
 use tracing::{Instrument, error, info_span};
 use uuid::Uuid;
 use wynnmap_types::{
-    Region, encoding,
+    Region,
     guild::Guild,
     resources::{BaseResGen, ResourceType, ResourceValues, Resources},
-    terr::{CompactState, TerrState, Territory},
+    terr::{TerrState, Territory},
     tier::WynnTier,
-    ws::TerrSockMessage,
 };
 
 use crate::{
@@ -36,7 +32,6 @@ pub struct TerritoryTracker {
     client: reqwest::Client,
     guilds: Arc<RwLock<BTreeMap<Arc<str>, Guild>>>,
 
-    bc_bytes: broadcast::Sender<Arc<Vec<u8>>>,
     terrs_updated: Gauge<i64>,
 
     updated: Gauge<i64>,
@@ -50,7 +45,6 @@ impl TerritoryTracker {
     pub fn with_config(config: &Config, guild_state: &GuildState) -> Self {
         let client = util::reqwest_client_from_conf(config);
 
-        let (bc_bytes_s, bc_bytes_r) = broadcast::channel(100);
         let (bc_events, _) = broadcast::channel(100);
         let bc_events = Arc::new(bc_events);
 
@@ -70,7 +64,6 @@ impl TerritoryTracker {
             client,
             guilds: guild_state.guilds.clone(),
 
-            bc_bytes: bc_bytes_s,
             terrs_updated: meter
                 .i64_gauge("terrs_updated")
                 .with_description("Territories updated this cycle")
@@ -83,11 +76,6 @@ impl TerritoryTracker {
             state: Arc::new(TerritoryState {
                 inner: Default::default(),
 
-                bc_bytes: Arc::new(bc_bytes_r),
-                ws_conns: meter
-                    .i64_up_down_counter("active-ws-sessions")
-                    .with_description("Active websocket sessions")
-                    .build(),
                 bc_events,
             }),
         }
@@ -95,16 +83,13 @@ impl TerritoryTracker {
 
     pub fn run(self) -> Arc<TerritoryState> {
         let state = self.state.clone();
-        let (notify_send, mut notify_recv) = mpsc::channel(100);
-        let bc_bytes = self.bc_bytes.clone();
 
         // tracker code
         tokio::spawn(async move {
             let tracker = self;
 
             loop {
-                let sender = notify_send.clone();
-                let res = tracker.query_territories(sender).await;
+                let res = tracker.query_territories().await;
 
                 let waittime = match res {
                     Ok(expires) => {
@@ -128,36 +113,11 @@ impl TerritoryTracker {
             }
         });
 
-        // notifier code
-        {
-            let state = state.inner.clone();
-            tokio::spawn(async move {
-                loop {
-                    let data = select! {
-                        Some(data) = notify_recv.recv() => {
-                            data
-                        },
-                        // send last updated notifications every 60s
-                        _ = tokio::time::sleep(Duration::from_secs(60)) => {
-                            TerrSockMessage::LastUpdate(state.read().await.timestamps)
-                        }
-                    };
-
-                    bc_bytes
-                        .send(encoding::encode_data(&data).unwrap().into())
-                        .unwrap();
-                }
-            });
-        }
-
         state
     }
 
     #[tracing::instrument(skip(self), err(Debug))]
-    async fn query_territories(
-        &self,
-        notify_send: mpsc::Sender<TerrSockMessage>,
-    ) -> Result<Option<Timestamp>, AnyError> {
+    async fn query_territories(&self) -> Result<Option<Timestamp>, AnyError> {
         let (data, expires, wynntick) = async {
             let res = self
                 .client
@@ -264,30 +224,6 @@ impl TerritoryTracker {
         // send broadcasts to notify websockets
         if !old_state.is_empty() {
             async {
-                // ws
-                let mut updateds = BTreeMap::new();
-
-                for (tname, new) in state.clone() {
-                    let old = old_state.get(&tname);
-
-                    if let Some(old) = old
-                        && old != &new
-                    {
-                        updateds.insert(tname, CompactState::from_diff(new, old));
-                    } else if old.is_none() {
-                        updateds.insert(tname, CompactState::from_full(new));
-                    }
-                }
-
-                self.terrs_updated.record(updateds.len() as i64, &[]);
-
-                if !updateds.is_empty() {
-                    notify_send
-                        .send(TerrSockMessage::Update(updateds, timestamps))
-                        .await?;
-                }
-
-                // sse
                 let mut updateds = BTreeMap::new();
 
                 for (name, new) in state {
@@ -301,6 +237,8 @@ impl TerritoryTracker {
                         updateds.insert(name, new);
                     }
                 }
+
+                self.terrs_updated.record(updateds.len() as i64, &[]);
 
                 if !updateds.is_empty() {
                     self.state

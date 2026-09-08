@@ -19,7 +19,6 @@ gloo-net = { version = "0.7", default-features = false, features = [
 ] }
 leptos = { version = "0.8", features = ["csr"] }
 leptos-use = { version = "0.19", default-features = false, features = [
-    "use_websocket",
     "use_event_source",
     "use_window_size",
 ] }

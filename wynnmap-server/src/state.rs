@@ -2,7 +2,6 @@ use std::{collections::BTreeMap, sync::Arc};
 
 use axum::{body::Bytes, response::sse::Event};
 use jiff::Timestamp;
-use opentelemetry::metrics::UpDownCounter;
 use tokio::sync::{RwLock, broadcast};
 use wynnmap_types::{
     drops::ItemDrops,
@@ -29,10 +28,6 @@ pub struct GuildState {
 #[derive(Debug)]
 pub struct TerritoryState {
     pub inner: Arc<RwLock<TerritoryStateInner>>,
-
-    /// A broadcast receiver for encoded territory updates
-    pub bc_bytes: Arc<broadcast::Receiver<Arc<Vec<u8>>>>,
-    pub ws_conns: UpDownCounter<i64>,
 
     pub bc_events: Arc<broadcast::Sender<Event>>,
 }
