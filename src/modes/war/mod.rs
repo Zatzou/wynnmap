@@ -17,7 +17,9 @@ use crate::{
     sectimer::SecondTimer,
     settings::use_toggle,
     util::fmt_time_short,
-    wynnmap::{WynnMap, conns::Connections, maptile::WithDefaultMapTiles, terrs::TerrView},
+    wynnmap::{
+        OnCtxMenu, WynnMap, conns::Connections, maptile::WithDefaultMapTiles, terrs::TerrView,
+    },
 };
 
 mod calc;
@@ -122,8 +124,31 @@ pub fn WarMap() -> impl IntoView {
         );
     });
 
+    let onctx: OnCtxMenu = (move |pos: RwSignal<[i32; 2]>, close: Callback<()>| {
+        let under = terrs
+            .read()
+            .iter()
+            .find(|(_, t)| t.location.contains(pos.get()))
+            .and_then(|(n, _)| state.read().get(n).cloned());
+
+        under
+            .map(|terr| {
+                let name = terr.guild.name.clone();
+                let link = move || format!("https://wynncraft.com/stats/guild/{}", name);
+
+                view! {
+                    <a href=link on:click=move |_| close.run(()) class="ctxmenu-btn" target="_blank">
+                        <icons::ExternalLink/>
+                        "Open "{terr.guild.name}" on Wynncraft"
+                    </a>
+                }
+            })
+            .into_any()
+    })
+    .into();
+
     view! {
-        <WynnMap onclick=onclick>
+        <WynnMap onclick=onclick onctxmenu=onctx>
             <WithDefaultMapTiles />
 
             // conns

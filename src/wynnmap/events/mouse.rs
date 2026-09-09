@@ -48,14 +48,15 @@ pub fn handlers(
     let start_mousemove = move |e: MouseEvent| {
         e.prevent_default();
 
-        moving.set(true);
+        // allow moving with buttons 1 (left click) and 4 (middle mouse button)
+        moving.set((e.buttons() & 0b101) > 0);
     };
 
     // detect when a mouse drag ends
     let end_mousemove = move |e: MouseEvent| {
         e.prevent_default();
 
-        moving.set(false);
+        moving.set((e.buttons() & 0b101) > 0);
     };
 
     // detect zooming using a mouse wheel

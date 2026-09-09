@@ -61,6 +61,7 @@ pub fn handlers(
         if let Some(cb) = onclick
             && diff[0] < 5
             && diff[1] < 5
+            && e.button() == 0
         {
             cb.run(relmousepos.get().unwrap_or_default());
         }

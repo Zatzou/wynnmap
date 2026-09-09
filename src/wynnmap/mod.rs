@@ -2,11 +2,15 @@ use leptos::prelude::*;
 
 use crate::wynnmap::{
     context::MapPosition,
+    ctxmenu::context_menu,
     events::{mouse::MouseEventHandlers, pointer::PointerEventHandlers, touch::TouchEventHandlers},
 };
 
+pub use ctxmenu::OnCtxMenu;
+
 pub mod conns;
 pub mod context;
+mod ctxmenu;
 mod events;
 pub mod maptile;
 pub mod terrs;
@@ -21,6 +25,7 @@ const ZOOM_MAX: f64 = 64.0;
 pub fn WynnMap(
     children: Children,
     #[prop(optional)] onclick: Option<Callback<[i32; 2]>>,
+    #[prop(optional)] onctxmenu: Option<OnCtxMenu>,
 ) -> impl IntoView {
     // is the map being moved currently
     let moving = RwSignal::new(false);
@@ -51,6 +56,8 @@ pub fn WynnMap(
         pointerleave,
     } = events::pointer::handlers(position, zoom, moving, onclick);
 
+    let (ctx_menu, ctx_handler) = context_menu(onctxmenu);
+
     view! {
         // outermost container used for containing the map
         <div
@@ -69,6 +76,8 @@ pub fn WynnMap(
             on:pointerdown=pointerdown
             on:pointerup=pointerup
             on:pointerleave=pointerleave
+
+            on:contextmenu=ctx_handler
         >
             // the inner container used for moving the map
             // this container contains the map contents and is moved when the map is dragged
@@ -93,5 +102,8 @@ pub fn WynnMap(
                 {children()}
             </div>
         </div>
+
+        // context menu
+        {ctx_menu}
     }
 }

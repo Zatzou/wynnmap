@@ -184,3 +184,37 @@
         border-color: transparent;
     }
 }
+
+.wynnmap-ctxmenu {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+
+    overflow: auto;
+
+    max-height: 100dvh;
+
+    @apply bg-neutral-900 rounded max-w-sm;
+
+    >.ctxmenu-btn {
+        display: flex;
+
+        cursor: pointer;
+
+        @apply p-2 gap-2;
+    }
+
+    >.ctxmenu-btn:hover {
+        @apply bg-neutral-700;
+    }
+
+    >*+* {
+        border-top: 1px solid;
+
+        @apply border-neutral-600;
+    }
+}
+
+.wynnmap-ctxmenu.hidden {
+    display: none;
+}
