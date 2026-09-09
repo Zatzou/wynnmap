@@ -241,14 +241,17 @@ impl TerritoryTracker {
                 self.terrs_updated.record(updateds.len() as i64, &[]);
 
                 if !updateds.is_empty() {
-                    self.state
+                    // ignore send errors as they only occur if there are 0 receivers
+                    let _ = self
+                        .state
                         .bc_events
-                        .send(Event::default().event("terr").json_data(updateds)?)?;
+                        .send(Event::default().event("terr").json_data(updateds)?);
                 }
 
-                self.state
+                let _ = self
+                    .state
                     .bc_events
-                    .send(Event::default().event("ts").json_data(timestamps)?)?;
+                    .send(Event::default().event("ts").json_data(timestamps)?);
 
                 Ok::<(), AnyError>(())
             }
