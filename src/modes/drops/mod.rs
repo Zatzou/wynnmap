@@ -124,7 +124,7 @@ fn ItemSelected(selected: Item, back: impl Fn() + 'static) -> impl IntoView {
 
             <div class="dropsources">
                 {selected.dropped_by.into_iter().map(|(name, locations)| {
-                    let col = Color::from_hash(name.as_bytes()).to_rgb_values();
+                    let col = Color::from_hash(name.as_bytes()).saturate(0.75).to_rgb_values();
 
                     view! {
                         <div class="source" style:--col=col>
@@ -145,7 +145,9 @@ fn ItemSelected(selected: Item, back: impl Fn() + 'static) -> impl IntoView {
 fn DropInfoCard(
     #[prop(name = "spot")] (name, spots): (Arc<str>, BTreeSet<DropArea>),
 ) -> impl IntoView {
-    let col = Color::from_hash(name.as_bytes()).to_rgb_values();
+    let col = Color::from_hash(name.as_bytes())
+        .saturate(0.75)
+        .to_rgb_values();
 
     view! {
         <div class="dropinfocard" style:--col=col>

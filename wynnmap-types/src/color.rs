@@ -75,4 +75,18 @@ impl Color {
     pub fn to_rgb_with_alpha(&self, alpha: f32) -> String {
         format!("rgb({} {} {} / {})", self.r, self.g, self.b, alpha)
     }
+
+    pub fn saturate(&self, amount: f32) -> Self {
+        let mut col = *self;
+        let amount = amount.clamp(0.0, 1.0) + 1.0;
+
+        let gray = (f32::from(col.r) + f32::from(col.g) + f32::from(col.b)) / 3.0;
+        let apply = |c: &mut u8| *c = (gray + (f32::from(*c) - gray) * amount) as u8;
+
+        apply(&mut col.r);
+        apply(&mut col.g);
+        apply(&mut col.b);
+
+        col
+    }
 }

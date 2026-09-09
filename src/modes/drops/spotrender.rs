@@ -19,7 +19,7 @@ pub fn SpotRenderer(selected_item: RwSignal<Option<Item>>) -> impl IntoView {
                 each=spots
                 key=move |(name, locations)| (name.clone(), locations.clone())
                 children=move |(name, locations)| {
-                    let col = Color::from_hash(name.as_bytes());
+                    let col = Color::from_hash(name.as_bytes()).saturate(0.75);
                     let fill = col.to_rgb_with_alpha(0.4);
                     let stroke = col.to_hex();
 
@@ -28,7 +28,7 @@ pub fn SpotRenderer(selected_item: RwSignal<Option<Item>>) -> impl IntoView {
                         let r = loc.radius.max(5);
 
                         view! {
-                            <circle cx=x cy=y r=r fill=fill.clone() stroke=stroke.clone() />
+                            <circle cx=x cy=y r=r fill=fill.clone() stroke=stroke.clone() stroke-width=3 />
                         }
                     }).collect::<Vec<_>>()
                 }
