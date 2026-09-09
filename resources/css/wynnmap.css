@@ -185,6 +185,14 @@
     }
 }
 
+.wynnmap-btmtxt {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+
+    opacity: 0.75;
+}
+
 .wynnmap-ctxmenu {
     position: absolute;
     display: flex;
