@@ -105,6 +105,11 @@
     }
 
     >div:last-child {
-        @apply p-2
+        @apply p-2;
+
+        >p>svg {
+            display: inline-block;
+            cursor: pointer;
+        }
     }
 }

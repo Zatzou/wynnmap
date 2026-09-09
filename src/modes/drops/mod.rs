@@ -154,8 +154,15 @@ fn DropInfoCard(
                 <h2>{name}</h2>
                 {spots.into_iter().map(|area| {
                     let [x, y, z] = area.location;
+
+                    let copystring = move |_| {
+                        let clipboard = window().navigator().clipboard();
+
+                        let _promise = clipboard.write_text(&format!("/comp {x} {y} {z}"));
+                    };
+
                     view! {
-                        <p>"X: "{x}" Y: "{y}" Z: "{z}" radius: "{area.radius}</p>
+                        <p><icons::Clipboard on:click=copystring size=16/>" "{x}" "{y}" "{z}" radius: "{area.radius}</p>
                     }}).collect::<Vec<_>>()
                 }
             </div>
