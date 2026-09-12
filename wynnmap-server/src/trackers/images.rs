@@ -153,11 +153,11 @@ impl ImageTracker {
         }
 
         let mut maps_cache = self.state.map_cache.write().await;
-        let mut etags_cache = self.etag_cache.write().await;
 
         // add the images to the cache
         for ((name, img), (tname, t_etag)) in processed_images {
             if let Some(etag) = t_etag {
+                let mut etags_cache = self.etag_cache.write().await;
                 etags_cache.insert(tname, etag.into());
             }
 
@@ -185,17 +185,21 @@ impl ImageTracker {
             tiles
         };
 
-        let mut maps = self.state.maps.write().await;
-        let mut maps_etag = self.state.maps_etag.write().await;
-
         // remove old images from the cache
         maps_cache.retain(|k, _| tiles.iter().any(|d| d.md5 == *k));
+        drop(maps_cache);
+
+        let mut maps_etag = self.state.maps_etag.write().await;
 
         // calculate the new etag
         *maps_etag = sha224_etag_json(&tiles);
+        drop(maps_etag);
+
+        let mut maps = self.state.maps.write().await;
 
         // replace the cache with the new data
         *maps = tiles;
+        drop(maps);
 
         info!("completed image update");
 
@@ -210,7 +214,10 @@ impl ImageTracker {
     ) -> Result<(Option<Bytes>, Option<String>), reqwest::Error> {
         let res = self
             .client
-            .get(url.replace("cdn.wynntils.com/static", "raw.githubusercontent.com/Wynntils/Static-Storage/refs/heads/main"))
+            .get(url.replace(
+                "cdn.wynntils.com/static",
+                "raw.githubusercontent.com/Wynntils/Static-Storage/refs/heads/main",
+            ))
             .header("If-None-Match", etag)
             .send()
             .await?;

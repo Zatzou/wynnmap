@@ -92,7 +92,7 @@ async fn map_state(State(state): State<Arc<TerritoryState>>) -> impl IntoRespons
 }
 
 async fn sse_handler(State(state): State<Arc<TerritoryState>>) -> Sse<BroadcastStream<Event>> {
-    let bc_channel = &state.bc_events;
+    let bc_channel = state.bc_events.subscribe();
 
-    Sse::new(BroadcastStream::new(bc_channel.subscribe()))
+    Sse::new(BroadcastStream::new(bc_channel))
 }

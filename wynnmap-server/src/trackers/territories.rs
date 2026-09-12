@@ -55,7 +55,7 @@ impl TerritoryTracker {
             let _bc_counter = meter
                 .i64_observable_up_down_counter("active_broadcast_receivers")
                 .with_callback(move |observer| {
-                    observer.observe(bc_events.receiver_count() as i64, &[])
+                    observer.observe(bc_events.receiver_count() as i64, &[]);
                 })
                 .build();
         }
@@ -152,7 +152,7 @@ impl TerritoryTracker {
                         t.resources
                             .iter()
                             .find(|r| r.kind == rt)
-                            .map(|r| r.as_resval())
+                            .map(WynnRes::as_resval)
                             .unwrap_or_default()
                     };
 
@@ -283,8 +283,7 @@ impl From<WynnTerritory> for Territory {
                 .resources
                 .iter()
                 .find(|r| r.kind == rt)
-                .map(|r| (r.base_gen, r.generation))
-                .unwrap_or((0, 0));
+                .map_or((0, 0), |r| (r.base_gen, r.generation));
 
             // fix for the wynn api returning incorrect base generation values
             // zero the false base gen value based on the actual generation values
@@ -335,7 +334,7 @@ struct WynnRes {
 }
 
 impl WynnRes {
-    fn as_resval(&self) -> ResourceValues {
+    const fn as_resval(&self) -> ResourceValues {
         ResourceValues {
             generation: self.generation,
             stored: self.stored,
