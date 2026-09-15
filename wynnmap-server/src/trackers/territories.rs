@@ -7,7 +7,7 @@ use std::{
 
 use axum::response::sse::Event;
 use jiff::Timestamp;
-use opentelemetry::{global, metrics::Gauge};
+use opentelemetry::{global, metrics::Histogram};
 use serde::Deserialize;
 use tokio::sync::{RwLock, broadcast};
 use tracing::{Instrument, error, info_span};
@@ -32,11 +32,11 @@ pub struct TerritoryTracker {
     client: reqwest::Client,
     guilds: Arc<RwLock<BTreeMap<Arc<str>, Guild>>>,
 
-    terrs_updated: Gauge<i64>,
+    terrs_updated: Histogram<f64>,
 
-    updated: Gauge<i64>,
-    changed: Gauge<i64>,
-    wynntick: Gauge<i64>,
+    req_dur: Histogram<f64>,
+    expires_rem: Histogram<f64>,
+    wynntick_latency: Histogram<f64>,
 
     state: Arc<TerritoryState>,
 }
@@ -65,13 +65,22 @@ impl TerritoryTracker {
             guilds: guild_state.guilds.clone(),
 
             terrs_updated: meter
-                .i64_gauge("terrs_updated")
+                .f64_histogram("wynnmap.terrs.updated")
                 .with_description("Territories updated this cycle")
                 .build(),
 
-            updated: meter.i64_gauge("wynnmap.terrs.updated").build(),
-            changed: meter.i64_gauge("wynnmap.terrs.changed").build(),
-            wynntick: meter.i64_gauge("wynnmap.terrs.wynntick").build(),
+            req_dur: meter
+                .f64_histogram("wynnmap.terrs.req_dur")
+                .with_unit("s")
+                .build(),
+            expires_rem: meter
+                .f64_histogram("wynnmap.terrs.expires_rem")
+                .with_unit("s")
+                .build(),
+            wynntick_latency: meter
+                .f64_histogram("wynnmap.terrs.wynntick_latency")
+                .with_unit("s")
+                .build(),
 
             state: Arc::new(TerritoryState {
                 inner: Default::default(),
@@ -118,6 +127,8 @@ impl TerritoryTracker {
 
     #[tracing::instrument(skip(self), err(Debug))]
     async fn query_territories(&self) -> Result<Option<Timestamp>, AnyError> {
+        let start = Timestamp::now();
+
         let (data, expires, wynntick) = async {
             let res = self
                 .client
@@ -136,6 +147,22 @@ impl TerritoryTracker {
         }
         .instrument(info_span!("fetch"))
         .await?;
+
+        // record request duration
+        self.req_dur
+            .record(start.duration_until(Timestamp::now()).as_secs_f64(), &[]);
+
+        // record time until expires
+        if let Some(exp) = expires {
+            self.expires_rem
+                .record(start.duration_until(exp).as_secs_f64(), &[]);
+        }
+
+        // record time since wynntick
+        if let Some(wt) = wynntick {
+            self.wynntick_latency
+                .record(start.duration_since(wt).as_secs_f64(), &[]);
+        }
 
         // create owner data
         let state = {
@@ -205,17 +232,12 @@ impl TerritoryTracker {
 
             let now = Timestamp::now();
             lock.timestamps.updated = Some(now);
-            self.updated.record(now.as_millisecond(), &[]);
 
             if old_state != lock.state {
                 lock.timestamps.changed = lock.timestamps.updated;
-                self.changed.record(now.as_millisecond(), &[]);
             }
 
             lock.timestamps.wynntick = wynntick;
-            if let Some(t) = wynntick {
-                self.wynntick.record(t.as_millisecond(), &[]);
-            }
 
             // return old owners for notifications
             (old_state, lock.timestamps)
@@ -238,7 +260,7 @@ impl TerritoryTracker {
                     }
                 }
 
-                self.terrs_updated.record(updateds.len() as i64, &[]);
+                self.terrs_updated.record(updateds.len() as f64, &[]);
 
                 if !updateds.is_empty() {
                     // ignore send errors as they only occur if there are 0 receivers
