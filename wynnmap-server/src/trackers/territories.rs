@@ -72,10 +72,15 @@ impl TerritoryTracker {
             req_dur: meter
                 .f64_histogram("wynnmap.terrs.req_dur")
                 .with_unit("s")
+                .with_boundaries(vec![
+                    0.001, 0.005, 0.010, 0.025, 0.050, 0.075, 0.100, 0.150, 0.250, 0.400, 0.500,
+                    0.750, 1.0, 1.5, 2.5, 5.0, 10.0,
+                ])
                 .build(),
             expires_rem: meter
                 .f64_histogram("wynnmap.terrs.expires_rem")
                 .with_unit("s")
+                .with_boundaries(vec![0.1, 0.5, 1.0, 2.0, 5.0, 7.5, 10.0, 12.5, 15.0, 20.0])
                 .build(),
             wynntick_latency: meter
                 .f64_histogram("wynnmap.terrs.wynntick_latency")
