@@ -6,7 +6,7 @@ pub struct Color {
 }
 
 impl From<[u8; 3]> for Color {
-    #[inline(always)]
+    #[inline]
     fn from(value: [u8; 3]) -> Self {
         let [r, g, b] = value;
         Self { r, g, b }
