@@ -90,7 +90,9 @@ pub fn GatherMap() -> impl IntoView {
         <WynnMap>
             <WithDefaultMapTiles grayscale=true />
 
-            <NodeRenderer nodes data hovered hidden={hidelist} />
+            <div class="wynnmap-items">
+                <NodeRenderer nodes data hovered hidden={hidelist} />
+            </div>
         </WynnMap>
 
         <SideCard hover=true>

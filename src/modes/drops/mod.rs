@@ -71,7 +71,9 @@ pub fn DropsMap() -> impl IntoView {
     view! {
         <WynnMap onclick>
             <WithDefaultMapTiles grayscale=true />
-            <SpotRenderer selected_item/>
+            <div class="wynnmap-items">
+                <SpotRenderer selected_item/>
+            </div>
         </WynnMap>
 
         <Show when=move || selected_spots.read().is_empty()>
