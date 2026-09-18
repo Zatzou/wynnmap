@@ -6,6 +6,7 @@ use wynnmap_types::maptile::MapTile;
 use crate::{
     datasource,
     dialog::{Dialogs, info::info_dialog},
+    util::zip_map,
     wynnmap::util::get_viewport_middle,
 };
 
@@ -18,10 +19,25 @@ pub fn MapContextProvider(children: Children) -> impl IntoView {
     children()
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct MapPosition {
     pub position: RwSignal<[f64; 2]>,
     pub zoom: RwSignal<f64>,
+    pub transitioning: RwSignal<bool>,
+}
+
+impl MapPosition {
+    pub fn center_on(&self, pos: [i32; 2], transition: bool) {
+        let zoom = self.zoom.get();
+        let pos = pos.map(|p| f64::from(-p).algebraic_mul(zoom));
+
+        let screen_middle = get_viewport_middle();
+
+        self.position
+            .set(zip_map(pos, screen_middle, f64::algebraic_add));
+
+        self.transitioning.set(transition);
+    }
 }
 
 fn provide_map_position() {
@@ -31,7 +47,13 @@ fn provide_map_position() {
 
     let zoom = RwSignal::new(0.5);
 
-    provide_context(MapPosition { position, zoom });
+    let transitioning = RwSignal::new(false);
+
+    provide_context(MapPosition {
+        position,
+        zoom,
+        transitioning,
+    });
 }
 
 /// Mouse position on the map atlas

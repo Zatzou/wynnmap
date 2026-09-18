@@ -30,10 +30,11 @@ pub fn WynnMap(
     // is the map being moved currently
     let moving = RwSignal::new(false);
 
-    let MapPosition { position, zoom } = expect_context();
-
-    // are we currently transitioning? transitions can occur from zooming
-    let transitioning = RwSignal::new(false);
+    let MapPosition {
+        position,
+        zoom,
+        transitioning,
+    } = expect_context();
 
     let MouseEventHandlers {
         mousemove,

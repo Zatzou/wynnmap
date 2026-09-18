@@ -83,6 +83,7 @@ pub fn NodeRenderer(
     let MapPosition {
         zoom,
         position: map_pos,
+        ..
     } = expect_context();
     let UseWindowSizeReturn { width, height } = use_window_size();
 

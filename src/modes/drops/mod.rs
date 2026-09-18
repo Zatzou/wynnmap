@@ -13,7 +13,11 @@ use crate::{
     components::{sidebar::Sidebar, sidecard::SideCard},
     datasource,
     modes::drops::{search::DropSearch, spotrender::SpotRenderer},
-    wynnmap::{WynnMap, context::RelMousePos, maptile::WithDefaultMapTiles},
+    wynnmap::{
+        WynnMap,
+        context::{MapPosition, RelMousePos},
+        maptile::WithDefaultMapTiles,
+    },
 };
 
 mod search;
@@ -112,6 +116,8 @@ pub fn DropsMap() -> impl IntoView {
 
 #[component]
 fn ItemSelected(selected: Item, back: impl Fn() + 'static) -> impl IntoView {
+    let map_location = expect_context::<MapPosition>();
+
     view! {
         <div class="dropsiteminfo">
             <div class="backbtn" on:click=move |_| back()>
@@ -143,8 +149,13 @@ fn ItemSelected(selected: Item, back: impl Fn() + 'static) -> impl IntoView {
                                         let _promise = clipboard.write_text(&format!("/comp {x} {y} {z}"));
                                     };
 
+                                    let moveto = move |_| {
+                                        map_location.center_on([x, z], true);
+                                    };
+
                                     view! {
                                         <div class="srcloc">
+                                            <icons::Locate on:click=moveto size=16/>
                                             <icons::ClipboardCopy on:click=copystring size=16/>
                                             <span>{x}" "{y}" "{z}" r="{r}</span>
                                         </div>

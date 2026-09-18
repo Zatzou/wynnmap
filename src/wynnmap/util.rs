@@ -61,5 +61,5 @@ pub fn get_viewport_middle() -> [f64; 2] {
     let width = window.inner_width().unwrap().as_f64().unwrap();
     let height = window.inner_height().unwrap().as_f64().unwrap();
 
-    [width / 2.0, height / 2.0]
+    [width, height].map(|p| p.algebraic_div(2.0))
 }
