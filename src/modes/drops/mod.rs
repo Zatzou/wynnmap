@@ -150,7 +150,6 @@ fn ItemSelected(selected: Item, back: impl Fn() + 'static) -> impl IntoView {
                                         </div>
                                     }
                                 }).collect::<Vec<_>>()}
-                                // <span>{locations.len()}</span>
                             </div>
                         </div>
                     }
