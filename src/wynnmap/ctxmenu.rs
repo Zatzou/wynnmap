@@ -70,7 +70,7 @@ fn CopyCoordsBtn(menu_relpos: RwSignal<[i32; 2]>, close: impl Fn() + 'static) ->
 
     view! {
         <button class="ctxmenu-btn" on:click=click>
-            <icons::Clipboard/>
+            <icons::ClipboardCopy/>
             "Copy position "{move || menu_relpos.read()[0]}" "{move || menu_relpos.read()[1]}
         </button>
     }

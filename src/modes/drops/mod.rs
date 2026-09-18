@@ -145,7 +145,7 @@ fn ItemSelected(selected: Item, back: impl Fn() + 'static) -> impl IntoView {
 
                                     view! {
                                         <div class="srcloc">
-                                            <icons::Clipboard on:click=copystring size=16/>
+                                            <icons::ClipboardCopy on:click=copystring size=16/>
                                             <span>{x}" "{y}" "{z}" r="{r}</span>
                                         </div>
                                     }
@@ -183,7 +183,7 @@ fn DropInfoCard(
                     };
 
                     view! {
-                        <p><icons::Clipboard on:click=copystring size=16/>" "{x}" "{y}" "{z}" radius: "{area.radius}</p>
+                        <p><icons::ClipboardCopy on:click=copystring size=16/>" "{x}" "{y}" "{z}" radius: "{area.radius}</p>
                     }}).collect::<Vec<_>>()
                 }
             </div>
