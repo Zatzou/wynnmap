@@ -132,8 +132,25 @@ fn ItemSelected(selected: Item, back: impl Fn() + 'static) -> impl IntoView {
                         <div class="source" style:--col=col>
                             <div/>
                             <div>
-                                <span>{name}</span>
-                                <span>{locations.len()}</span>
+                                <h3>{name}</h3>
+                                {locations.into_iter().map(|area| {
+                                    let [x, y, z] = area.location;
+                                    let r = area.radius;
+
+                                    let copystring = move |_| {
+                                        let clipboard = window().navigator().clipboard();
+
+                                        let _promise = clipboard.write_text(&format!("/comp {x} {y} {z}"));
+                                    };
+
+                                    view! {
+                                        <div class="srcloc">
+                                            <icons::Clipboard on:click=copystring size=16/>
+                                            <span>{x}" "{y}" "{z}" r="{r}</span>
+                                        </div>
+                                    }
+                                }).collect::<Vec<_>>()}
+                                // <span>{locations.len()}</span>
                             </div>
                         </div>
                     }

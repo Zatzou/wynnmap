@@ -59,15 +59,13 @@
     }
 
     >.dropsources {
-        display: grid;
-        grid-template-columns: min-content auto auto;
+        display: flex;
+        flex-direction: column;
 
         background-color: black;
 
         >.source {
-            display: grid;
-            grid-column: 1/4;
-            grid-template-columns: subgrid;
+            display: flex;
 
             background-color: rgb(var(--col) / 0.4);
 
@@ -78,14 +76,20 @@
             }
 
             >div:last-child {
-                display: grid;
-                grid-column: 2/4;
-                grid-template-columns: subgrid;
+                display: flex;
+                flex-direction: column;
 
                 @apply p-2;
 
-                >span:last-child {
-                    text-align: right;
+                >.srcloc {
+                    display: flex;
+                    align-items: center;
+
+                    @apply pl-2 gap-1;
+
+                    >svg {
+                        cursor: pointer;
+                    }
                 }
             }
         }
