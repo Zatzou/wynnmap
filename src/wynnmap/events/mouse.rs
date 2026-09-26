@@ -56,7 +56,7 @@ pub fn handlers(
     let end_mousemove = move |e: MouseEvent| {
         e.prevent_default();
 
-        moving.set((e.buttons() & 0b101) > 0);
+        moving.set(false);
     };
 
     // detect zooming using a mouse wheel
