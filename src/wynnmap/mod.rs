@@ -90,7 +90,7 @@ pub fn WynnMap(
                 // disable the transition after it has run
                 on:transitionend=move |_| transitioning.set(false)
 
-                // will-change:transform if using gecko (according to user agent) or you're currently holding down (moving.get())
+                // will-change:transform if you're currently moving
                 style:will-change=move || moving.get().then_some("transform")
 
                 style:transform=move ||
