@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use wynnmap_types::maptile::MapTile;
 
-use crate::{settings::use_toggle, util::as_px, wynnmap::context::DefaultMapTiles};
+use crate::{settings::SettingsCtx, util::as_px, wynnmap::context::DefaultMapTiles};
 
 #[component]
 pub fn MapTile(#[prop(into)] tile: Signal<MapTile>) -> impl IntoView {
@@ -24,7 +24,8 @@ pub fn MapTiles(
     #[prop(into)] tiles: Signal<Vec<MapTile>>,
     #[prop(default = false.into(), into)] grayscale: Signal<bool>,
 ) -> impl IntoView {
-    let show_non_main = use_toggle("show_non_main_maps", false);
+    let SettingsCtx(settings) = expect_context();
+    let show_non_main = settings.map.show_non_main_areas;
 
     view! {
         <div class="wynnmap-tiles" class:tiles-grayscale=grayscale>

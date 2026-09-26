@@ -84,10 +84,6 @@
     &.hq {
         background-color: rgb(var(--guild-col) / 0.75);
     }
-
-    &.guildterr-notrans {
-        background-color: rgb(var(--guild-col));
-    }
 }
 
 .guildterr-info {

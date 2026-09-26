@@ -11,7 +11,7 @@ use wynnmap_types::{
 
 use crate::{
     sectimer::SecondTimer,
-    settings::use_toggle,
+    settings::SettingsCtx,
     util::{as_px, fmt_time_short},
     wynnmap::context::RelMousePos,
 };
@@ -83,15 +83,12 @@ pub fn TerritoryBox(
 ) -> impl IntoView {
     let col_rgb = move || state.read().guild.get_color().to_rgb_values();
 
-    let use_transparency = use_toggle("use_transparency", true);
-
     let location = move || terr.read().location;
 
     view! {
         <div
             class="guildterr-box"
             class:hq={move || state.read().hq}
-            class:guildterr-notrans=move || !use_transparency.get()
             style:width=move || as_px(location().width())
             style:height=move || as_px(location().height())
             style:top=move || as_px(location().top_side())
@@ -107,6 +104,8 @@ pub fn TerritoryInfo(
     #[prop(into)] state: Signal<TerrState>,
     #[prop(optional)] hide_timers: bool,
 ) -> impl IntoView {
+    let SettingsCtx(settings) = expect_context();
+
     let top = move || {
         f64::from(terr.read().location.top_side())
             + (f64::from(terr.read().location.height()) / 2.0)
@@ -116,9 +115,9 @@ pub fn TerritoryInfo(
             + (f64::from(terr.read().location.width()) / 2.0)
     };
 
-    let show_gtag = use_toggle("terrs_show_guildtag", true);
-    let show_res = use_toggle("resico", true);
-    let show_timers = use_toggle("timers", true);
+    let show_gtag = settings.terrs.show_gtags;
+    let show_res = settings.terrs.show_resicons;
+    let show_timers = settings.terrs.show_timers;
 
     let location = move || terr.read().location;
     let namesize = Memo::new(move |_| (location().width() / 3).min(40));

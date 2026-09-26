@@ -1,91 +1,88 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, LazyLock, Mutex},
-};
+use std::{collections::BTreeMap, sync::Arc};
 
 use gloo_storage::Storage;
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-struct Settings {
-    toggles: HashMap<Arc<str>, bool>,
+#[derive(Serialize, Deserialize, Default)]
+pub struct Settings {
+    pub terrs: TerrSettings,
+    pub map: MapSettings,
+    pub sidebar: SidebarSettings,
+
+    pub gather: GatherSettings,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(default)]
+pub struct TerrSettings {
+    pub show_gtags: RwSignal<bool>,
+    pub show_resicons: RwSignal<bool>,
+    pub show_timers: RwSignal<bool>,
+}
+
+impl Default for TerrSettings {
+    fn default() -> Self {
+        Self {
+            show_gtags: RwSignal::new(true),
+            show_resicons: RwSignal::new(true),
+            show_timers: RwSignal::new(true),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(default)]
+pub struct MapSettings {
+    pub show_terrs: RwSignal<bool>,
+    pub show_conns: RwSignal<bool>,
+    pub show_non_main_areas: RwSignal<bool>,
+}
+
+impl Default for MapSettings {
+    fn default() -> Self {
+        Self {
+            show_terrs: RwSignal::new(true),
+            show_conns: RwSignal::new(true),
+            show_non_main_areas: RwSignal::new(false),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(default)]
+pub struct SidebarSettings {
+    pub show_gleaderboard: RwSignal<bool>,
+}
+
+impl Default for SidebarSettings {
+    fn default() -> Self {
+        Self {
+            show_gleaderboard: RwSignal::new(true),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct GatherSettings {
+    pub show_res: RwSignal<BTreeMap<Arc<str>, RwSignal<bool>>>,
 }
 
 #[derive(Clone)]
-struct SettingsContext(RwSignal<Settings>);
+pub struct SettingsCtx(pub Arc<Settings>);
 
 /// Function for loading the settings from local storage and providing them to the context. This function should be called once at the start of the application.
 pub fn provide_settings() {
-    let settings: Settings = gloo_storage::LocalStorage::get("settings").unwrap_or_default();
+    let settings: Settings = gloo_storage::LocalStorage::get("settings_v1").unwrap_or_default();
 
-    let signal = RwSignal::new(settings);
+    let settings = Arc::new(settings);
+
+    let signal = RwSignal::new(settings.clone());
 
     Effect::new(move || {
-        update_settings(signal.get());
+        gloo_storage::LocalStorage::set("settings_v1", signal).expect("failed to save settings");
     });
 
-    provide_context(SettingsContext(signal));
-}
-
-fn update_settings(settings: Settings) {
-    gloo_storage::LocalStorage::set("settings", settings).expect("failed to save settings");
-}
-
-/// The static variable for storing the toggle signals which are currently in use.
-static TOGGLES: LazyLock<Mutex<HashMap<Arc<str>, ArcRwSignal<bool>>>> =
-    LazyLock::new(|| Mutex::new(HashMap::new()));
-
-/// A function that retrieves a signal for a given toggle setting. If the signal or setting doesn't yet exist it will be created with the given default value.
-///
-/// # Arguments
-///
-/// * `name` - The name of the toggle setting.
-/// * `default` - The default value of the toggle setting.
-pub fn use_toggle(name: impl AsRef<str> + 'static, default: bool) -> RwSignal<bool> {
-    let mut toggles = TOGGLES.lock().unwrap();
-
-    // check if the signal already exists
-    if let Some(signal) = toggles.get(name.as_ref()) {
-        let signal = signal.clone();
-
-        // check that the signal hasn't been disposed and if it has been then generate a new one
-        if !signal.is_disposed() {
-            drop(toggles);
-            return signal.into();
-        }
-    }
-
-    // get the settings context
-    let settings = use_context::<SettingsContext>()
-        .expect("attempted to use toggle outside of settings context")
-        .0;
-
-    // get the toggle value from the settings and fall back to the default if it doesn't exist
-    let option = settings
-        .read_untracked()
-        .toggles
-        .get(name.as_ref())
-        .copied()
-        .unwrap_or(default);
-
-    // create a new signal with the value from the settings
-    let signal = ArcRwSignal::new(option);
-
-    // insert the signal into the toggles map
-    toggles.insert(name.as_ref().into(), signal.clone());
-    drop(toggles);
-
-    // create an effect to update the settings when the signal changes
-    Effect::new({
-        let signal = signal.clone();
-        move || {
-            settings
-                .write()
-                .toggles
-                .insert(name.as_ref().into(), signal.get());
-        }
-    });
-
-    signal.into()
+    provide_context(SettingsCtx(settings));
 }

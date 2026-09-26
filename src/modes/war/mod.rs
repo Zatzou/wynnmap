@@ -15,7 +15,7 @@ use crate::{
     dialog::{Dialogs, info::info_dialog},
     modes::war::calc::TerrCalc,
     sectimer::SecondTimer,
-    settings::use_toggle,
+    settings::SettingsCtx,
     util::fmt_time_short,
     wynnmap::{
         OnCtxMenu, WynnMap, conns::Connections, maptile::WithDefaultMapTiles, terrs::TerrView,
@@ -26,13 +26,14 @@ mod calc;
 
 #[component]
 pub fn WarMap() -> impl IntoView {
+    let SettingsCtx(settings) = expect_context();
     let dialogs = use_context::<Dialogs>().expect("Dialogs context not found");
 
-    let show_terrs = use_toggle("terrs", true);
-    let show_conns = use_toggle("conns", true);
-    let show_res = use_toggle("resico", true);
-    let show_timers = use_toggle("timers", true);
-    let show_guild_leaderboard = use_toggle("gleaderboard", true);
+    let show_terrs = settings.map.show_terrs;
+    let show_conns = settings.map.show_conns;
+    let show_res = settings.terrs.show_resicons;
+    let show_timers = settings.terrs.show_timers;
+    let show_guild_leaderboard = settings.sidebar.show_gleaderboard;
 
     let terrs = RwSignal::new(BTreeMap::new());
     let state = RwSignal::new(BTreeMap::new());

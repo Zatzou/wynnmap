@@ -7,7 +7,7 @@ use crate::{
     components::{checkbox::Checkbox, sidebar::Sidebar, sidecard::SideCard},
     datasource,
     modes::gather::noderender::NodeRenderer,
-    settings::use_toggle,
+    settings::SettingsCtx,
     wynnmap::{WynnMap, context::RelMousePos, maptile::WithDefaultMapTiles},
 };
 
@@ -16,6 +16,8 @@ mod noderender;
 
 #[component]
 pub fn GatherMap() -> impl IntoView {
+    let SettingsCtx(settings) = expect_context();
+
     let nodes = RwSignal::new(GatherSpots::default());
     let data = RwSignal::new(BTreeMap::new());
 
@@ -48,7 +50,12 @@ pub fn GatherMap() -> impl IntoView {
             for (n, mat) in nodes.read().resources.iter().enumerate() {
                 toggles.push(MatToggle {
                     mat: mat.clone(),
-                    toggle: use_toggle(format!("gather-mat-{}", mat.name), true),
+                    toggle: *settings
+                        .gather
+                        .show_res
+                        .write()
+                        .entry(mat.name.clone())
+                        .or_insert(RwSignal::new(true)),
                     count: nodes
                         .read()
                         .spots

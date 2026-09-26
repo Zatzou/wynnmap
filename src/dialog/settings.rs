@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use leptos::prelude::*;
 
-use crate::{components::checkbox::Checkbox, dialog::DialogCloseButton, settings::use_toggle};
+use crate::{components::checkbox::Checkbox, dialog::DialogCloseButton, settings::SettingsCtx};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum SettingsView {
@@ -67,24 +67,25 @@ pub fn settings_dialog() -> impl IntoView {
 
 #[component]
 fn GeneralSettings() -> impl IntoView {
-    let show_non_main = use_toggle("show_non_main_maps", false);
-    let use_transparency = use_toggle("use_transparency", true);
+    let SettingsCtx(settings) = expect_context();
+    let show_non_main = settings.map.show_non_main_areas;
 
     view! {
         <div class="flex-1 flex flex-col p-2 text-lg">
             <Checkbox id="nonmains" checked={show_non_main}>"Show non-main map areas"</Checkbox>
-            <Checkbox id="transparency" checked={use_transparency}>"Enable transparent territories"</Checkbox>
         </div>
     }
 }
 
 #[component]
 fn GuildMapSettings() -> impl IntoView {
-    let show_terrs = use_toggle("terrs", true);
-    let show_conns = use_toggle("conns", true);
-    let show_gtag = use_toggle("terrs_show_guildtag", true);
-    let show_res = use_toggle("resico", true);
-    let show_timers = use_toggle("timers", true);
+    let SettingsCtx(settings) = expect_context();
+    let show_terrs = settings.map.show_terrs;
+    let show_conns = settings.map.show_conns;
+
+    let show_gtag = settings.terrs.show_gtags;
+    let show_res = settings.terrs.show_resicons;
+    let show_timers = settings.terrs.show_timers;
 
     view! {
         <div class="flex-1 flex flex-col gap-2 p-2 text-lg">

@@ -15,14 +15,15 @@ use crate::{
     },
     datasource,
     dialog::{self, Dialogs, info::info_dialog},
-    settings::use_toggle,
+    settings::SettingsCtx,
     wynnmap::{WynnMap, conns::Connections, maptile::WithDefaultMapTiles, terrs::TerrView},
 };
 
 #[component]
 pub fn PlanningMap() -> impl IntoView {
+    let SettingsCtx(settings) = expect_context();
     let dialogs = use_context::<Dialogs>().expect("Dialogs context not found");
-    let show_guild_leaderboard = use_toggle("gleaderboard", true);
+    let show_guild_leaderboard = settings.sidebar.show_gleaderboard;
 
     let location = use_location();
     // read a share string from the url
@@ -65,7 +66,7 @@ pub fn PlanningMap() -> impl IntoView {
 
     // console_log(&format!("{:?}", sharedata));
 
-    let show_conns = use_toggle("conns", true);
+    let show_conns = settings.map.show_conns;
 
     let terrs = RwSignal::new(BTreeMap::new());
 
