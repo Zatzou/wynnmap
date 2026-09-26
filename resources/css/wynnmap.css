@@ -12,7 +12,7 @@
     position: relative;
     transform-origin: 0 0;
     backface-visibility: hidden;
-    contain: size layout;
+    contain: layout;
 }
 
 .wynnmap-transitions {
@@ -28,8 +28,6 @@
 }
 
 .wynnmap-tiles {
-    contain: style;
-    isolation: isolate;
     pointer-events: none;
     user-select: none;
 }
@@ -39,9 +37,9 @@
 }
 
 .wynnmap-tile {
-    position: fixed;
+    position: absolute;
     max-width: unset;
-    content-visibility: auto;
+    contain: strict;
 
     /* reduce chromium/webkit pixel gaps */
     /* still visible at high zooms but greatly reduced */
@@ -49,23 +47,21 @@
 }
 
 .connpath {
-    position: fixed;
+    position: absolute;
     pointer-events: none;
     user-select: none;
-    backface-visibility: hidden;
-    content-visibility: auto;
+    contain: strict;
 }
 
 .wynnmap-items {
     contain: style;
-    isolation: isolate;
 
     pointer-events: none;
     user-select: none;
 }
 
 .wynnmap-item {
-    position: fixed;
+    position: absolute;
     backface-visibility: hidden;
 }
 
@@ -77,13 +73,10 @@
     image-rendering: pixelated;
 }
 
-.guildterr {
-    position: fixed;
+.guildterr-box {
+    position: absolute;
 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    contain: strict;
 
     background-color: rgb(var(--guild-col) / 0.35);
     border: 2px solid rgb(var(--guild-col));
@@ -91,6 +84,21 @@
     &.hq {
         background-color: rgb(var(--guild-col) / 0.75);
     }
+
+    &.guildterr-notrans {
+        background-color: rgb(var(--guild-col));
+    }
+}
+
+.guildterr-info {
+    position: absolute;
+    width: 0;
+    height: 0;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 
     >.guildtag {
         font-size: var(--tsize);
@@ -105,15 +113,20 @@
         paint-order: stroke;
         font-optical-sizing: auto;
 
-        margin: -0.15lh 0;
+        contain: strict;
+
+        margin: -0.2lh 0;
     }
 
     >.resicons {
         display: flex;
-        height: 24px;
+        height: 20px;
+        margin: 0 0 2px 0;
         width: 120px;
         flex-shrink: 0;
         justify-content: center;
+
+        contain: strict;
     }
 
     >.terrtimer {
@@ -127,56 +140,88 @@
         width: 16ch;
         flex-shrink: 0;
 
-        >h4 {
+        contain: strict;
+
+        >span {
             @apply px-2;
             @apply rounded-2xl;
 
-            contain: paint;
+            contain: layout paint;
 
             background-color: var(--bg-col);
             color: black;
         }
     }
-
-    >.attacktmr {
-        position: absolute;
-        width: calc(100% + 6px);
-        height: calc(100% + 6px);
-        z-index: -1;
-
-        border: 4px dashed transparent;
-    }
 }
 
-.guildterr-notrans {
-    background-color: rgb(var(--guild-col));
+.attackborder {
+    position: absolute;
+
+    contain: strict;
+
+    border: 4px dashed transparent;
+
+    animation: attack-and-flash 601s linear 1 forwards;
 }
 
+@keyframes attack-and-flash {
 
-@keyframes attackdelay {
+    /* First 600 seconds */
     0% {
         border-color: oklch(0.577 0.245 27.325);
     }
 
-    25% {
+    24.9584% {
         border-color: oklch(0.646 0.222 41.116);
     }
 
-    50% {
+    49.9168% {
         border-color: oklch(0.769 0.188 70.08);
     }
 
-    75% {
+    74.8752% {
         border-color: oklch(0.852 0.199 91.936);
     }
 
-    100% {
+    /* At 600 seconds */
+    99.8336% {
         border-color: oklch(0.841 0.238 128.85);
     }
-}
 
-@keyframes flash {
-    0% {
+    /* Five flashes during the final second */
+    99.8337% {
+        border-color: oklch(0.577 0.245 27.325);
+    }
+
+    99.8503% {
+        border-color: transparent;
+    }
+
+    99.8669% {
+        border-color: oklch(0.577 0.245 27.325);
+    }
+
+    99.8836% {
+        border-color: transparent;
+    }
+
+    99.9002% {
+        border-color: oklch(0.577 0.245 27.325);
+    }
+
+    99.9169% {
+        border-color: transparent;
+    }
+
+    99.9335% {
+        border-color: oklch(0.577 0.245 27.325);
+    }
+
+    99.9501% {
+        border-color: transparent;
+    }
+
+    99.9668% {
         border-color: oklch(0.577 0.245 27.325);
     }
 

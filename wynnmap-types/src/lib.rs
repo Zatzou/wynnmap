@@ -10,7 +10,7 @@ pub mod terr;
 pub mod tier;
 
 /// A rectangular region in the minecraft world
-#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Region {
     /// Start positions of the region. First value is the X and second is the Z
     pub start: [i32; 2],

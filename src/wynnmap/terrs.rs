@@ -1,8 +1,9 @@
-use std::{collections::BTreeMap, sync::Arc, time::Duration};
+use std::{collections::BTreeMap, sync::Arc};
 
-use jiff::Timestamp;
+use jiff::{SignedDuration, Timestamp};
 use leptos::prelude::*;
 use wynnmap_types::{
+    Region,
     resources::BaseResGen,
     terr::{TerrState, Territory},
     tier::WynnTier,
@@ -49,7 +50,25 @@ pub fn TerrView(
                     });
 
                     view! {
-                        <Territory terr state hide_timers/>
+                        <TerritoryBox terr state/>
+                    }
+                }
+            />
+        </div>
+        <Show when={move || !hide_timers}>
+            <AttackBorders terrs state/>
+        </Show>
+        <div class="wynnmap-items">
+            <For
+                each=move || terrs.get().into_iter()
+                key=move |(k, _)| k.clone()
+                children=move |(name, terr)| {
+                    let state = Memo::new({
+                        move |_| state.read().get(&name).cloned().unwrap_or_default()
+                    });
+
+                    view! {
+                        <TerritoryInfo terr state hide_timers/>
                     }
                 }
             />
@@ -58,38 +77,57 @@ pub fn TerrView(
 }
 
 #[component]
-pub fn Territory(
+pub fn TerritoryBox(
     #[prop(into)] terr: Signal<Territory>,
     #[prop(into)] state: Signal<TerrState>,
-    #[prop(optional)] hide_timers: bool,
 ) -> impl IntoView {
     let col_rgb = move || state.read().guild.get_color().to_rgb_values();
 
-    // toggles for showing territory parts
-    let show_gtag = use_toggle("terrs_show_guildtag", true);
-    let show_res = use_toggle("resico", true);
-    let show_timers = use_toggle("timers", true);
     let use_transparency = use_toggle("use_transparency", true);
 
     let location = move || terr.read().location;
-    let namesize = Memo::new(move |_| (location().width() / 3).min(40));
 
     view! {
-        <div class="guildterr" class:hq={move || state.read().hq}
+        <div
+            class="guildterr-box"
+            class:hq={move || state.read().hq}
             class:guildterr-notrans=move || !use_transparency.get()
             style:width=move || as_px(location().width())
             style:height=move || as_px(location().height())
             style:top=move || as_px(location().top_side())
             style:left=move || as_px(location().left_side())
             style:--guild-col=move || col_rgb()
-        >
-            // attack timer border
-            {move || state.read().acquired.map(|acquired| view! {
-                <Show when={move || !hide_timers}>
-                    <AttackBorder acquired/>
-                </Show>
-            })}
+        />
+    }
+}
 
+#[component]
+pub fn TerritoryInfo(
+    #[prop(into)] terr: Signal<Territory>,
+    #[prop(into)] state: Signal<TerrState>,
+    #[prop(optional)] hide_timers: bool,
+) -> impl IntoView {
+    let top = move || {
+        f64::from(terr.read().location.top_side())
+            + (f64::from(terr.read().location.height()) / 2.0)
+    };
+    let left = move || {
+        f64::from(terr.read().location.left_side())
+            + (f64::from(terr.read().location.width()) / 2.0)
+    };
+
+    let show_gtag = use_toggle("terrs_show_guildtag", true);
+    let show_res = use_toggle("resico", true);
+    let show_timers = use_toggle("timers", true);
+
+    let location = move || terr.read().location;
+    let namesize = Memo::new(move |_| (location().width() / 3).min(40));
+
+    view! {
+        <div class="guildterr-info"
+            style:top=move || as_px(top())
+            style:left=move || as_px(left())
+        >
             // guild hq crown
             <Show when=move || state.read().hq>
                 <div class="spriteicon icon-crown" />
@@ -97,12 +135,12 @@ pub fn Territory(
 
             // guild tag
             <Show when={move || show_gtag.get()}>
-                <h1
+                <span
                     class="guildtag"
                     style:--tsize=move || as_px(namesize.read())
                 >
                     {state.read().guild.prefix.clone()}
-                </h1>
+                </span>
             </Show>
 
             // resource icons
@@ -162,58 +200,69 @@ fn TerrTimer(#[prop(into)] acquired: Signal<Timestamp>) -> impl IntoView {
 
     view! {
         <div class="terrtimer">
-            <h4 style:--bg-col={color}>{timestr}</h4>
+            <span style:--bg-col={color}>{timestr}</span>
         </div>
     }
 }
 
-/// The component rendering the attack timer border for territories which are on attack cooldown.
 #[component]
-fn AttackBorder(#[prop(into)] acquired: Signal<Timestamp>) -> impl IntoView {
+fn AttackBorders(
+    #[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>,
+    #[prop(into)] state: Signal<BTreeMap<Arc<str>, TerrState>>,
+) -> impl IntoView {
+    let active = RwSignal::new(BTreeMap::new());
+
+    // update list
+    Effect::new(move || {
+        let now = Timestamp::now();
+
+        active.update(|active| {
+            // remove old ones
+            active.retain(|_, acq: &mut Timestamp| {
+                acq.duration_until(now) <= SignedDuration::from_secs(601)
+            });
+
+            for (name, s) in state.read().iter() {
+                if let Some(acq) = s.acquired
+                    && acq.duration_until(now) <= SignedDuration::from_secs(601)
+                    && let Some(terr) = terrs.read().get(name)
+                {
+                    active.insert(terr.location, acq);
+                }
+            }
+        });
+    });
+
+    view! {
+        <div class="wynnmap-items">
+            <For
+                each=move || active.get().into_iter()
+                key=move |d| *d
+                children=move |(reg, acq)| {
+
+                    view! {
+                        <AttackBorder reg acq/>
+                    }
+                }
+            />
+        </div>
+    }
+}
+
+#[component]
+fn AttackBorder(reg: Region, acq: Timestamp) -> impl IntoView {
     let now = Timestamp::now();
-    let time = now.duration_since(*acquired.read_untracked()).as_millis() as i64;
+    let time = now.duration_since(acq).as_millis() as i64;
 
-    let (time, set_time) = signal(time);
+    view! {
+        <div
+            class="attackborder"
+            style:width=as_px(reg.width() + 2)
+            style:height=as_px(reg.height() + 2)
+            style:top=as_px(reg.top_side() - 1)
+            style:left=as_px(reg.left_side() - 1)
 
-    move || {
-        if time.get() < 599_000 {
-            let h = set_timeout_with_handle(
-                move || {
-                    set_time.set(599_000);
-                },
-                Duration::from_millis((599_000 - time.get()).max(1000).cast_unsigned()),
-            )
-            .ok();
-
-            on_cleanup(move || {
-                if let Some(i) = h {
-                    i.clear();
-                }
-            });
-
-            Some(view! {
-                <div class="attacktmr" style:animation={move || format!("600s linear {}ms attackdelay", -time.get())} />
-            }.into_any())
-        } else if time.get() < 600_000 {
-            let h = set_timeout_with_handle(
-                move || {
-                    set_time.set(600_000);
-                },
-                Duration::from_secs(1),
-            )
-            .ok();
-
-            on_cleanup(move || {
-                if let Some(i) = h {
-                    i.clear();
-                }
-            });
-
-            Some(view! {
-                <div class="attacktmr" style:animation={move || String::from("0.2s linear 5 flash")} />
-            }.into_any())
-        } else {
-            None
-        }
+            style:animation-delay=format!("{}ms", -time)
+        />
     }
 }
