@@ -74,6 +74,9 @@ pub struct SettingsCtx(pub Arc<Settings>);
 
 /// Function for loading the settings from local storage and providing them to the context. This function should be called once at the start of the application.
 pub fn provide_settings() {
+    // delete old settings variables
+    gloo_storage::LocalStorage::delete("settings");
+
     let settings: Settings = gloo_storage::LocalStorage::get("settings_v1").unwrap_or_default();
 
     let settings = Arc::new(settings);
