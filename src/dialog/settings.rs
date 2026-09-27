@@ -2,7 +2,10 @@ use std::fmt::Display;
 
 use leptos::prelude::*;
 
-use crate::{components::checkbox::Checkbox, dialog::DialogCloseButton, settings::SettingsCtx};
+use crate::{
+    components::checkbox::Checkbox, coordfmt::CoordFmtSelector, dialog::DialogCloseButton,
+    settings::SettingsCtx,
+};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum SettingsView {
@@ -69,10 +72,15 @@ pub fn settings_dialog() -> impl IntoView {
 fn GeneralSettings() -> impl IntoView {
     let SettingsCtx(settings) = expect_context();
     let show_non_main = settings.map.show_non_main_areas;
+    let copy_coordfmt = settings.copy_coordfmt;
 
     view! {
         <div class="flex-1 flex flex-col p-2 text-lg">
             <Checkbox id="nonmains" checked={show_non_main}>"Show non-main map areas"</Checkbox>
+            <div>
+                <span>"Prefered copy coordinate format"</span>
+                <CoordFmtSelector fmt=copy_coordfmt/>
+            </div>
         </div>
     }
 }

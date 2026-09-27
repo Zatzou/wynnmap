@@ -4,11 +4,15 @@ use gloo_storage::Storage;
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::coordfmt::CoordFmt;
+
 #[derive(Serialize, Deserialize, Default)]
 pub struct Settings {
     pub terrs: TerrSettings,
     pub map: MapSettings,
     pub sidebar: SidebarSettings,
+
+    pub copy_coordfmt: RwSignal<CoordFmt>,
 
     pub gather: GatherSettings,
 }

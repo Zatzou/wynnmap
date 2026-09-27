@@ -13,6 +13,7 @@ use crate::{
     components::{sidebar::Sidebar, sidecard::SideCard},
     datasource,
     modes::drops::{search::DropSearch, spotrender::SpotRenderer},
+    settings::SettingsCtx,
     wynnmap::{
         WynnMap,
         context::{MapPosition, RelMousePos},
@@ -118,6 +119,9 @@ pub fn DropsMap() -> impl IntoView {
 fn ItemSelected(selected: Item, back: impl Fn() + 'static) -> impl IntoView {
     let map_location = expect_context::<MapPosition>();
 
+    let SettingsCtx(settings) = expect_context();
+    let copy_coordfmt = settings.copy_coordfmt;
+
     view! {
         <div class="dropsiteminfo">
             <div class="backbtn" on:click=move |_| back()>
@@ -146,7 +150,7 @@ fn ItemSelected(selected: Item, back: impl Fn() + 'static) -> impl IntoView {
                                     let copystring = move |_| {
                                         let clipboard = window().navigator().clipboard();
 
-                                        let _promise = clipboard.write_text(&format!("/comp {x} {y} {z}"));
+                                        let _promise = clipboard.write_text(&copy_coordfmt.read().format_xyz(area.location));
                                     };
 
                                     let moveto = move |_| {
@@ -178,6 +182,9 @@ fn DropInfoCard(
         .saturate(0.75)
         .to_rgb_values();
 
+    let SettingsCtx(settings) = expect_context();
+    let copy_coordfmt = settings.copy_coordfmt;
+
     view! {
         <div class="dropinfocard" style:--col=col>
             <div/>
@@ -189,7 +196,7 @@ fn DropInfoCard(
                     let copystring = move |_| {
                         let clipboard = window().navigator().clipboard();
 
-                        let _promise = clipboard.write_text(&format!("/comp {x} {y} {z}"));
+                        let _promise = clipboard.write_text(&copy_coordfmt.read().format_xyz(area.location));
                     };
 
                     view! {

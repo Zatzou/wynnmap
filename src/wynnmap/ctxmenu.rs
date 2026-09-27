@@ -1,7 +1,7 @@
 use leptos::{ev, prelude::*};
 use web_sys::MouseEvent;
 
-use crate::{util::as_px, wynnmap::context::RelMousePos};
+use crate::{settings::SettingsCtx, util::as_px, wynnmap::context::RelMousePos};
 
 pub type OnCtxMenu = Callback<(RwSignal<[i32; 2]>, Callback<()>), AnyView>;
 
@@ -58,12 +58,15 @@ pub fn context_menu(
 
 #[component]
 fn CopyCoordsBtn(menu_relpos: RwSignal<[i32; 2]>, close: impl Fn() + 'static) -> impl IntoView {
+    let SettingsCtx(settings) = expect_context();
+    let copy_coordfmt = settings.copy_coordfmt;
+
     let click = move |_| {
         let [x, z] = menu_relpos.get();
 
         let clipboard = window().navigator().clipboard();
 
-        let _promise = clipboard.write_text(&format!("/comp {x} {z}"));
+        let _promise = clipboard.write_text(&copy_coordfmt.read().format_xz([x, z]));
 
         close();
     };
