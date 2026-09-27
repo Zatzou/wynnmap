@@ -72,7 +72,7 @@ fn provide_default_map_tiles() {
     let tiles = RwSignal::new(Vec::new());
 
     let load_tiles = move |tiles: RwSignal<_>| async move {
-        match datasource::load_map_tiles().await {
+        match datasource::load_json("/api/v1/images/maps.json").await {
             Ok(data) => tiles.set(data),
             Err(err) => {
                 if !dialogs.contains("err_maptiles") {

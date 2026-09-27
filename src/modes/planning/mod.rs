@@ -2,7 +2,10 @@ use std::{collections::BTreeMap, sync::Arc};
 
 use leptos::{leptos_dom::logging::console_log, prelude::*, task::spawn_local};
 use leptos_router::hooks::use_location;
-use wynnmap_types::{guild::Guild, terr::TerrState};
+use wynnmap_types::{
+    guild::Guild,
+    terr::{TerrState, Territory},
+};
 
 use crate::{
     components::{
@@ -71,7 +74,7 @@ pub fn PlanningMap() -> impl IntoView {
     let terrs = RwSignal::new(BTreeMap::new());
 
     let load_terrs = move |terrs: RwSignal<_>| async move {
-        match datasource::get_terrs().await {
+        match datasource::load_json::<BTreeMap<Arc<str>, Territory>>("/api/v3/terr/list").await {
             Ok(data) => terrs.set(data),
             Err(err) => {
                 if !dialogs.contains("err_maptiles") {

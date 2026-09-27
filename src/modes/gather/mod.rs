@@ -23,8 +23,8 @@ pub fn GatherMap() -> impl IntoView {
 
     let load_data = move |nodes: RwSignal<_>| async move {
         match (
-            datasource::get_gather_nodes().await,
-            datasource::get_mat_data().await,
+            datasource::load_json("/api/v3/gather/nodes").await,
+            datasource::load_json("/matdata.json").await,
         ) {
             (Ok(n), Ok(d)) => {
                 nodes.set(n);

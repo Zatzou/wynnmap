@@ -1,8 +1,8 @@
-use std::{collections::BTreeMap, time::Duration};
+use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 use jiff::SignedDuration;
 use leptos::{prelude::*, task::spawn_local};
-use wynnmap_types::terr::TerrTimestamps;
+use wynnmap_types::terr::{MapState, TerrTimestamps, Territory};
 
 use crate::{
     components::{
@@ -40,7 +40,7 @@ pub fn WarMap() -> impl IntoView {
     let last_updated = RwSignal::new(TerrTimestamps::default());
 
     let load_terrs = move |terrs: RwSignal<_>| async move {
-        match datasource::get_terrs().await {
+        match datasource::load_json::<BTreeMap<Arc<str>, Territory>>("/api/v3/terr/list").await {
             Ok(data) => terrs.set(data),
             Err(err) => {
                 if !dialogs.contains("err_maptiles") {
@@ -61,7 +61,7 @@ pub fn WarMap() -> impl IntoView {
     spawn_local(load_terrs(terrs));
 
     let load_owners = move || async move {
-        match datasource::get_state().await {
+        match datasource::load_json::<MapState>("/api/v3/terr/state").await {
             Ok(data) => {
                 state.set(data.terrs);
                 last_updated.set(data.timestamps);
