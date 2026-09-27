@@ -28,7 +28,10 @@ impl Dialogs {
     pub fn contains(&self, name: impl Into<Arc<str>>) -> bool {
         let name = name.into();
 
-        self.dialogs.read().iter().any(|(n, _)| *n == name)
+        self.dialogs
+            .read_untracked()
+            .iter()
+            .any(|(n, _)| *n == name)
     }
 }
 
