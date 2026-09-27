@@ -19,6 +19,10 @@ command_arguments = [
     "./wynnmap.css",
 ]
 
+[[hooks]]
+stage = "pre_build"
+command = "./write-version.sh"
+
 [[proxy]]
 backend = "https://wynnmap.zatzou.com/api/"
 # backend = "http://localhost:8081/api/"
