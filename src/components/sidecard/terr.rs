@@ -110,8 +110,8 @@ pub fn GuildInfo(#[prop(into)] state: Signal<TerrState>) -> impl IntoView {
             {move || time.get().map(|time| view! {
                 <div class="px-2 pt-2">
                     <h2>"Time held: "{move || fmt_time_long(time)}</h2>
-                    <h2>"Treasury: "<span style:color=move || state.read().treasury.color()>{move || state.read().treasury.to_string()}</span></h2>
-                    <h2>"Defences: "<span style:color=move || state.read().defences.color()>{move || state.read().defences.to_string()}</span></h2>
+                    <h2>"Treasury: "<span style:color=move || state.read().treasury.color().to_hex()>{move || state.read().treasury.to_string()}</span></h2>
+                    <h2>"Defences: "<span style:color=move || state.read().defences.color().to_hex()>{move || state.read().defences.to_string()}</span></h2>
                 </div>
             })}
         </div>

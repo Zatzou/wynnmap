@@ -3,6 +3,8 @@ use std::fmt::Display;
 use jiff::SignedDuration;
 use serde::{Deserialize, Serialize};
 
+use crate::color::Color;
+
 #[derive(
     Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Default, PartialOrd, Ord,
 )]
@@ -40,13 +42,13 @@ impl Display for WynnTier {
 impl WynnTier {
     /// Return the hex color generally used for this tier
     #[inline]
-    pub const fn color(&self) -> &'static str {
+    pub const fn color(&self) -> Color {
         match self {
-            WynnTier::VeryLow => "#00AA00",  // dark green
-            WynnTier::Low => "#55FF55",      // green
-            WynnTier::Medium => "#FFFF55",   // yellow
-            WynnTier::High => "#FF5555",     // red
-            WynnTier::VeryHigh => "#AA0000", // dark red
+            WynnTier::VeryLow => Color::new([0x00, 0xAA, 0x00]), // dark green
+            WynnTier::Low => Color::new([0x55, 0xFF, 0x55]),     // green
+            WynnTier::Medium => Color::new([0xFF, 0xFF, 0x55]),  // yellow
+            WynnTier::High => Color::new([0xFF, 0x55, 0x55]),    // red
+            WynnTier::VeryHigh => Color::new([0xAA, 0x00, 0x00]), // dark red
         }
     }
 

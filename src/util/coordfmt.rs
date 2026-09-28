@@ -56,9 +56,9 @@ pub fn CoordFmtSelector(fmt: RwSignal<CoordFmt>) -> impl IntoView {
             prop:value=move || match fmt.get() {
                 CoordFmt::CompassShort => "CompassShort",
                 CoordFmt::CompassLong => "CompassLong",
-                CoordFmt::Raw => todo!(),
-                CoordFmt::Commas => todo!(),
-                CoordFmt::Lettered => todo!(),
+                CoordFmt::Raw => "Raw",
+                CoordFmt::Commas => "Commas",
+                CoordFmt::Lettered => "Lettered",
             }
         >
             <option value="CompassShort">"/comp {x} (y) {z}"</option>

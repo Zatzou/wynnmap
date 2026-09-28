@@ -6,7 +6,6 @@ use wynnmap_types::{
     Region,
     resources::BaseResGen,
     terr::{TerrState, Territory},
-    tier::WynnTier,
 };
 
 use crate::{
@@ -81,7 +80,16 @@ pub fn TerritoryBox(
     #[prop(into)] terr: Signal<Territory>,
     #[prop(into)] state: Signal<TerrState>,
 ) -> impl IntoView {
-    let col_rgb = move || state.read().guild.get_color().to_rgb_values();
+    let SettingsCtx(settings) = expect_context();
+
+    let col_rgb = move || {
+        settings
+            .terrs
+            .terr_color
+            .read()
+            .get_color(&state.read())
+            .to_rgb_values()
+    };
 
     let location = move || terr.read().location;
 
@@ -149,9 +157,7 @@ pub fn TerritoryInfo(
 
             // timer
             <Show when={move || show_timers.get() && !hide_timers}>
-                {move || state.read().acquired.map(|acquired| view! {
-                    <TerrTimer acquired/>
-                })}
+                <TerrTimer state/>
             </Show>
         </div>
     }
@@ -188,14 +194,24 @@ fn ResIcons(terr: Signal<BaseResGen>) -> impl IntoView {
 }
 
 #[component]
-fn TerrTimer(#[prop(into)] acquired: Signal<Timestamp>) -> impl IntoView {
+fn TerrTimer(#[prop(into)] state: Signal<TerrState>) -> impl IntoView {
+    let SettingsCtx(settings) = expect_context();
     let SecondTimer(now) = expect_context::<SecondTimer>();
 
-    let time = Memo::new(move |_| now.read().duration_since(*acquired.read()));
+    let acquired = move || state.read().acquired.unwrap_or(Timestamp::now());
+
+    let time = Memo::new(move |_| now.read().duration_since(acquired()));
 
     let timestr = move || fmt_time_short(time.get());
 
-    let color = move || WynnTier::from_time_held(time.get()).color();
+    let color = move || {
+        settings
+            .terrs
+            .timer_color
+            .read()
+            .get_color(&state.read())
+            .to_hex()
+    };
 
     view! {
         <div class="terrtimer">

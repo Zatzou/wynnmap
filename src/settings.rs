@@ -4,7 +4,7 @@ use gloo_storage::Storage;
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::coordfmt::CoordFmt;
+use crate::util::{CoordFmt, GColSource};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Settings {
@@ -23,6 +23,9 @@ pub struct TerrSettings {
     pub show_gtags: RwSignal<bool>,
     pub show_resicons: RwSignal<bool>,
     pub show_timers: RwSignal<bool>,
+
+    pub terr_color: RwSignal<GColSource>,
+    pub timer_color: RwSignal<GColSource>,
 }
 
 impl Default for TerrSettings {
@@ -31,6 +34,9 @@ impl Default for TerrSettings {
             show_gtags: RwSignal::new(true),
             show_resicons: RwSignal::new(true),
             show_timers: RwSignal::new(true),
+
+            terr_color: RwSignal::new(GColSource::Guild),
+            timer_color: RwSignal::new(GColSource::Treasury),
         }
     }
 }

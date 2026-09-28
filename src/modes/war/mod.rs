@@ -16,7 +16,7 @@ use crate::{
     modes::war::calc::TerrCalc,
     sectimer::SecondTimer,
     settings::SettingsCtx,
-    util::fmt_time_short,
+    util::{GColSourceSelector, fmt_time_short},
     wynnmap::{
         OnCtxMenu, WynnMap, conns::Connections, maptile::WithDefaultMapTiles, terrs::TerrView,
     },
@@ -204,6 +204,14 @@ pub fn WarMap() -> impl IntoView {
                     </div>
                 </div>
                 <Checkbox id="conns" checked={show_conns}>"Connections"</Checkbox>
+                <div>
+                    "Territory color: "
+                    <GColSourceSelector src=settings.terrs.terr_color/>
+                </div>
+                <div>
+                    "Timer color: "
+                    <GColSourceSelector src=settings.terrs.timer_color/>
+                </div>
             </div>
 
             // guild leaderboard

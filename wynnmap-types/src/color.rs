@@ -8,8 +8,7 @@ pub struct Color {
 impl From<[u8; 3]> for Color {
     #[inline]
     fn from(value: [u8; 3]) -> Self {
-        let [r, g, b] = value;
-        Self { r, g, b }
+        Self::new(value)
     }
 }
 
@@ -20,6 +19,11 @@ impl From<Color> for [u8; 3] {
 }
 
 impl Color {
+    #[inline]
+    pub const fn new([r, g, b]: [u8; 3]) -> Self {
+        Self { r, g, b }
+    }
+
     /// Get a color using the wynntils guild color hashing
     #[inline]
     pub fn from_hash(hashable: impl AsRef<[u8]>) -> Self {

@@ -163,7 +163,7 @@ pub fn TerrCalc(
 
                     fmt_num(health / (1.0 - def))
                 }}</h2>
-                <h2>"Defense: "<span style:color=move || def_tier().color()>{move || def_tier().to_string()}</span></h2>
+                <h2>"Defense: "<span style:color=move || def_tier().color().to_hex()>{move || def_tier().to_string()}</span></h2>
             </div>
         </div>
     }

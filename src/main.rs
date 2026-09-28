@@ -16,7 +16,6 @@ use crate::{
 };
 
 mod components;
-mod coordfmt;
 mod datasource;
 mod dialog;
 mod error;

@@ -3,8 +3,8 @@ use std::fmt::Display;
 use leptos::prelude::*;
 
 use crate::{
-    components::checkbox::Checkbox, coordfmt::CoordFmtSelector, dialog::DialogCloseButton,
-    settings::SettingsCtx,
+    components::checkbox::Checkbox, dialog::DialogCloseButton, settings::SettingsCtx,
+    util::CoordFmtSelector,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
