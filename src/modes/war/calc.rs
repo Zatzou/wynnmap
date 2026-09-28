@@ -106,7 +106,7 @@ pub fn TerrCalc(
     view! {
         <div>
             <h2 class="text-xl">"Tower"</h2>
-            <div class="p-2">
+            <div class="px-2 pt-2">
                 <Checkbox id="hq" checked={hq}>"HQ"</Checkbox>
 
                 <div class="flex flex-col gap-2">
@@ -146,23 +146,25 @@ pub fn TerrCalc(
             </div>
         </div>
 
-        <div class="p-4">
-            <h2>"Avg DPS: "{move || {
-                let dmg_low = calc_stat(DAMAGES[*damage.read()].start);
-                let dmg_high = calc_stat(DAMAGES[*damage.read()].end);
-                let dmg_avg = f64::midpoint(dmg_low, dmg_high);
+        <div>
+            <div class="px-2">
+                <h2>"Avg DPS: "{move || {
+                    let dmg_low = calc_stat(DAMAGES[*damage.read()].start);
+                    let dmg_high = calc_stat(DAMAGES[*damage.read()].end);
+                    let dmg_avg = f64::midpoint(dmg_low, dmg_high);
 
-                let att_rate = ATTACK_RATES[*attacks.read()];
+                    let att_rate = ATTACK_RATES[*attacks.read()];
 
-                fmt_num(dmg_avg * att_rate)
-            }}</h2>
-            <h2>"EHP: "{move || {
-                let health = calc_stat(HEALTHS[*health.read()]);
-                let def = DEFENSES[*defense.read()];
+                    fmt_num(dmg_avg * att_rate)
+                }}</h2>
+                <h2>"EHP: "{move || {
+                    let health = calc_stat(HEALTHS[*health.read()]);
+                    let def = DEFENSES[*defense.read()];
 
-                fmt_num(health / (1.0 - def))
-            }}</h2>
-            <h2>"Defense: "<span style:color=move || def_tier().color()>{move || def_tier().to_string()}</span></h2>
+                    fmt_num(health / (1.0 - def))
+                }}</h2>
+                <h2>"Defense: "<span style:color=move || def_tier().color()>{move || def_tier().to_string()}</span></h2>
+            </div>
         </div>
     }
 }

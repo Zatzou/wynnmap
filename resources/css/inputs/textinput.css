@@ -1,0 +1,3 @@
+.textbar {
+    @apply input-base p-1 px-2;
+}

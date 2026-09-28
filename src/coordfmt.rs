@@ -42,6 +42,7 @@ impl CoordFmt {
 pub fn CoordFmtSelector(fmt: RwSignal<CoordFmt>) -> impl IntoView {
     view! {
         <select
+            class="select"
             on:change:target=move |ev| {
                 fmt.set(match ev.target().value().as_str() {
                     "CompassShort" => CoordFmt::CompassShort,

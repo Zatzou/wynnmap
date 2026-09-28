@@ -1,0 +1,20 @@
+@utility input-base {
+    /* bg */
+    @apply bg-neutral-800 hover:input-hover;
+    /* border */
+    @apply border border-neutral-700;
+    /* text */
+    @apply text-white placeholder:text-neutral-400;
+    /* rounding */
+    @apply rounded-sm;
+}
+
+@utility input-hover {
+    @apply bg-neutral-700;
+}
+
+@import "./inputs/checkbox.css";
+@import "./inputs/incrementor.css";
+@import "./inputs/textinput.css";
+@import "./inputs/select.css";
+@import "./inputs/button.css";

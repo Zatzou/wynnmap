@@ -13,7 +13,7 @@ pub fn manage_guilds(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>) -> impl IntoView
         <div class="bg-neutral-900 md:rounded-xl text-white w-screen max-w-3xl h-dvh md:max-h-150 flex flex-col">
             <div>
                 <div class="flex justify-between p-2 items-center">
-                    <h1 class="text-4xl">"Manage guilds"</h1>
+                    <h2 class="text-4xl">"Manage guilds"</h2>
 
                     <DialogCloseButton />
                 </div>

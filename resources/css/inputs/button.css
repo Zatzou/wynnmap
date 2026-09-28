@@ -1,0 +1,19 @@
+.button-small {
+    cursor: pointer;
+
+    @apply input-base p-1 px-2;
+}
+
+@utility button-large {
+    cursor: pointer;
+
+    @apply bg-neutral-900 hover:input-hover;
+}
+
+@utility button-sidebar {
+    display: flex;
+    align-items: center;
+    text-align: left;
+
+    @apply button-large p-2 gap-2 text-xl;
+}

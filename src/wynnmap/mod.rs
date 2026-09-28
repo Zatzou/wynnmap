@@ -104,11 +104,9 @@ pub fn WynnMap(
             </div>
 
             // bottom text
-            <div class="wynnmap-btmtxt">
-                <h2 class="p-1 px-2">
-                    <a class="underline" href="https://github.com/Zatzou/wynnmap" target="_blank">"Wynnmap"</a>" "{env!("CARGO_PKG_VERSION")}
-                </h2>
-            </div>
+            <span class="wynnmap-btmtxt">
+                <a class="underline" href="https://github.com/Zatzou/wynnmap" target="_blank">"Wynnmap"</a>" "{env!("CARGO_PKG_VERSION")}
+            </span>
         </div>
 
         // context menu

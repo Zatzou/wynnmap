@@ -25,7 +25,7 @@ pub fn DropSearch(
 
     view! {
         <div class="dropsearch">
-            <input type="text" placeholder="Search items" bind:value=search_str/>
+            <input type="text" class="textbar" placeholder="Search items" bind:value=search_str/>
         </div>
         <div class="dropsearchres">
             <For

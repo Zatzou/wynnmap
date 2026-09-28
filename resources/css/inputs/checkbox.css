@@ -1,5 +1,5 @@
 .checkbox:hover input {
-    @apply bg-neutral-500;
+    @apply input-hover;
 }
 
 .checkbox {
@@ -7,17 +7,19 @@
     align-items: center;
     position: relative;
 
+    @apply gap-1.5;
+
     input {
         appearance: none;
 
         cursor: pointer;
         user-select: none;
 
-        @apply mr-2 h-5 w-5 rounded-sm bg-neutral-700;
+        @apply input-base h-lh w-[1lh];
     }
 
     input:disabled {
-        @apply bg-neutral-600;
+        @apply bg-neutral-900;
     }
 
     input:checked+.checkmark {
@@ -33,7 +35,7 @@
 
         pointer-events: none;
 
-        @apply justify-center items-center h-5 w-5;
+        @apply justify-center items-center h-lh w-[1lh];
 
         div {
             @apply w-[0.4em] h-[0.75em] mb-0.5 rotate-45 border-white border-0 border-r-3 border-b-3;
@@ -43,7 +45,6 @@
     input:disabled+.checkmark>div {
         @apply border-neutral-400;
     }
-
 
     label {
         cursor: pointer;

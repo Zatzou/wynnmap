@@ -16,10 +16,6 @@
             @apply border border-neutral-600 hover:bg-neutral-700 p-2 rounded-md;
         }
     }
-
-    >input {
-        @apply border border-neutral-600 p-1 px-2 rounded-lg;
-    }
 }
 
 .mattoggles {
@@ -46,6 +42,8 @@
         display: grid;
         grid-column: 1 / 5;
         grid-template-columns: subgrid;
+
+        @apply gap-1;
 
         >.checkbox {
             display: grid;

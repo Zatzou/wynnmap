@@ -16,7 +16,7 @@ pub(super) fn edit_guild(guilds: RwSignal<Vec<ArcRwSignal<Guild>>>, n: usize) ->
         <div class="bg-neutral-900 md:rounded-xl text-white flex flex-col">
             <div>
                 <div class="flex justify-between p-2 items-center">
-                    <h1 class="text-2xl">"Edit guild"</h1>
+                    <h2 class="text-2xl">"Edit guild"</h2>
                 </div>
 
                 <hr class="border-neutral-600" />

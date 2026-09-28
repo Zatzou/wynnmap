@@ -3,10 +3,6 @@
     flex-direction: column;
 
     @apply p-2 gap-2;
-
-    >input {
-        @apply border border-neutral-600 p-1 px-2 rounded-lg;
-    }
 }
 
 .dropsearchres {

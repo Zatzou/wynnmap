@@ -119,7 +119,7 @@ pub fn GatherMap() -> impl IntoView {
                     <button on:click=show_all>"Show all"</button>
                     <button on:click=show_none>"Show none"</button>
                 </div>
-                <input type="text" placeholder="Search materials" bind:value=search_str/>
+                <input type="text" class="textbar" placeholder="Search materials" bind:value=search_str/>
             </div>
             <div class="mattoggles">
                 <div class="header">

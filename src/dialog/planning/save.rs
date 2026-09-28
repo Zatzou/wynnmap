@@ -168,7 +168,7 @@ pub fn save_dialog(
     view! {
         <div class="bg-neutral-900 md:rounded-xl text-white w-screen max-w-3xl h-dvh md:max-h-150 flex flex-col">
             <div class="flex justify-between p-2 items-center">
-                <h1 class="text-4xl">"Import/Export"</h1>
+                <h2 class="text-4xl">"Import/Export"</h2>
 
                 <DialogCloseButton />
             </div>

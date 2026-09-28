@@ -29,7 +29,7 @@ pub fn settings_dialog() -> impl IntoView {
         <div class="bg-neutral-900 md:rounded-xl text-white w-screen max-w-3xl h-dvh md:max-h-150 flex flex-col">
             <div>
                 <div class="flex justify-between p-2 items-center">
-                    <h1 class="text-4xl">"Settings"</h1>
+                    <h2 class="text-4xl">"Settings"</h2>
 
                     <DialogCloseButton />
                 </div>
@@ -75,10 +75,10 @@ fn GeneralSettings() -> impl IntoView {
     let copy_coordfmt = settings.copy_coordfmt;
 
     view! {
-        <div class="flex-1 flex flex-col p-2 text-lg">
+        <div class="flex-1 flex flex-col p-2 gap-2 text-lg">
             <Checkbox id="nonmains" checked={show_non_main}>"Show non-main map areas"</Checkbox>
             <div>
-                <span>"Prefered copy coordinate format"</span>
+                <span class="mr-2">"Prefered copy coordinate format"</span>
                 <CoordFmtSelector fmt=copy_coordfmt/>
             </div>
         </div>

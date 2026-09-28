@@ -184,7 +184,7 @@ pub fn WarMap() -> impl IntoView {
         {move || if *data_age.read() > SignedDuration::from_mins(10) {
             Some(view! {
                 <div class="fixed bottom-4 right-4 bg-neutral-900 text-white rounded-md w-sm p-2">
-                    <h1 class="text-2xl">"Warning: territory data is outdated"</h1>
+                    <h2 class="text-2xl">"Warning: territory data is outdated"</h2>
                     <p>"Data was last updated " {move || {
                         fmt_time_short(data_age.get())
                     }} " ago"</p>
@@ -195,10 +195,10 @@ pub fn WarMap() -> impl IntoView {
 
         <Sidebar>
             // checkboxes
-            <div class="flex-1 flex flex-col gap-2 p-2 text-lg">
-                <div>
+            <div class="flex-1 flex flex-col gap-2 p-2">
+                <div class="flex flex-col gap-2">
                     <Checkbox id="terrs" checked={show_terrs}>"Territories"</Checkbox>
-                    <div class="flex flex-col gap-1 ml-6" class:hidden={move || !show_terrs.get()}>
+                    <div class="flex flex-col gap-2 ml-6" class:hidden={move || !show_terrs.get()}>
                         <Checkbox id="resico" checked={show_res}>"Resource icons"</Checkbox>
                         <Checkbox id="timers" checked={show_timers}>"Timers"</Checkbox>
                     </div>

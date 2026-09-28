@@ -80,7 +80,7 @@ fn update_dialog(version: String, ignore: RwSignal<bool>) -> impl IntoView {
     view! {
         <div class="bg-neutral-900 md:rounded-xl text-white flex flex-col">
             <div class="flex justify-between p-2 items-center">
-                <h1 class="text-4xl">"Update available"</h1>
+                <h2 class="text-4xl">"Update available"</h2>
 
                 <DialogCloseButton />
             </div>

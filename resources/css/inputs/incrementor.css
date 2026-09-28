@@ -3,7 +3,7 @@
 
     button {
         display: inline-block;
-        @apply bg-neutral-600 hover:bg-neutral-300 w-6 font-bold rounded;
+        @apply input-base w-6 h-6 leading-none;
     }
 
     input {

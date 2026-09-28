@@ -39,7 +39,7 @@
         grid-template-columns: max-content max-content auto max-content max-content max-content;
 
         align-items: center;
-        @apply p-2 gap-1;
+        @apply px-2 pt-2 gap-1;
 
         * {
             text-align: right;

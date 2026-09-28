@@ -32,7 +32,7 @@ pub fn TerrInfo(
 ) -> impl IntoView {
     view! {
         <div>
-            <h1 class="text-2xl">{name}</h1>
+            <h2 class="text-2xl">{name}</h2>
 
             <div class="resview">
                 {move ||
@@ -102,13 +102,13 @@ pub fn GuildInfo(#[prop(into)] state: Signal<TerrState>) -> impl IntoView {
 
     view! {
         <div>
-            <h1 class="text-xl">
+            <h2 class="text-xl">
                 {move || state.read().guild.name.clone()}" "
                 <span class="font-mono">"["{move || state.read().guild.prefix.clone()}"]"</span>
-            </h1>
+            </h2>
 
             {move || time.get().map(|time| view! {
-                <div class="p-2">
+                <div class="px-2 pt-2">
                     <h2>"Time held: "{move || fmt_time_long(time)}</h2>
                     <h2>"Treasury: "<span style:color=move || state.read().treasury.color()>{move || state.read().treasury.to_string()}</span></h2>
                     <h2>"Defences: "<span style:color=move || state.read().defences.color()>{move || state.read().defences.to_string()}</span></h2>

@@ -35,7 +35,7 @@ pub fn Sidebar(#[prop(optional)] children: Option<Children>) -> impl IntoView {
             </div>
 
             // settings button
-            <div class="settings-btn"
+            <button class="button-sidebar"
                 on:click={
                     move |_| {
                         dialogs.add("settings", dialog::settings::settings_dialog);
@@ -43,15 +43,13 @@ pub fn Sidebar(#[prop(optional)] children: Option<Children>) -> impl IntoView {
                 }
             >
                 <icons::Settings size=24/>
-                <h2>"Settings"</h2>
-            </div>
+                <span>"Settings"</span>
+            </button>
 
             // bottom text
-            <div>
-                <h2 class="text-neutral-400 p-1 px-2">
-                    <a class="underline" href="https://github.com/Zatzou/wynnmap" target="_blank">"Wynnmap"</a>" "{env!("CARGO_PKG_VERSION")}
-                </h2>
-            </div>
+            <span class="text-neutral-400 p-1">
+                <a class="underline" href="https://github.com/Zatzou/wynnmap" target="_blank">"Wynnmap"</a>" "{env!("CARGO_PKG_VERSION")}
+            </span>
         </div>
     }
 }
@@ -63,13 +61,12 @@ fn Modeswitch() -> impl IntoView {
 
     view! {
         <div class="modeswitcher">
-            <div class="title" on:click=move |_| toggle_modeswitch.update(|s| *s = !*s)>
-                <div class="flex flex-row gap-1 items-center">
-                    <ModeswitchTitle cur=cur_path />
-                </div>
+            <button class="button-sidebar title" on:click=move |_| toggle_modeswitch.update(|s| *s = !*s)>
+                <ModeswitchTitle cur=cur_path />
+
                 <Show when=move || !toggle_modeswitch.get()><icons::ChevronDown size=24/></Show>
                 <Show when=move || toggle_modeswitch.get()><icons::ChevronUp size=24/></Show>
-            </div>
+            </button>
 
             <hr class:hidden=move || !toggle_modeswitch.get()/>
 
@@ -89,7 +86,7 @@ fn ModeswitchItem(
     #[prop(into)] hide: Signal<bool>,
 ) -> impl IntoView {
     view! {
-        <A href=move || location.get() attr:class="flex flex-row gap-1 pl-2 items-center" class:hidden=hide>
+        <A href=move || location.get() attr:class="button-sidebar" class:hidden=hide>
             <ModeswitchTitle cur=location/>
         </A>
     }
@@ -113,6 +110,6 @@ fn ModeswitchTitle(#[prop(into)] cur: Signal<String>) -> impl IntoView {
     };
 
     view! {
-        {cur_icon} {cur_title}
+        {cur_icon} <span class="flex-1">{cur_title}</span>
     }
 }
