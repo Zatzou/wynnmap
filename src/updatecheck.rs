@@ -29,8 +29,8 @@ pub fn checker() {
 
         if let Ok(ver) = ver {
             last_checked.set(Timestamp::now());
-            if ver.as_str() > CURRENT && !dialogs.contains("update") {
-                dialogs.add("update", move || update_dialog(ver.clone(), ignore));
+            if ver.as_str() > CURRENT {
+                dialogs.add_if_not_exist("update", move || update_dialog(ver.clone(), ignore));
             }
         }
     };

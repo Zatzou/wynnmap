@@ -75,17 +75,15 @@ fn provide_default_map_tiles() {
         match datasource::load_json("/api/v1/images/maps.json").await {
             Ok(data) => tiles.set(data),
             Err(err) => {
-                if !dialogs.contains("err_maptiles") {
-                    dialogs.add("err_maptiles", move || {
-                        info_dialog(
-                            String::from("Failed to load map tiles"),
-                            view! {
-                                <p>"An error occured while loading api data"</p>
-                                <pre class="p-2 bg-neutral-800 rounded my-1">{format!("{err:?}")}</pre>
-                            },
-                        )
-                    });
-                }
+                dialogs.add_if_not_exist("err_maptiles", move || {
+                    info_dialog(
+                        String::from("Failed to load map tiles"),
+                        view! {
+                            <p>"An error occured while loading api data"</p>
+                            <pre class="p-2 bg-neutral-800 rounded my-1">{format!("{err:?}")}</pre>
+                        },
+                    )
+                });
             }
         }
     };

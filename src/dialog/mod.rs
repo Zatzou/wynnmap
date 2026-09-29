@@ -25,13 +25,21 @@ impl Dialogs {
         });
     }
 
-    pub fn contains(&self, name: impl Into<Arc<str>>) -> bool {
+    pub fn add_if_not_exist(&self, name: impl Into<Arc<str>>, view: impl Into<ViewFn>) {
         let name = name.into();
+
+        if !self.contains(&name) {
+            self.add(name, view);
+        }
+    }
+
+    pub fn contains(&self, name: impl AsRef<str>) -> bool {
+        let name = name.as_ref();
 
         self.dialogs
             .read_untracked()
             .iter()
-            .any(|(n, _)| *n == name)
+            .any(|(n, _)| **n == *name)
     }
 }
 

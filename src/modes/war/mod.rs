@@ -43,17 +43,15 @@ pub fn WarMap() -> impl IntoView {
         match datasource::load_json::<BTreeMap<Arc<str>, Territory>>("/api/v3/terr/list").await {
             Ok(data) => terrs.set(data),
             Err(err) => {
-                if !dialogs.contains("err_maptiles") {
-                    dialogs.add("err_maptiles", move || {
-                        info_dialog(
-                            String::from("Failed to load territory data"),
-                            view! {
-                                <p>"An error occured while loading api data"</p>
-                                <pre class="p-2 bg-neutral-800 rounded my-1">{format!("{err:?}")}</pre>
-                            },
-                        )
-                    });
-                }
+                dialogs.add_if_not_exist("err_maptiles", move || {
+                    info_dialog(
+                        String::from("Failed to load territory data"),
+                        view! {
+                            <p>"An error occured while loading api data"</p>
+                            <pre class="p-2 bg-neutral-800 rounded my-1">{format!("{err:?}")}</pre>
+                        },
+                    )
+                });
             }
         }
     };
@@ -67,17 +65,15 @@ pub fn WarMap() -> impl IntoView {
                 last_updated.set(data.timestamps);
             }
             Err(err) => {
-                if !dialogs.contains("err_maptiles") {
-                    dialogs.add("err_maptiles", move || {
-                        info_dialog(
-                            String::from("Failed to load territory data"),
-                            view! {
-                                <p>"An error occured while loading api data"</p>
-                                <pre class="p-2 bg-neutral-800 rounded my-1">{format!("{err:?}")}</pre>
-                            },
-                        )
-                    });
-                }
+                dialogs.add_if_not_exist("err_maptiles", move || {
+                    info_dialog(
+                        String::from("Failed to load territory data"),
+                        view! {
+                            <p>"An error occured while loading api data"</p>
+                            <pre class="p-2 bg-neutral-800 rounded my-1">{format!("{err:?}")}</pre>
+                        },
+                    )
+                });
             }
         }
     };
