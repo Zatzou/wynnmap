@@ -71,8 +71,8 @@ pub struct TerrTimestamps {
 impl Default for TerrTimestamps {
     fn default() -> Self {
         Self {
-            updated: Timestamp::default(),
-            changed: Timestamp::default(),
+            updated: Timestamp::now(),
+            changed: Timestamp::now(),
             wynntick: None,
 
             epoch: Timestamp::now().as_second(),
