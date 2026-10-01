@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 use jiff::SignedDuration;
 use leptos::{prelude::*, task::spawn_local};
-use wynnmap_types::terr::{MapState, TerrTimestamps, Territory};
+use wynnmap_types::terr::{TerrTimestamps, Territory};
 
 use crate::{
     components::{
@@ -58,42 +58,13 @@ pub fn WarMap() -> impl IntoView {
 
     spawn_local(load_terrs(terrs));
 
-    let load_owners = move || async move {
-        match datasource::load_json::<MapState>("/api/v3/terr/state").await {
-            Ok(data) => {
-                state.set(data.terrs);
-                last_updated.set(data.timestamps);
-            }
-            Err(err) => {
-                dialogs.add_if_not_exist("err_maptiles", move || {
-                    info_dialog(
-                        String::from("Failed to load territory data"),
-                        view! {
-                            <p>"An error occured while loading api data"</p>
-                            <pre class="p-2 bg-neutral-800 rounded my-1">{format!("{err:?}")}</pre>
-                        },
-                    )
-                });
-            }
-        }
-    };
-
-    spawn_local(load_owners());
-
     datasource::sse_terr_updates(state, last_updated);
 
     let hovered = RwSignal::new(None);
     let selected = RwSignal::new(None);
 
     let SecondTimer(now) = expect_context();
-    let data_age = Memo::new(move |_| {
-        last_updated
-            .read()
-            .updated
-            .map_or(SignedDuration::ZERO, |updated| {
-                now.read().duration_since(updated)
-            })
-    });
+    let data_age = Memo::new(move |_| now.read().duration_since(last_updated.read().updated));
 
     // Update the territory data every 10 minutes to ensure the map stays up to date
     let terr_data_updater = set_interval_with_handle(
