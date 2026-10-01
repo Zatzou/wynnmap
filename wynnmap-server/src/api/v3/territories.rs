@@ -33,7 +33,7 @@ async fn terr_list(
         (
             lock.territories.clone(),
             lock.territories_etag.clone(),
-            lock.territories_modified,
+            lock.timestamps.changed,
             lock.expires,
         )
     };
@@ -76,10 +76,7 @@ async fn map_state(State(state): State<Arc<TerritoryState>>) -> impl IntoRespons
             (10 - Timestamp::now().duration_until(expires).as_secs()).to_string(),
         ),
         (header::EXPIRES, header_date(expires)),
-        (
-            header::LAST_MODIFIED,
-            header_date(timestamps.changed.unwrap_or_default()),
-        ),
+        (header::LAST_MODIFIED, header_date(timestamps.changed)),
     ];
 
     (

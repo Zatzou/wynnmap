@@ -36,7 +36,6 @@ pub struct TerritoryState {
 pub struct TerritoryStateInner {
     pub territories: BTreeMap<Arc<str>, Territory>,
     pub territories_etag: Arc<str>,
-    pub territories_modified: Timestamp,
 
     pub state: BTreeMap<Arc<str>, TerrState>,
 

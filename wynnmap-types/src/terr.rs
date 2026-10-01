@@ -58,11 +58,27 @@ pub struct MapState {
     pub timestamps: TerrTimestamps,
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TerrTimestamps {
-    pub updated: Option<Timestamp>,
-    pub changed: Option<Timestamp>,
+    pub updated: Timestamp,
+    pub changed: Timestamp,
     pub wynntick: Option<Timestamp>,
+
+    pub epoch: i64,
+    pub seq: i64,
+}
+
+impl Default for TerrTimestamps {
+    fn default() -> Self {
+        Self {
+            updated: Timestamp::default(),
+            changed: Timestamp::default(),
+            wynntick: None,
+
+            epoch: Timestamp::now().as_second(),
+            seq: 0,
+        }
+    }
 }
 
 /// Structure representing the state information of the guild

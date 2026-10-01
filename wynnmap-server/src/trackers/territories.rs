@@ -222,10 +222,15 @@ impl TerritoryTracker {
             // update expires and last updated
             lock.expires = expires.unwrap_or_default();
 
+            let now = Timestamp::now();
+            lock.timestamps.updated = now;
+
+            lock.timestamps.wynntick = wynntick;
+
             // update territories
             if lock.territories != territories {
                 lock.territories = territories;
-                lock.territories_modified = Timestamp::now();
+                lock.timestamps.changed = lock.timestamps.updated;
             }
 
             // update etag values
@@ -235,14 +240,8 @@ impl TerritoryTracker {
             let mut old_state = state.clone();
             mem::swap(&mut old_state, &mut lock.state);
 
-            let now = Timestamp::now();
-            lock.timestamps.updated = Some(now);
-
-            if old_state != lock.state {
-                lock.timestamps.changed = lock.timestamps.updated;
-            }
-
-            lock.timestamps.wynntick = wynntick;
+            // increment seq
+            lock.timestamps.seq += 1;
 
             // return old owners for notifications
             (old_state, lock.timestamps)
@@ -269,16 +268,20 @@ impl TerritoryTracker {
 
                 if !updateds.is_empty() {
                     // ignore send errors as they only occur if there are 0 receivers
-                    let _ = self
-                        .state
-                        .bc_events
-                        .send(Event::default().event("terr").json_data(updateds)?);
+                    let _ = self.state.bc_events.send(
+                        Event::default()
+                            .event("terr")
+                            .id(timestamps.seq.to_string())
+                            .json_data(updateds)?,
+                    );
                 }
 
-                let _ = self
-                    .state
-                    .bc_events
-                    .send(Event::default().event("ts").json_data(timestamps)?);
+                let _ = self.state.bc_events.send(
+                    Event::default()
+                        .event("ts")
+                        .id(timestamps.seq.to_string())
+                        .json_data(timestamps)?,
+                );
 
                 Ok::<(), AnyError>(())
             }
