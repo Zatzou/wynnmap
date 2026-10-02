@@ -92,7 +92,7 @@ pub fn WarMap() -> impl IntoView {
         );
     });
 
-    let onctx: OnCtxMenu = (move |pos: RwSignal<[i32; 2]>, close: Callback<()>| {
+    let onctxmenu: OnCtxMenu = (move |pos: RwSignal<[i32; 2]>, close: Callback<()>| {
         let under = terrs
             .read()
             .iter()
@@ -116,16 +116,16 @@ pub fn WarMap() -> impl IntoView {
     .into();
 
     view! {
-        <WynnMap onclick=onclick onctxmenu=onctx>
+        <WynnMap onclick onctxmenu>
             <WithDefaultMapTiles />
 
             // conns
-            <Show when={move || show_conns.get()}>
+            <Show when={move || show_conns.get() && !state.read().is_empty()}>
                 <Connections terrs />
             </Show>
 
             // territories
-            <Show when={move || show_terrs.get()}>
+            <Show when={move || show_terrs.get() && !state.read().is_empty()}>
                 <TerrView terrs state hovered />
             </Show>
         </WynnMap>

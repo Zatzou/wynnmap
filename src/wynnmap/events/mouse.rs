@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use web_sys::{MouseEvent, WheelEvent};
 
-use crate::wynnmap::util::apply_zoom;
+use crate::{util::zip_map, wynnmap::util::apply_zoom};
 
 pub struct MouseEventHandlers<MM, SM, EM, WH>
 where
@@ -35,10 +35,8 @@ pub fn handlers(
 
         // if we are dragging move the map
         if moving.get() {
-            position.update(|[x, y]| {
-                *x += f64::from(e.movement_x());
-                *y += f64::from(e.movement_y());
-            });
+            let movement = [e.movement_x(), e.movement_y()].map(f64::from);
+            position.update(|pos| *pos = zip_map(*pos, movement, f64::algebraic_add));
         }
 
         mousepos.set([e.client_x(), e.client_y()]);

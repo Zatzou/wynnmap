@@ -9,7 +9,7 @@ pub fn MapTile(#[prop(into)] tile: Signal<MapTile>) -> impl IntoView {
 
     view! {
         <img
-            src=tile.get().url
+            src=tile.read().url.clone()
             class="wynnmap-tile"
             style:width=move || as_px(location().width())
             style:height=move || as_px(location().height())
@@ -53,5 +53,5 @@ pub fn WithDefaultMapTiles(
 ) -> impl IntoView {
     let DefaultMapTiles(tiles) = expect_context();
 
-    view! { <MapTiles tiles={tiles} grayscale /> }
+    view! { <MapTiles tiles grayscale /> }
 }

@@ -43,7 +43,7 @@ impl MapPosition {
 fn provide_map_position() {
     let screen_middle = get_viewport_middle();
     // use the midpoint to position the map so that it is centered
-    let position = RwSignal::new([100.0 + screen_middle[0], 1200.0 + screen_middle[1]]);
+    let position = RwSignal::new(zip_map(screen_middle, [100.0, 1200.0], f64::algebraic_add));
 
     let zoom = RwSignal::new(0.5);
 

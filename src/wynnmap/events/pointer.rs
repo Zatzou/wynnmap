@@ -37,7 +37,9 @@ pub fn handlers(
             // calculate the compensation
             let zoom = zoom.get();
             let map_pos = position.get();
-            let rel = zip_map(pos, map_pos, |p, m| ((p - m) / zoom) as i32);
+            let rel = zip_map(pos, map_pos, |p, m| {
+                ((p.algebraic_sub(m)).algebraic_div(zoom)) as i32
+            });
             relmousepos.set(Some(rel));
         }
     };
@@ -55,7 +57,7 @@ pub fn handlers(
         let pos = [e.client_x(), e.client_y()];
         let startpos = dragstartpos.get();
 
-        let diff = zip_map(pos, startpos, |p, s| s.abs_diff(p));
+        let diff = zip_map(pos, startpos, i32::abs_diff);
 
         // emit clicks when the map hasnt been moved meaningfully
         if let Some(cb) = onclick

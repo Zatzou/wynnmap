@@ -225,36 +225,28 @@ fn AttackBorders(
     #[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>,
     #[prop(into)] state: Signal<BTreeMap<Arc<str>, TerrState>>,
 ) -> impl IntoView {
-    let active = RwSignal::new(BTreeMap::new());
-
-    // update list
-    Effect::new(move || {
+    let active = move || {
         let now = Timestamp::now();
+        let mut active = BTreeMap::new();
 
-        active.update(|active| {
-            // remove old ones
-            active.retain(|_, acq: &mut Timestamp| {
-                acq.duration_until(now) <= SignedDuration::from_secs(601)
-            });
-
-            for (name, s) in state.read().iter() {
-                if let Some(acq) = s.acquired
-                    && acq.duration_until(now) <= SignedDuration::from_secs(601)
-                    && let Some(terr) = terrs.read().get(name)
-                {
-                    active.insert(terr.location, acq);
-                }
+        for (name, s) in state.read().iter() {
+            if let Some(acq) = s.acquired
+                && acq.duration_until(now) <= SignedDuration::from_secs(601)
+                && let Some(terr) = terrs.read().get(name)
+            {
+                active.insert(terr.location, acq);
             }
-        });
-    });
+        }
+
+        active
+    };
 
     view! {
         <div class="wynnmap-items">
             <For
-                each=move || active.get().into_iter()
+                each=move || active().into_iter()
                 key=move |d| *d
                 children=move |(reg, acq)| {
-
                     view! {
                         <AttackBorder reg acq/>
                     }

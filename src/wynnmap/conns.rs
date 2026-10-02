@@ -15,13 +15,8 @@ pub fn Connections(#[prop(into)] terrs: Signal<BTreeMap<Arc<str>, Territory>>) -
     let bounds = Memo::new(move |_| bounds(&terrs.read()));
 
     let viewbox = move || {
-        format!(
-            "{} {} {} {}",
-            bounds.read().0,
-            bounds.read().1,
-            bounds.read().2,
-            bounds.read().3
-        )
+        let (b1, b2, b3, b4) = bounds.get();
+        format!("{b1} {b2} {b3} {b4}")
     };
 
     view! {
@@ -78,15 +73,14 @@ fn create_route_paths(terrs: &BTreeMap<Arc<str>, Territory>) -> String {
 
     let mut pathing = String::new();
     for (start, end) in terr_conns {
-        write!(
+        let _ = write!(
             pathing,
             "M{} {}L{} {}",
             start[0],
             start[1], // x and y of starting point
             end[0],
             end[1] // x and y of ending point
-        )
-        .expect("Write should not fail");
+        );
     }
 
     pathing

@@ -1,7 +1,10 @@
 use leptos::{ev, prelude::*};
 use web_sys::KeyboardEvent;
 
-use crate::wynnmap::util::{apply_zoom, apply_zoom_compensation, get_viewport_middle};
+use crate::{
+    util::zip_map,
+    wynnmap::util::{apply_zoom, apply_zoom_compensation, get_viewport_middle},
+};
 
 pub fn handlers(position: RwSignal<[f64; 2]>, zoom: RwSignal<f64>, transitioning: RwSignal<bool>) {
     let onkeydown = move |e: KeyboardEvent| {
@@ -25,12 +28,9 @@ pub fn handlers(position: RwSignal<[f64; 2]>, zoom: RwSignal<f64>, transitioning
             // Home - reset position
             "Home" => {
                 let screen_middle = get_viewport_middle();
-                let zoom = zoom.get() * 2.0;
 
-                position.set([
-                    100.0f64.mul_add(zoom, screen_middle[0]),
-                    1200.0f64.mul_add(zoom, screen_middle[1]),
-                ]);
+                position.set(zip_map(screen_middle, [100.0, 1200.0], f64::algebraic_add));
+                zoom.set(0.5);
 
                 transitioning.set(true);
             }
