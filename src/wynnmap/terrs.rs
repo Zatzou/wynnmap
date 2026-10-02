@@ -198,7 +198,7 @@ fn TerrTimer(#[prop(into)] state: Signal<TerrState>) -> impl IntoView {
     let SettingsCtx(settings) = expect_context();
     let SecondTimer(now) = expect_context::<SecondTimer>();
 
-    let acquired = move || state.read().acquired.unwrap_or(Timestamp::now());
+    let acquired = move || state.read().acquired.unwrap_or_else(Timestamp::now);
 
     let time = Memo::new(move |_| now.read().duration_since(acquired()));
 

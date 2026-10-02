@@ -11,7 +11,7 @@ pub enum GColSource {
 }
 
 impl GColSource {
-    pub fn get_color(&self, state: &TerrState) -> Color {
+    pub fn get_color(self, state: &TerrState) -> Color {
         match self {
             GColSource::Guild => state.guild.get_color(),
             GColSource::Treasury => state.treasury.color(),
@@ -31,7 +31,7 @@ pub fn GColSourceSelector(src: RwSignal<GColSource>) -> impl IntoView {
                     "Treasury" => GColSource::Treasury,
                     "Defences" => GColSource::Defences,
                     _ => unreachable!()
-                })
+                });
             }
             prop:value=move || match src.get() {
                 GColSource::Guild => "Guild",

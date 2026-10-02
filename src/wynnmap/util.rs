@@ -23,7 +23,7 @@ pub fn calculate_zoom_compensation(center: [f64; 2], old_zoom: f64, new_zoom: f6
 
     let n = i.map(|i| i.algebraic_mul(new_zoom));
 
-    zip_map(center, n, |c, n| c.algebraic_sub(n))
+    zip_map(center, n, f64::algebraic_sub)
 }
 
 /// Helper function to apply the zoom compensation to the current position

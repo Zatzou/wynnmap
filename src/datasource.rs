@@ -24,7 +24,7 @@ pub async fn load_json<T: DeserializeOwned>(url: impl AsRef<str>) -> Result<T, N
         .send()
         .await?;
 
-    if (200..=299).contains(&res.status().into()) {
+    if (200..=299).contains(&res.status()) {
         Ok(res.json().await?)
     } else {
         Err(NetworkError::BadStatus(res.status(), res.status_text()))

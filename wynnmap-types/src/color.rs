@@ -84,8 +84,14 @@ impl Color {
         let mut col = *self;
         let amount = amount.clamp(0.0, 1.0) + 1.0;
 
-        let gray = (f32::from(col.r) + f32::from(col.g) + f32::from(col.b)) / 3.0;
-        let apply = |c: &mut u8| *c = (gray + (f32::from(*c) - gray) * amount) as u8;
+        let gray = (f32::from(col.r)
+            .algebraic_add(f32::from(col.g))
+            .algebraic_add(f32::from(col.b)))
+        .algebraic_div(3.0);
+        let apply = |c: &mut u8| {
+            *c = (gray.algebraic_add((f32::from(*c).algebraic_sub(gray)).algebraic_mul(amount)))
+                as u8
+        };
 
         apply(&mut col.r);
         apply(&mut col.g);

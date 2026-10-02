@@ -15,7 +15,7 @@ pub enum CoordFmt {
 }
 
 impl CoordFmt {
-    pub fn format_xz(&self, pos: [impl Display; 2]) -> String {
+    pub fn format_xz(self, pos: [impl Display; 2]) -> String {
         let [x, z] = pos;
         match self {
             CoordFmt::CompassShort => format!("/comp {x} {z}"),
@@ -26,7 +26,7 @@ impl CoordFmt {
         }
     }
 
-    pub fn format_xyz(&self, pos: [impl Display; 3]) -> String {
+    pub fn format_xyz(self, pos: [impl Display; 3]) -> String {
         let [x, y, z] = pos;
         match self {
             CoordFmt::CompassShort => format!("/comp {x} {y} {z}"),
@@ -51,7 +51,7 @@ pub fn CoordFmtSelector(fmt: RwSignal<CoordFmt>) -> impl IntoView {
                     "Commas" => CoordFmt::Commas,
                     "Lettered" => CoordFmt::Lettered,
                     _ => unreachable!()
-                })
+                });
             }
             prop:value=move || match fmt.get() {
                 CoordFmt::CompassShort => "CompassShort",

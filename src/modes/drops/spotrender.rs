@@ -32,7 +32,7 @@ pub fn SpotRenderer(selected_item: RwSignal<Option<Item>>) -> impl IntoView {
                     let r = r.max(5);
 
                     view! {
-                        <circle cx=x cy=y r=r fill=fill.clone() stroke=stroke.clone() stroke-width=3 />
+                        <circle cx=x cy=y r=r fill=fill stroke=stroke stroke-width=3 />
                     }
                 }
             />

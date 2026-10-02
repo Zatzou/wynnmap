@@ -102,7 +102,7 @@ pub fn WarMap() -> impl IntoView {
         under
             .map(|terr| {
                 let name = terr.guild.name.clone();
-                let link = move || format!("https://wynncraft.com/stats/guild/{}", name);
+                let link = move || format!("https://wynncraft.com/stats/guild/{name}");
 
                 view! {
                     <a href=link on:click=move |_| close.run(()) class="ctxmenu-btn" target="_blank">

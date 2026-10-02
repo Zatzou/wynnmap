@@ -55,7 +55,7 @@ pub fn GatherMap() -> impl IntoView {
                         .show_res
                         .write()
                         .entry(mat.name.clone())
-                        .or_insert(RwSignal::new(true)),
+                        .or_insert_with(|| RwSignal::new(true)),
                     count: nodes
                         .read()
                         .spots
