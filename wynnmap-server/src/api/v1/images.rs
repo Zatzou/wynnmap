@@ -5,7 +5,7 @@ use axum::{
     body::Body,
     extract::{Path, State},
     http::{HeaderMap, StatusCode, header},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
     routing::get,
 };
 
@@ -44,37 +44,33 @@ async fn get_image(
     Path(name): Path<String>,
     State(state): State<Arc<ImageState>>,
     headers: HeaderMap,
-) -> impl IntoResponse {
-    let (name, ext) = name.split_once('.').unwrap_or((name.as_str(), ""));
+) -> Response {
+    let (name, _) = name.split_once('.').unwrap_or((name.as_str(), ""));
 
-    let (wanted_ext, mime) = if state.use_webp {
-        ("webp", "image/webp")
+    let mime = if state.use_webp {
+        "image/webp"
     } else {
-        ("png", "image/png")
+        "image/png"
     };
 
-    if ext == wanted_ext {
-        let data = {
-            let map_cache = state.map_cache.read().await;
-            map_cache.get(name).cloned()
-        };
+    let data = {
+        let map_cache = state.map_cache.read().await;
+        map_cache.get(name).cloned()
+    };
 
-        if let Some((etag, data)) = data {
-            let resp_headers = [
-                (header::CONTENT_TYPE, mime),
-                (header::ETAG, &format!("\"{name}\"")),
-                (header::CACHE_CONTROL, "public, max-age=2592000, immutable"),
-            ];
+    if let Some((etag, data)) = data {
+        let resp_headers = [
+            (header::CONTENT_TYPE, mime),
+            (header::ETAG, &format!("\"{etag}\"")),
+            (header::CACHE_CONTROL, "public, max-age=2592000, immutable"),
+        ];
 
-            if check_etag(&headers, etag) {
-                (StatusCode::NOT_MODIFIED, resp_headers, Body::empty()).into_response()
-            } else {
-                (StatusCode::OK, resp_headers, data).into_response()
-            }
+        if check_etag(&headers, etag) {
+            (StatusCode::NOT_MODIFIED, resp_headers).into_response()
         } else {
-            (StatusCode::NOT_FOUND, "Image not found").into_response()
+            (StatusCode::OK, resp_headers, data).into_response()
         }
     } else {
-        (StatusCode::NOT_FOUND, "Image not found").into_response()
+        (StatusCode::NOT_FOUND, "404 Image not found").into_response()
     }
 }

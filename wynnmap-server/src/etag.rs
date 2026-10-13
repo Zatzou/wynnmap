@@ -8,9 +8,7 @@ use serde::Serialize;
 use sha2::{Digest, Sha224};
 
 pub fn check_etag(headers: &HeaderMap, val: impl AsRef<str>) -> bool {
-    let if_none_match_header = headers.get(header::IF_NONE_MATCH);
-
-    if let Some(if_none_match) = if_none_match_header
+    if let Some(if_none_match) = headers.get(header::IF_NONE_MATCH)
         && let Ok(Ok(if_none_match)) = if_none_match.to_str().map(str::parse::<EntityTag>)
     {
         if_none_match.strong_eq(&EntityTag::new(false, val.as_ref()))

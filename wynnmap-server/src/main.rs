@@ -3,8 +3,6 @@ use std::path::PathBuf;
 use axum::http::Method;
 use axum::response::IntoResponse;
 use axum::{Json, Router, middleware};
-use jiff::Timestamp;
-use jiff::fmt::rfc2822::DateTimePrinter;
 use reqwest::StatusCode;
 use state::ImageState;
 use tokio::net::TcpListener;
@@ -27,6 +25,7 @@ mod file_cache;
 mod otel;
 mod state;
 mod trackers;
+pub(crate) mod util;
 
 type AnyError = Box<dyn std::error::Error + Send + Sync>;
 
@@ -43,7 +42,7 @@ async fn main() {
         info!("Otel not configured. Using only fmt logging.");
     }
 
-    let img_state = ImageTracker::from_config(config.clone()).run();
+    let img_state = ImageTracker::with_config(&config).run();
     let guild_state = GuildTracker::with_config(&config).run();
     let terr_state = TerritoryTracker::with_config(&config, &guild_state).run();
     let gather_state = GatherSpotsTracker::with_config(&config).run();
@@ -98,13 +97,4 @@ async fn main() {
 
 async fn api_404() -> impl IntoResponse {
     (StatusCode::NOT_FOUND, Json("Not Found"))
-}
-
-/// Format a date into the format that http headers expect which is rfc 2822 with "+0000" replaced to "GMT"
-pub fn header_date(dt: impl Into<Timestamp>) -> String {
-    let dt = dt.into();
-
-    DateTimePrinter::new()
-        .timestamp_to_rfc9110_string(&dt)
-        .unwrap_or_default()
 }

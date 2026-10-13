@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use serde::Deserialize;
 
@@ -15,7 +15,7 @@ pub struct ServerConfig {
     pub bind: Arc<str>,
     pub port: u16,
     pub base_url: Arc<str>,
-    pub fe_dir: Arc<str>,
+    pub fe_dir: Arc<Path>,
 }
 
 #[derive(Clone, Deserialize)]

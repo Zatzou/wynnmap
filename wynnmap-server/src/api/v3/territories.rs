@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use axum::{
     Json,
-    body::Body,
     extract::State,
     http::{HeaderMap, header},
     response::{IntoResponse, Sse, sse::Event},
@@ -13,7 +12,7 @@ use reqwest::StatusCode;
 use tokio_stream::wrappers::BroadcastStream;
 use wynnmap_types::terr::MapState;
 
-use crate::{etag::check_etag, header_date, state::TerritoryState};
+use crate::{etag::check_etag, state::TerritoryState, util::header_date};
 
 pub fn router(state: Arc<TerritoryState>) -> axum::Router {
     axum::Router::new()
@@ -53,7 +52,7 @@ async fn terr_list(
     ];
 
     if check_etag(&headers, &etag) {
-        (StatusCode::NOT_MODIFIED, resp_headers, Body::empty()).into_response()
+        (StatusCode::NOT_MODIFIED, resp_headers).into_response()
     } else {
         (resp_headers, Json(territories)).into_response()
     }

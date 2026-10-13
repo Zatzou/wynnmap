@@ -1,11 +1,14 @@
 use std::{collections::HashMap, io::Cursor, sync::Arc, time::Duration};
 
-use axum::body::Bytes;
+use axum::{body::Bytes, http::HeaderValue};
 use image::ImageReader;
-use reqwest::StatusCode;
+use reqwest::{StatusCode, header};
 use serde::Deserialize;
-use tokio::{sync::RwLock, task::JoinSet};
-use tracing::{Instrument, error, info, info_span};
+use tokio::{
+    join,
+    task::{JoinSet, spawn_blocking},
+};
+use tracing::{error, info};
 use webp::Encoder;
 use wynnmap_types::{Region, maptile::MapTile};
 
@@ -18,17 +21,18 @@ use crate::{
 };
 
 pub struct ImageTracker {
-    client: reqwest::Client,
-    config: Arc<Config>,
+    client: Arc<reqwest::Client>,
+    base_url: Arc<str>,
 
-    etag_cache: RwLock<HashMap<Arc<str>, Arc<str>>>,
+    list_etag: HeaderValue,
+    etag_cache: HashMap<Arc<str>, Arc<str>>,
 
     state: Arc<ImageState>,
 }
 
 impl ImageTracker {
-    pub fn from_config(config: Arc<Config>) -> Self {
-        let client = util::reqwest_client_from_conf(&config);
+    pub fn with_config(config: &Config) -> Self {
+        let client = Arc::new(util::reqwest_client_from_conf(config));
 
         Self {
             state: Arc::new(ImageState {
@@ -37,8 +41,9 @@ impl ImageTracker {
             }),
 
             client,
-            config,
+            base_url: config.server.base_url.clone(),
 
+            list_etag: HeaderValue::from_static(""),
             etag_cache: Default::default(),
         }
     }
@@ -47,16 +52,15 @@ impl ImageTracker {
         let state2 = self.state.clone();
 
         tokio::spawn(async move {
-            let tracker = Arc::new(self);
+            let mut tracker = self;
 
             loop {
-                let tracker = tracker.clone();
                 let res = tracker.query_images().await;
 
                 let waittime = match res {
                     Ok(_) => Duration::from_hours(1),
                     Err(e) => {
-                        error!(error = ?e, "Error occured while querying extra data");
+                        error!(error = ?e, "Error occured while querying images");
                         Duration::from_mins(10)
                     }
                 };
@@ -69,180 +73,176 @@ impl ImageTracker {
     }
 
     #[tracing::instrument(skip(self), err(Debug))]
-    async fn query_images(self: Arc<Self>) -> Result<(), AnyError> {
-        let tiles: Vec<WynntilsMapTile> = async {
-            let res = self
-                .client
-                .get("https://raw.githubusercontent.com/Wynntils/Static-Storage/refs/heads/main/Reference/maps.json")
-                .header(
-                    "If-None-Match",
-                    &*self
-                        .etag_cache
-                        .read()
-                        .await
-                        .get("maps.json")
-                        .cloned()
-                        .unwrap_or_default(),
-                )
-                .send()
-                .await?;
+    async fn query_images(&mut self) -> Result<(), AnyError> {
+        if let Some(tiles) = self.list_tiles().await? {
+            let mut tasks = tiles
+                .iter()
+                .map(|t| self.new_imagetask(t))
+                .collect::<Vec<_>>()
+                .into_iter();
+            let mut joinset = JoinSet::new();
 
-            if res.status() == StatusCode::NOT_MODIFIED {
-                return Ok(Vec::new());
+            // run 4 concurrent tasks
+            for task in tasks.by_ref().take(4) {
+                joinset.spawn(async move { task.execute().await });
             }
 
-            if let Some(etag) = res.get_header("etag") {
-                self.etag_cache
-                    .write()
-                    .await
-                    .insert(Arc::from("maps.json"), Arc::from(etag));
-            }
+            let mut processed_images = Vec::new();
 
-            res.parse_json().await
-        }
-        .instrument(info_span!("fetch"))
-        .await?;
+            while let Some(res) = joinset.join_next().await {
+                // spawn a new task
+                if let Some(task) = tasks.next() {
+                    joinset.spawn(async move { task.execute().await });
+                }
 
-        // empty = 304 Not modified
-        if tiles.is_empty() {
-            return Ok(());
-        }
-
-        // download and process the tiles, limit concurrency to 4
-        let mut processed_images = Vec::new();
-        for chunk in tiles.chunks(4) {
-            let mut tasks: JoinSet<Result<_, AnyError>> = JoinSet::new();
-
-            for tile in chunk {
-                let etag = self
-                    .etag_cache
-                    .read()
-                    .await
-                    .get(&tile.name)
-                    .cloned()
-                    .unwrap_or_default();
-                let tile = tile.clone();
-                let self2 = self.clone();
-                tasks.spawn(
-                    async move {
-                        let data = self2.download_image(&tile.url, &etag).await?;
-
-                        if let (Some(data), etag) = data {
-                            let img = if self2.config.images.use_webp {
-                                tokio::task::spawn_blocking(|| encode_image(data))
-                                    .instrument(info_span!("encode_image"))
-                                    .await??
-                            } else {
-                                data
-                            };
-
-                            Ok(Some(((tile.md5.clone(), img), (tile.name.clone(), etag))))
-                        } else {
-                            Ok(None)
-                        }
+                if let Some((tile, image, etag)) = res?? {
+                    if let Some(etag) = etag {
+                        self.etag_cache.insert(tile.name, etag.clone());
                     }
-                    .instrument(info_span!("load_image")),
-                );
-            }
 
-            for res in tasks.join_all().await {
-                if let Some(res) = res? {
-                    processed_images.push(res);
+                    let etag = sha224_etag(&image);
+
+                    processed_images.push((tile.md5, (etag, image)));
                 }
             }
-        }
 
-        let mut maps_cache = self.state.map_cache.write().await;
+            let mut cache = self.state.map_cache.write().await;
 
-        // add the images to the cache
-        for ((name, img), (tname, t_etag)) in processed_images {
-            if let Some(etag) = t_etag {
-                let mut etags_cache = self.etag_cache.write().await;
-                etags_cache.insert(tname, etag.into());
+            for (md5, entry) in processed_images {
+                cache.insert(md5, entry);
             }
 
-            let etag = sha224_etag(&img);
-            maps_cache.insert(name, (etag, img));
-        }
+            // remove old images from the cache
+            cache.retain(|k, _| tiles.iter().any(|d| d.md5 == *k));
 
-        // reprocess the json data
-        let tiles = {
-            let format = if self.config.images.use_webp {
-                "webp"
-            } else {
-                "png"
-            };
+            drop(cache);
 
-            let mut tiles: Vec<MapTile> = tiles.into_iter().map(Into::into).collect::<Vec<_>>();
+            // reformat the tiles
+            let tiles = tiles
+                .into_iter()
+                .map(MapTile::from)
+                .map(|mut tile| {
+                    tile.url = format!("{}/api/v1/images/{}", self.base_url, tile.md5).into();
+                    tile
+                })
+                .collect::<Vec<_>>();
 
-            for item in &mut tiles {
-                item.url = Arc::from(format!(
-                    "{}/api/v1/images/{}.{}",
-                    self.config.server.base_url, item.md5, format
-                ));
+            let etag = sha224_etag_json(&tiles);
+
+            {
+                let (mut state, mut etag_state) =
+                    join!(self.state.maps.write(), self.state.maps_etag.write());
+
+                *state = tiles;
+                *etag_state = etag;
             }
 
-            tiles
-        };
-
-        // remove old images from the cache
-        maps_cache.retain(|k, _| tiles.iter().any(|d| d.md5 == *k));
-        drop(maps_cache);
-
-        let mut maps_etag = self.state.maps_etag.write().await;
-
-        // calculate the new etag
-        *maps_etag = sha224_etag_json(&tiles);
-        drop(maps_etag);
-
-        let mut maps = self.state.maps.write().await;
-
-        // replace the cache with the new data
-        *maps = tiles;
-        drop(maps);
-
-        info!("completed image update");
+            info!("completed image update");
+        }
 
         Ok(())
     }
 
     #[tracing::instrument(skip(self), err(Debug))]
-    async fn download_image(
-        &self,
-        url: &str,
-        etag: &str,
-    ) -> Result<(Option<Bytes>, Option<String>), reqwest::Error> {
-        let res = self
-            .client
-            .get(url.replace(
-                "cdn.wynntils.com/static",
-                "raw.githubusercontent.com/Wynntils/Static-Storage/refs/heads/main",
-            ))
-            .header("If-None-Match", etag)
+    async fn list_tiles(&mut self) -> Result<Option<Vec<WynntilsMapTile>>, util::RequestError> {
+        let res = self.client.get("https://raw.githubusercontent.com/Wynntils/Static-Storage/refs/heads/main/Reference/maps.json")
+            .header(header::ACCEPT, "application/json")
+            .header(header::IF_NONE_MATCH, self.list_etag.clone())
             .send()
             .await?;
 
         if res.status() == StatusCode::NOT_MODIFIED {
-            return Ok((None, None));
+            Ok(None)
+        } else {
+            self.list_etag = res
+                .headers()
+                .get(header::ETAG)
+                .cloned()
+                .unwrap_or_else(|| HeaderValue::from_static(""));
+
+            res.parse_json().await
+        }
+    }
+
+    fn new_imagetask(&self, tile: &WynntilsMapTile) -> ImageTask {
+        let tile = tile.clone();
+
+        ImageTask {
+            client: self.client.clone(),
+            use_webp: self.state.use_webp,
+            etag: self.etag_cache.get(&tile.name).cloned().unwrap_or_default(),
+            tile,
+        }
+    }
+}
+
+struct ImageTask {
+    client: Arc<reqwest::Client>,
+    use_webp: bool,
+
+    tile: WynntilsMapTile,
+
+    etag: Arc<str>,
+}
+
+impl ImageTask {
+    #[tracing::instrument(skip(self), err(Debug))]
+    async fn execute(self) -> Result<Option<(WynntilsMapTile, Bytes, Option<Arc<str>>)>, AnyError> {
+        let (image, etag) = self.download_image().await?;
+
+        if let Some(image) = image {
+            let image = if self.use_webp {
+                spawn_blocking(|| ImageTask::encode_image(image)).await??
+            } else {
+                image
+            };
+
+            return Ok(Some((self.tile, image, etag)));
         }
 
-        let recv_etag = res.get_header("etag").map(String::from);
+        Ok(None)
+    }
+
+    #[tracing::instrument(skip(self), err(Debug))]
+    async fn download_image(
+        &self,
+    ) -> Result<(Option<Bytes>, Option<Arc<str>>), util::RequestError> {
+        let res = self
+            .client
+            .get(self.tile.url.replace(
+                "cdn.wynntils.com/static",
+                "raw.githubusercontent.com/Wynntils/Static-Storage/refs/heads/main",
+            ))
+            .header(header::ACCEPT, "image/png")
+            .header(
+                header::IF_NONE_MATCH,
+                HeaderValue::from_str(&self.etag).unwrap(),
+            )
+            .send()
+            .await?;
+
+        let recv_etag = res.get_header("etag").map(Into::into);
+
+        if res.status() == StatusCode::NOT_MODIFIED {
+            return Ok((None, recv_etag));
+        }
 
         let data = res.bytes().await?;
 
         Ok((Some(data), recv_etag))
     }
-}
 
-fn encode_image(data: Bytes) -> Result<Bytes, AnyError> {
-    let img = ImageReader::new(Cursor::new(data))
-        .with_guessed_format()?
-        .decode()?;
+    #[tracing::instrument(skip(data), err(Debug))]
+    fn encode_image(data: Bytes) -> Result<Bytes, AnyError> {
+        let img = ImageReader::new(Cursor::new(data))
+            .with_guessed_format()?
+            .decode()?;
 
-    let encoder = Encoder::from_image(&img)?;
-    let out = encoder.encode_lossless();
+        let encoder = Encoder::from_image(&img)?;
+        let out = encoder.encode_lossless();
 
-    Ok(out.iter().copied().collect())
+        Ok(out.iter().copied().collect())
+    }
 }
 
 /// The deserialization format for the wynntils `maps.json`
