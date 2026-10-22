@@ -20,7 +20,7 @@ pub struct SeasonList {
 
 pub type GuildLeaderboard = Vec<GuildLeaderboardEntry>;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash)]
 pub struct GuildLeaderboardEntry {
     pub guild: Guild,
     pub score: i32,

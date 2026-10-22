@@ -182,7 +182,7 @@ pub fn WarMap() -> impl IntoView {
             </div>
 
             // guild leaderboard
-            <Gleaderboard state show_guild_leaderboard/>
+            <Gleaderboard state show_guild_leaderboard enable_seasons=true/>
         </Sidebar>
 
         // selected terr info

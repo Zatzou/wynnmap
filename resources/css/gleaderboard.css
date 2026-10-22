@@ -28,10 +28,16 @@
             background-color: black;
 
             .glrow {
-                display: contents;
+                display: grid;
+                grid-column: 1 / 5;
+                grid-template-columns: subgrid;
 
                 * {
                     background-color: rgb(var(--col) / 0.3);
+
+                    text-wrap: nowrap;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
                 }
 
                 *:first-child {
