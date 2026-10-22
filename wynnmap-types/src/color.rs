@@ -90,7 +90,7 @@ impl Color {
         .algebraic_div(3.0);
         let apply = |c: &mut u8| {
             *c = (gray.algebraic_add((f32::from(*c).algebraic_sub(gray)).algebraic_mul(amount)))
-                as u8
+                as u8;
         };
 
         apply(&mut col.r);
