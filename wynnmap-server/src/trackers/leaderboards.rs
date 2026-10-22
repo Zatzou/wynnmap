@@ -95,14 +95,18 @@ impl LeaderboardTracker {
 
         let seasons = seasons
             .into_iter()
-            .map(|(n, s)| (n, s.into()))
-            .collect::<BTreeMap<_, Season>>();
+            .map(|(n, s)| Season {
+                name: n,
+                start: s.start,
+                end: s.end,
+            })
+            .collect::<Vec<_>>();
 
         let now = Timestamp::now();
         let current = seasons
             .iter()
-            .find(|(_, s)| s.start <= now && s.end >= now)
-            .map(|(n, _)| n.clone());
+            .find(|s| s.start <= now && s.end >= now)
+            .map(|s| s.name.clone());
 
         let season_lb = async {
             let mut leaderboards = BTreeMap::new();
@@ -110,10 +114,10 @@ impl LeaderboardTracker {
             let guilds = self.guilds.read().await;
 
             // during first fetch get all leaderboards otherwise only get ones which have either not ended or have ended in the last 10h
-            for (name, season) in seasons.iter().filter(|(n, s)| {
-                (s.end + Duration::from_hours(10)) >= now || !existing_seasons.contains(n)
+            for season in seasons.iter().filter(|s| {
+                (s.end + Duration::from_hours(10)) >= now || !existing_seasons.contains(&s.name)
             }) {
-                let lb = self.fetch_lb(name).await?;
+                let lb = self.fetch_lb(&season.name).await?;
 
                 let leaderboard = lb
                     .into_values()
@@ -121,7 +125,7 @@ impl LeaderboardTracker {
                     .collect::<Vec<_>>();
 
                 leaderboards.insert(
-                    name.clone(),
+                    season.name.clone(),
                     SeasonLeaderboard {
                         season: season.clone(),
                         leaderboard,
@@ -191,15 +195,6 @@ struct WynnSeasonsListItem {
     start: Timestamp,
     #[serde(alias = "endDate")]
     end: Timestamp,
-}
-
-impl From<WynnSeasonsListItem> for Season {
-    fn from(value: WynnSeasonsListItem) -> Self {
-        Self {
-            start: value.start,
-            end: value.end,
-        }
-    }
 }
 
 type WynnLeaderboard = BTreeMap<i32, WynnLeaderboardEntry>;

@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, sync::Arc};
+use std::sync::Arc;
 
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
@@ -7,13 +7,14 @@ use crate::guild::Guild;
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Season {
+    pub name: Arc<str>,
     pub start: Timestamp,
     pub end: Timestamp,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct SeasonList {
-    pub seasons: BTreeMap<Arc<str>, Season>,
+    pub seasons: Vec<Season>,
     pub current: Option<Arc<str>>,
 }
 
