@@ -6,6 +6,8 @@ mod coordfmt;
 pub use coordfmt::{CoordFmt, CoordFmtSelector};
 mod gcolsource;
 pub use gcolsource::{GColSource, GColSourceSelector};
+mod maptilefilter;
+pub use maptilefilter::{MapTileFilter, MapTileFilterSelector};
 
 const fn times(time: SignedDuration) -> (i64, i64, i64, i64) {
     let days = time.as_hours() / 24;

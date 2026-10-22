@@ -4,7 +4,7 @@ use gloo_storage::Storage;
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::util::{CoordFmt, GColSource};
+use crate::util::{CoordFmt, GColSource, MapTileFilter};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Settings {
@@ -15,6 +15,7 @@ pub struct Settings {
     pub copy_coordfmt: RwSignal<CoordFmt>,
 
     pub gather: GatherSettings,
+    pub drops: DropsSettings,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -73,10 +74,34 @@ impl Default for SidebarSettings {
     }
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize)]
 #[serde(default)]
 pub struct GatherSettings {
+    pub tile_filter: RwSignal<MapTileFilter>,
     pub show_res: RwSignal<BTreeMap<Arc<str>, RwSignal<bool>>>,
+}
+
+impl Default for GatherSettings {
+    fn default() -> Self {
+        Self {
+            tile_filter: RwSignal::new(MapTileFilter::GrayScaleLowcontrast),
+            show_res: Default::default(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(default)]
+pub struct DropsSettings {
+    pub tile_filter: RwSignal<MapTileFilter>,
+}
+
+impl Default for DropsSettings {
+    fn default() -> Self {
+        Self {
+            tile_filter: RwSignal::new(MapTileFilter::GrayScaleLowcontrast),
+        }
+    }
 }
 
 #[derive(Clone)]

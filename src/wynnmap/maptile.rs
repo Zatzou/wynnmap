@@ -1,7 +1,11 @@
 use leptos::prelude::*;
 use wynnmap_types::maptile::MapTile;
 
-use crate::{settings::SettingsCtx, util::as_px, wynnmap::context::DefaultMapTiles};
+use crate::{
+    settings::SettingsCtx,
+    util::{MapTileFilter, as_px},
+    wynnmap::context::DefaultMapTiles,
+};
 
 #[component]
 pub fn MapTile(#[prop(into)] tile: Signal<MapTile>) -> impl IntoView {
@@ -22,13 +26,13 @@ pub fn MapTile(#[prop(into)] tile: Signal<MapTile>) -> impl IntoView {
 #[component]
 pub fn MapTiles(
     #[prop(into)] tiles: Signal<Vec<MapTile>>,
-    #[prop(default = false.into(), into)] grayscale: Signal<bool>,
+    #[prop(into)] filter: Option<Signal<MapTileFilter>>,
 ) -> impl IntoView {
     let SettingsCtx(settings) = expect_context();
     let show_non_main = settings.map.show_non_main_areas;
 
     view! {
-        <div class="wynnmap-tiles" class:tiles-grayscale=grayscale>
+        <div class="wynnmap-tiles" style:filter=move || filter.and_then(|f| f.get().get_filter())>
             {move || {
                 tiles.get()
                     .into_iter()
@@ -49,9 +53,9 @@ pub fn MapTiles(
 /// A component that displays the default map tiles fetched from the server.
 #[component]
 pub fn WithDefaultMapTiles(
-    #[prop(default = false.into(), into)] grayscale: Signal<bool>,
+    #[prop(into, optional)] filter: Option<Signal<MapTileFilter>>,
 ) -> impl IntoView {
     let DefaultMapTiles(tiles) = expect_context();
 
-    view! { <MapTiles tiles grayscale /> }
+    view! { <MapTiles tiles filter /> }
 }

@@ -3,8 +3,10 @@ use std::fmt::Display;
 use leptos::prelude::*;
 
 use crate::{
-    components::checkbox::Checkbox, dialog::DialogCloseButton, settings::SettingsCtx,
-    util::CoordFmtSelector,
+    components::checkbox::Checkbox,
+    dialog::DialogCloseButton,
+    settings::SettingsCtx,
+    util::{CoordFmtSelector, MapTileFilterSelector},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -80,6 +82,15 @@ fn GeneralSettings() -> impl IntoView {
             <div>
                 <span class="mr-2">"Prefered copy coordinate format"</span>
                 <CoordFmtSelector fmt=copy_coordfmt/>
+            </div>
+
+            <div>
+                <span class="mr-2">"Gather mode map display"</span>
+                <MapTileFilterSelector filt=settings.gather.tile_filter/>
+            </div>
+            <div>
+                <span class="mr-2">"Drops mode map display"</span>
+                <MapTileFilterSelector filt=settings.drops.tile_filter/>
             </div>
         </div>
     }

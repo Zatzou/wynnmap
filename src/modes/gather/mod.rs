@@ -17,6 +17,7 @@ mod noderender;
 #[component]
 pub fn GatherMap() -> impl IntoView {
     let SettingsCtx(settings) = expect_context();
+    let filter = settings.gather.tile_filter;
 
     let nodes = RwSignal::new(GatherSpots::default());
     let data = RwSignal::new(BTreeMap::new());
@@ -95,7 +96,7 @@ pub fn GatherMap() -> impl IntoView {
 
     view! {
         <WynnMap>
-            <WithDefaultMapTiles grayscale=true />
+            <WithDefaultMapTiles filter />
 
             <div class="wynnmap-items">
                 <NodeRenderer nodes data hovered hidden={hidelist} />

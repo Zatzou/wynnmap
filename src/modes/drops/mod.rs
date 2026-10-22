@@ -26,6 +26,8 @@ mod spotrender;
 
 #[component]
 pub fn DropsMap() -> impl IntoView {
+    let SettingsCtx(settings) = expect_context();
+
     let itemdrops = RwSignal::new(ItemDrops::default());
 
     let load_data = move || async move {
@@ -75,7 +77,7 @@ pub fn DropsMap() -> impl IntoView {
 
     view! {
         <WynnMap onclick>
-            <WithDefaultMapTiles grayscale=true />
+            <WithDefaultMapTiles filter=settings.drops.tile_filter />
             <div class="wynnmap-items">
                 <SpotRenderer selected_item/>
             </div>
