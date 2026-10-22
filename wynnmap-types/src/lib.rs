@@ -4,6 +4,7 @@ pub mod color;
 pub mod drops;
 pub mod gather;
 pub mod guild;
+pub mod leaderboard;
 pub mod maptile;
 pub mod resources;
 pub mod terr;

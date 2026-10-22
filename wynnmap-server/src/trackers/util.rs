@@ -49,6 +49,10 @@ pub trait ResponseExt {
     fn get_header(&self, key: impl AsHeaderName) -> Option<&str>;
 
     fn expires(&self) -> Option<Timestamp>;
+
+    fn ratelimit_remaining(&self) -> Option<i32>;
+
+    fn ratelimit_reset(&self) -> Option<u64>;
 }
 
 impl ResponseExt for reqwest::Response {
@@ -79,5 +83,15 @@ impl ResponseExt for reqwest::Response {
 
     fn expires(&self) -> Option<Timestamp> {
         parse_header_datetime(self.headers().get("expires"))
+    }
+
+    fn ratelimit_remaining(&self) -> Option<i32> {
+        self.get_header("ratelimit-remaining")
+            .and_then(|h| h.parse().ok())
+    }
+
+    fn ratelimit_reset(&self) -> Option<u64> {
+        self.get_header("ratelimit-reset")
+            .and_then(|h| h.parse().ok())
     }
 }

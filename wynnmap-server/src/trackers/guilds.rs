@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use serde::Deserialize;
-use tokio::try_join;
+use tokio::{sync::watch, try_join};
 use tracing::{Instrument, error, info_span};
 use uuid::Uuid;
 use wynnmap_types::guild::Guild;
@@ -15,6 +15,8 @@ use crate::{
 pub struct GuildTracker {
     client: reqwest::Client,
 
+    done: watch::Sender<bool>,
+
     state: Arc<GuildState>,
 }
 
@@ -22,9 +24,18 @@ impl GuildTracker {
     pub fn with_config(config: &Config) -> Self {
         let client = util::reqwest_client_from_conf(config);
 
+        let (done_tx, done_rx) = watch::channel(false);
+
         Self {
             client,
-            state: Default::default(),
+
+            done: done_tx,
+
+            state: GuildState {
+                guilds: Default::default(),
+                done: done_rx,
+            }
+            .into(),
         }
     }
 
@@ -38,7 +49,10 @@ impl GuildTracker {
                 let res = tracker.query_guilds().await;
 
                 let waittime = match res {
-                    Ok(_) => Duration::from_hours(1),
+                    Ok(_) => {
+                        tracker.done.send_replace(true);
+                        Duration::from_hours(1)
+                    }
                     Err(e) => {
                         error!(error = ?e, "Error occured while querying guilds");
                         Duration::from_mins(10)

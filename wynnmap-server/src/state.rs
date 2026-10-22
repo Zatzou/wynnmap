@@ -2,11 +2,12 @@ use std::{collections::BTreeMap, sync::Arc};
 
 use axum::{body::Bytes, response::sse::Event};
 use jiff::Timestamp;
-use tokio::sync::{RwLock, broadcast};
+use tokio::sync::{RwLock, broadcast, watch};
 use wynnmap_types::{
     drops::ItemDrops,
     gather::GatherSpots,
     guild::Guild,
+    leaderboard::{SeasonLeaderboard, SeasonList},
     maptile::MapTile,
     terr::{TerrState, TerrTimestamps, Territory},
 };
@@ -20,10 +21,14 @@ pub struct ImageState {
     pub map_cache: Arc<RwLock<BTreeMap<Arc<str>, (Arc<str>, Bytes)>>>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct GuildState {
-    pub guilds: Arc<RwLock<BTreeMap<Arc<str>, Guild>>>,
+    pub guilds: Arc<RwLock<GuildList>>,
+    /// Notifier channel for waiting for the initial guild update to finish
+    pub done: watch::Receiver<bool>,
 }
+
+pub type GuildList = BTreeMap<Arc<str>, Guild>;
 
 #[derive(Debug)]
 pub struct TerritoryState {
@@ -41,6 +46,14 @@ pub struct TerritoryStateInner {
 
     pub expires: Timestamp,
     pub timestamps: TerrTimestamps,
+}
+
+#[derive(Debug, Default)]
+pub struct LeaderboardState {
+    /// List of seasons and the etag for the list
+    pub season_list: RwLock<(Arc<SeasonList>, Arc<str>)>,
+    /// The leaderboards and each leaderboards etag
+    pub season_lb: RwLock<BTreeMap<Arc<str>, (Arc<SeasonLeaderboard>, Arc<str>)>>,
 }
 
 #[derive(Debug, Default)]
