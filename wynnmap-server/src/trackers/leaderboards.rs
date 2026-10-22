@@ -93,7 +93,7 @@ impl LeaderboardTracker {
             lock.keys().cloned().collect::<Vec<_>>()
         };
 
-        let seasons = seasons
+        let mut seasons = seasons
             .into_iter()
             .map(|(n, s)| Season {
                 name: n,
@@ -101,6 +101,8 @@ impl LeaderboardTracker {
                 end: s.end,
             })
             .collect::<Vec<_>>();
+
+        seasons.sort_by_key(|s| s.start);
 
         let now = Timestamp::now();
         let current = seasons
