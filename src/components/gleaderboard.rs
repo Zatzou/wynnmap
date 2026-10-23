@@ -142,12 +142,6 @@ fn gleaderboard_no_seasons(
     .into_any()
 }
 
-async fn load_seasons(seasons: RwSignal<SeasonList>) {
-    if let Ok(data) = datasource::load_json::<SeasonList>("/api/v3/lb/seasons").await {
-        seasons.set(data);
-    }
-}
-
 /// `spawn_local`s the `load_seasons` function immediately and then once every hour
 fn update_seasondata_now_and_hourly(seasons: RwSignal<SeasonList>) {
     spawn_local(load_seasons(seasons));
@@ -165,6 +159,12 @@ fn update_seasondata_now_and_hourly(seasons: RwSignal<SeasonList>) {
             i.clear();
         }
     });
+}
+
+async fn load_seasons(seasons: RwSignal<SeasonList>) {
+    if let Ok(data) = datasource::load_json::<SeasonList>("/api/v3/lb/seasons").await {
+        seasons.set(data);
+    }
 }
 
 fn terr_count_score(state: Signal<BTreeMap<Arc<str>, TerrState>>) -> Vec<GuildLeaderboardEntry> {
