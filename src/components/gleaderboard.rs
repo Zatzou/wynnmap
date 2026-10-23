@@ -18,110 +18,131 @@ pub fn Gleaderboard(
     #[prop(into, default = RwSignal::new(true))] show_guild_leaderboard: RwSignal<bool>,
     #[prop(into, default = false)] enable_seasons: bool,
 ) -> impl IntoView {
-    if enable_seasons {
-        let seasons = RwSignal::new(SeasonList::default());
-        let selected_season = RwSignal::new(None::<Arc<str>>);
+    view! {
+        <div class="gleaderboard">
+            {move ||
+                if enable_seasons {
+                    gleaderboard_with_seasons(state, show_guild_leaderboard)
+                } else {
+                    gleaderboard_no_seasons(state, show_guild_leaderboard)
+                }
+            }
+        </div>
+    }
+}
 
-        update_seasondata_now_and_hourly(seasons);
+fn gleaderboard_with_seasons(
+    state: Signal<BTreeMap<Arc<str>, TerrState>>,
+    show_guild_leaderboard: RwSignal<bool>,
+) -> AnyView {
+    let seasons = RwSignal::new(SeasonList::default());
+    let selected_season = RwSignal::new(None::<Arc<str>>);
 
-        let season_scores = LocalResource::new(move || {
-            let selected_season = selected_season.get();
+    update_seasondata_now_and_hourly(seasons);
 
-            async {
-                if let Some(s) = selected_season {
-                    let lb = datasource::load_json::<SeasonLeaderboard>(format!(
-                        "/api/v3/lb/season/{s}"
-                    ))
-                    .await;
+    let season_scores = LocalResource::new(move || {
+        let selected_season = selected_season.get();
 
-                    if let Ok(lb) = lb {
-                        lb.leaderboard
-                    } else {
-                        Vec::new()
-                    }
+        async {
+            if let Some(s) = selected_season {
+                let lb =
+                    datasource::load_json::<SeasonLeaderboard>(format!("/api/v3/lb/season/{s}"))
+                        .await;
+
+                if let Ok(lb) = lb {
+                    lb.leaderboard
                 } else {
                     Vec::new()
                 }
-            }
-        });
-
-        let scores = move || {
-            if let Some(s) = season_scores.get()
-                && !s.is_empty()
-            {
-                s
             } else {
-                terr_count_score(state)
+                Vec::new()
             }
-        };
+        }
+    });
 
-        view! {
-            <div class="gleaderboard">
-                <hr/>
-                <div class="title" on:click={move |_| show_guild_leaderboard.update(|s| *s = !*s)}>
-                    <h2>"Guild leaderboard"</h2>
+    let scores = move || {
+        if let Some(s) = season_scores.get()
+            && !s.is_empty()
+        {
+            s
+        } else {
+            terr_count_score(state)
+        }
+    };
 
-                    <select
-                        class="select"
-                        on:change:target=move |ev| {
-                            let val = ev.target().value();
+    view! {
 
-                            if val == "territory" {
-                                selected_season.set(None);
-                            } else {
-                                selected_season.set(Some(val.into()));
-                            }
+            <hr/>
+            <div class="title" on:click={move |_| show_guild_leaderboard.update(|s| *s = !*s)}>
+                <h2>"Guild leaderboard"</h2>
+
+                <select
+                    class="select"
+                    on:change:target=move |ev| {
+                        let val = ev.target().value();
+
+                        if val == "territory" {
+                            selected_season.set(None);
+                        } else {
+                            selected_season.set(Some(val.into()));
                         }
-                        prop:value=move || {
-                            if let Some(s) = selected_season.get() {
-                                s
-                            } else {
-                                "territory".into()
-                            }
+                    }
+                    prop:value=move || {
+                        if let Some(s) = selected_season.get() {
+                            s
+                        } else {
+                            "territory".into()
                         }
-                        on:click=move |ev| {
-                            ev.stop_propagation();
+                    }
+                    on:click=move |ev| {
+                        ev.stop_propagation();
+                    }
+                >
+                    <option value="territory">"Territories"</option>
+                    <option value="" disabled="disabled">"────────"</option>
+
+                    {move || seasons.get().seasons.into_iter().map(|s| {
+                        let value = s.name.clone();
+
+                        view! {
+                            <option value=value>"Season "{s.name}</option>
                         }
-                    >
-                        <option value="territory">"Territories"</option>
-                        <option value="" disabled="disabled">"────────"</option>
+                    }).collect::<Vec<_>>()}
+                </select>
 
-                        {move || seasons.get().seasons.into_iter().map(|s| {
-                            let value = s.name.clone();
-
-                            view! {
-                                <option value=value>"Season "{s.name}</option>
-                            }
-                        }).collect::<Vec<_>>()}
-                    </select>
-
-                    <Show when=move || !show_guild_leaderboard.get()><icons::ChevronUp size=24/></Show>
-                    <Show when=move || show_guild_leaderboard.get()><icons::ChevronDown size=24/></Show>
-                </div>
-                <div class="content" class:hidden={move || !show_guild_leaderboard.get()}>
-                    <hr/>
-                    <GleaderboardContent scores/>
-                </div>
+                <Show when=move || !show_guild_leaderboard.get()><icons::ChevronUp size=24/></Show>
+                <Show when=move || show_guild_leaderboard.get()><icons::ChevronDown size=24/></Show>
             </div>
-        }.into_any()
-    } else {
-        let scores = move || terr_count_score(state);
-
-        view! {
-            <div class="gleaderboard">
+            <div class="content" class:hidden={move || !show_guild_leaderboard.get()}>
                 <hr/>
-                <div class="title" on:click={move |_| show_guild_leaderboard.update(|s| *s = !*s)}>
-                    <h2>"Guild leaderboard"</h2>
-                    <Show when=move || !show_guild_leaderboard.get()><icons::ChevronUp size=24/></Show>
-                    <Show when=move || show_guild_leaderboard.get()><icons::ChevronDown size=24/></Show>
-                </div>
-                <div class="content" class:hidden={move || !show_guild_leaderboard.get()}>
-                    <hr/>
-                    <GleaderboardContent scores/>
-                </div>
+                <GleaderboardContent scores/>
             </div>
-        }.into_any()
+
     }
+    .into_any()
+}
+
+fn gleaderboard_no_seasons(
+    state: Signal<BTreeMap<Arc<str>, TerrState>>,
+    show_guild_leaderboard: RwSignal<bool>,
+) -> AnyView {
+    let scores = move || terr_count_score(state);
+
+    view! {
+
+            <hr/>
+            <div class="title" on:click={move |_| show_guild_leaderboard.update(|s| *s = !*s)}>
+                <h2>"Guild leaderboard"</h2>
+                <Show when=move || !show_guild_leaderboard.get()><icons::ChevronUp size=24/></Show>
+                <Show when=move || show_guild_leaderboard.get()><icons::ChevronDown size=24/></Show>
+            </div>
+            <div class="content" class:hidden={move || !show_guild_leaderboard.get()}>
+                <hr/>
+                <GleaderboardContent scores/>
+            </div>
+
+    }
+    .into_any()
 }
 
 async fn load_seasons(seasons: RwSignal<SeasonList>) {
