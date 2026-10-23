@@ -20,6 +20,7 @@ pub fn Gleaderboard(
 ) -> impl IntoView {
     view! {
         <div class="gleaderboard">
+            <hr/>
             {move ||
                 if enable_seasons {
                     gleaderboard_with_seasons(state, show_guild_leaderboard)
@@ -71,8 +72,6 @@ fn gleaderboard_with_seasons(
     };
 
     view! {
-
-            <hr/>
             <div class="title" on:click={move |_| show_guild_leaderboard.update(|s| *s = !*s)}>
                 <h2>"Guild leaderboard"</h2>
 
@@ -129,8 +128,6 @@ fn gleaderboard_no_seasons(
     let scores = move || terr_count_score(state);
 
     view! {
-
-            <hr/>
             <div class="title" on:click={move |_| show_guild_leaderboard.update(|s| *s = !*s)}>
                 <h2>"Guild leaderboard"</h2>
                 <Show when=move || !show_guild_leaderboard.get()><icons::ChevronUp size=24/></Show>
