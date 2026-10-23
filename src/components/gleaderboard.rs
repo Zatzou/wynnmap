@@ -20,31 +20,9 @@ pub fn Gleaderboard(
 ) -> impl IntoView {
     if enable_seasons {
         let seasons = RwSignal::new(SeasonList::default());
-
-        let load_seasons = move |seasons: RwSignal<SeasonList>| async move {
-            if let Ok(data) = datasource::load_json::<SeasonList>("/api/v3/lb/seasons").await {
-                seasons.set(data);
-            }
-        };
-
-        spawn_local(load_seasons(seasons));
-
-        // Update the seasons every hour
-        let season_data_updater = set_interval_with_handle(
-            move || {
-                spawn_local(load_seasons(seasons));
-            },
-            Duration::from_hours(1),
-        )
-        .ok();
-
-        on_cleanup(move || {
-            if let Some(i) = season_data_updater {
-                i.clear();
-            }
-        });
-
         let selected_season = RwSignal::new(None::<Arc<str>>);
+
+        update_seasondata_now_and_hourly(seasons);
 
         let season_scores = LocalResource::new(move || {
             let selected_season = selected_season.get();
@@ -144,6 +122,31 @@ pub fn Gleaderboard(
             </div>
         }.into_any()
     }
+}
+
+async fn load_seasons(seasons: RwSignal<SeasonList>) {
+    if let Ok(data) = datasource::load_json::<SeasonList>("/api/v3/lb/seasons").await {
+        seasons.set(data);
+    }
+}
+
+/// `spawn_local`s the `load_seasons` function immediately and then once every hour
+fn update_seasondata_now_and_hourly(seasons: RwSignal<SeasonList>) {
+    spawn_local(load_seasons(seasons));
+    // Update the seasons every hour
+    let season_data_updater = set_interval_with_handle(
+        move || {
+            spawn_local(load_seasons(seasons));
+        },
+        Duration::from_hours(1),
+    )
+    .ok();
+
+    on_cleanup(move || {
+        if let Some(i) = season_data_updater {
+            i.clear();
+        }
+    });
 }
 
 fn terr_count_score(state: Signal<BTreeMap<Arc<str>, TerrState>>) -> Vec<GuildLeaderboardEntry> {
