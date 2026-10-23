@@ -23,7 +23,7 @@ pub fn Gleaderboard(
 
         let load_seasons = move |seasons: RwSignal<SeasonList>| async move {
             if let Ok(data) = datasource::load_json::<SeasonList>("/api/v3/lb/seasons").await {
-                seasons.set(data)
+                seasons.set(data);
             }
         };
 

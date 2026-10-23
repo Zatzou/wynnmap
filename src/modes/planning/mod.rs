@@ -236,7 +236,7 @@ pub fn PlanningMap() -> impl IntoView {
             let sel = Signal::derive(move || sel.clone());
 
             Some(view! {
-                <SideCard on_close={move |_| selected.set(None)}>
+                <SideCard on_close={move || selected.set(None)}>
                     <TerrInfo
                         name={sel}
                         terrs={terrs}

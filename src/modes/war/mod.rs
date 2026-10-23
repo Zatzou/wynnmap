@@ -188,7 +188,7 @@ pub fn WarMap() -> impl IntoView {
         // selected terr info
         {move || selected.get().map(|sel| {
             Some(view! {
-                <SideCard on_close=move |_| selected.set(None)>
+                <SideCard on_close=move || selected.set(None)>
                     <TerrStats name={sel.clone()} terrs state />
 
                     <TerrCalc name={sel} terrs state />

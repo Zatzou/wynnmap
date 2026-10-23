@@ -11,6 +11,7 @@ pub enum MapTileFilter {
 }
 
 impl MapTileFilter {
+    #[allow(clippy::trivially_copy_pass_by_ref)]
     pub fn get_filter(&self) -> Option<&'static str> {
         match self {
             MapTileFilter::Normal => None,

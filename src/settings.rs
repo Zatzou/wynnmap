@@ -44,6 +44,7 @@ impl Default for TerrSettings {
 
 #[derive(Serialize, Deserialize)]
 #[serde(default)]
+#[allow(clippy::struct_field_names)]
 pub struct MapSettings {
     pub show_terrs: RwSignal<bool>,
     pub show_conns: RwSignal<bool>,
@@ -85,7 +86,7 @@ impl Default for GatherSettings {
     fn default() -> Self {
         Self {
             tile_filter: RwSignal::new(MapTileFilter::GrayScaleLowcontrast),
-            show_res: Default::default(),
+            show_res: RwSignal::default(),
         }
     }
 }

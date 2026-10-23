@@ -10,7 +10,9 @@ pub fn DropSearch(
     let results = Memo::new(move |_| {
         let search = search_str.get().to_ascii_lowercase();
 
-        if !search.is_empty() {
+        if search.is_empty() {
+            Vec::new()
+        } else {
             itemdrops
                 .read()
                 .iter()
@@ -18,8 +20,6 @@ pub fn DropSearch(
                 .filter(|item| item.name.to_ascii_lowercase().contains(&search))
                 .cloned()
                 .collect::<Vec<_>>()
-        } else {
-            Vec::new()
         }
     });
 

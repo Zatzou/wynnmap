@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_lines)]
 use components::sidebar::ShowSidebar;
 use dialog::{DialogRenderer, provide_dialogs};
 use leptos::prelude::*;

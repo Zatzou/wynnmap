@@ -104,7 +104,7 @@ pub fn DropsMap() -> impl IntoView {
         </Sidebar>
 
         <Show when=move || !selected_spots.read().is_empty()>
-            <SideCard on_close=move |_| selected_spots.set(BTreeMap::new())>
+            <SideCard on_close=move || selected_spots.set(BTreeMap::new())>
                 <For
                     each=move || selected_spots.get()
                     key=move |spot| spot.clone()
