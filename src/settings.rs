@@ -14,6 +14,7 @@ pub struct Settings {
 
     pub copy_coordfmt: RwSignal<CoordFmt>,
 
+    pub war: WarSettings,
     pub gather: GatherSettings,
     pub drops: DropsSettings,
 }
@@ -70,6 +71,22 @@ impl Default for SidebarSettings {
     fn default() -> Self {
         Self {
             show_gleaderboard: RwSignal::new(true),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(default)]
+pub struct WarSettings {
+    pub tile_filter: RwSignal<MapTileFilter>,
+    pub show_restick_timer: RwSignal<bool>,
+}
+
+impl Default for WarSettings {
+    fn default() -> Self {
+        Self {
+            tile_filter: RwSignal::new(MapTileFilter::Normal),
+            show_restick_timer: RwSignal::new(true),
         }
     }
 }

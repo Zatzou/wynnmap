@@ -77,13 +77,18 @@ fn GeneralSettings() -> impl IntoView {
     let copy_coordfmt = settings.copy_coordfmt;
 
     view! {
-        <div class="flex-1 flex flex-col p-2 gap-2 text-lg">
+        <div class="flex-1 flex flex-col p-2 gap-2">
             <Checkbox id="nonmains" checked={show_non_main}>"Show non-main map areas"</Checkbox>
+            <Checkbox id="resticktimer" checked={settings.war.show_restick_timer}>"Show resource tick timer"</Checkbox>
             <div>
                 <span class="mr-2">"Prefered copy coordinate format"</span>
                 <CoordFmtSelector fmt=copy_coordfmt/>
             </div>
 
+            <div>
+                <span class="mr-2">"War mode map display"</span>
+                <MapTileFilterSelector filt=settings.war.tile_filter/>
+            </div>
             <div>
                 <span class="mr-2">"Gather mode map display"</span>
                 <MapTileFilterSelector filt=settings.gather.tile_filter/>

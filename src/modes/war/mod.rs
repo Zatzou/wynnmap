@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
-use jiff::SignedDuration;
+use jiff::{SignedDuration, Timestamp};
 use leptos::{prelude::*, task::spawn_local};
 use wynnmap_types::terr::{TerrTimestamps, Territory};
 
@@ -34,6 +34,8 @@ pub fn WarMap() -> impl IntoView {
     let show_res = settings.terrs.show_resicons;
     let show_timers = settings.terrs.show_timers;
     let show_guild_leaderboard = settings.sidebar.show_gleaderboard;
+    let tile_filter = settings.war.tile_filter;
+    let show_restick_timer = settings.war.show_restick_timer;
 
     let terrs = RwSignal::new(BTreeMap::new());
     let state = RwSignal::new(BTreeMap::new());
@@ -117,7 +119,7 @@ pub fn WarMap() -> impl IntoView {
 
     view! {
         <WynnMap onclick onctxmenu>
-            <WithDefaultMapTiles />
+            <WithDefaultMapTiles filter=tile_filter/>
 
             // conns
             <Show when={move || show_conns.get() && !state.read().is_empty()}>
@@ -129,6 +131,9 @@ pub fn WarMap() -> impl IntoView {
                 <TerrView terrs state hovered />
             </Show>
         </WynnMap>
+
+        // restick timer
+        {move || show_restick_timer.get().then(|| last_updated.read().wynntick.map(restick_timer))}
 
         // hover box
         {move || if let Some(hovered) = hovered.get() {
@@ -195,5 +200,20 @@ pub fn WarMap() -> impl IntoView {
                 </SideCard>
             })
         })}
+    }
+}
+
+fn restick_timer(wynntick: Timestamp) -> impl IntoView {
+    let SecondTimer(now) = expect_context();
+
+    let since = Memo::new(move |_| now.read().duration_since(wynntick));
+
+    view! {
+        <div class="fixed left-1/2 top-0 -translate-x-1/2 bg-neutral-900/75 p-1 rounded-b-sm select-none">
+            <span>
+                "Time since last resource tick: "
+                {move || fmt_time_short(since.get())}
+            </span>
+        </div>
     }
 }
