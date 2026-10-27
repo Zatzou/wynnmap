@@ -7,7 +7,6 @@ use axum::{
     response::{IntoResponse, Sse, sse::Event},
     routing::get,
 };
-use jiff::Timestamp;
 use reqwest::StatusCode;
 use tokio_stream::wrappers::BroadcastStream;
 use wynnmap_types::terr::MapState;
@@ -42,10 +41,6 @@ async fn terr_list(
             header::CACHE_CONTROL,
             String::from("public, must-revalidate"),
         ),
-        (
-            header::AGE,
-            (10 - Timestamp::now().duration_until(expires).as_secs()).to_string(),
-        ),
         (header::EXPIRES, header_date(expires)),
         (header::LAST_MODIFIED, header_date(modified)),
         (header::ETAG, format!("\"{etag}\"")),
@@ -70,12 +65,8 @@ async fn map_state(State(state): State<Arc<TerritoryState>>) -> impl IntoRespons
             header::CACHE_CONTROL,
             String::from("public, must-revalidate"),
         ),
-        (
-            header::AGE,
-            (10 - Timestamp::now().duration_until(expires).as_secs()).to_string(),
-        ),
         (header::EXPIRES, header_date(expires)),
-        (header::LAST_MODIFIED, header_date(timestamps.changed)),
+        (header::LAST_MODIFIED, header_date(timestamps.updated)),
     ];
 
     (
