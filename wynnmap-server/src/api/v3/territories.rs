@@ -40,7 +40,7 @@ async fn terr_list(
     let resp_headers = [
         (
             header::CACHE_CONTROL,
-            String::from("public, max-age=10, must-revalidate"),
+            String::from("public, must-revalidate"),
         ),
         (
             header::AGE,
@@ -68,7 +68,7 @@ async fn map_state(State(state): State<Arc<TerritoryState>>) -> impl IntoRespons
     let resp_headers = [
         (
             header::CACHE_CONTROL,
-            String::from("public, max-age=10, must-revalidate"),
+            String::from("public, must-revalidate"),
         ),
         (
             header::AGE,
