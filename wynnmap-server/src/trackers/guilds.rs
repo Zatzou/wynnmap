@@ -8,6 +8,7 @@ use wynnmap_types::guild::Guild;
 
 use crate::{
     config::Config,
+    readywatch::ReadyState,
     state::GuildState,
     trackers::util::{self, ResponseExt},
 };
@@ -15,7 +16,7 @@ use crate::{
 pub struct GuildTracker {
     client: reqwest::Client,
 
-    done: watch::Sender<bool>,
+    ready: watch::Sender<ReadyState>,
 
     state: Arc<GuildState>,
 }
@@ -24,16 +25,16 @@ impl GuildTracker {
     pub fn with_config(config: &Config) -> Self {
         let client = util::reqwest_client_from_conf(config);
 
-        let (done_tx, done_rx) = watch::channel(false);
+        let (ready_tx, ready_rx) = watch::channel(ReadyState::Loading);
 
         Self {
             client,
 
-            done: done_tx,
+            ready: ready_tx,
 
             state: GuildState {
                 guilds: Default::default(),
-                done: done_rx,
+                ready: ready_rx,
             }
             .into(),
         }
@@ -50,7 +51,7 @@ impl GuildTracker {
 
                 let waittime = match res {
                     Ok(_) => {
-                        tracker.done.send_replace(true);
+                        tracker.ready.send_replace(ReadyState::Ready);
                         Duration::from_hours(1)
                     }
                     Err(e) => {

@@ -12,9 +12,13 @@ use wynnmap_types::{
     terr::{TerrState, TerrTimestamps, Territory},
 };
 
-#[derive(Clone, Default)]
+use crate::readywatch::ReadyState;
+
+#[derive(Clone)]
 pub struct ImageState {
     pub use_webp: bool,
+
+    pub ready: watch::Receiver<ReadyState>,
 
     pub maps: Arc<RwLock<Vec<MapTile>>>,
     pub maps_etag: Arc<RwLock<Arc<str>>>,
@@ -25,7 +29,7 @@ pub struct ImageState {
 pub struct GuildState {
     pub guilds: Arc<RwLock<GuildList>>,
     /// Notifier channel for waiting for the initial guild update to finish
-    pub done: watch::Receiver<bool>,
+    pub ready: watch::Receiver<ReadyState>,
 }
 
 pub type GuildList = BTreeMap<Arc<str>, Guild>;
@@ -33,6 +37,8 @@ pub type GuildList = BTreeMap<Arc<str>, Guild>;
 #[derive(Debug)]
 pub struct TerritoryState {
     pub inner: Arc<RwLock<TerritoryStateInner>>,
+
+    pub ready: watch::Receiver<ReadyState>,
 
     pub bc_events: Arc<broadcast::Sender<Event>>,
 }
@@ -48,22 +54,28 @@ pub struct TerritoryStateInner {
     pub timestamps: TerrTimestamps,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct LeaderboardState {
     /// List of seasons and the etag for the list
     pub season_list: RwLock<(Arc<SeasonList>, Arc<str>)>,
     /// The leaderboards and each leaderboards etag
     pub season_lb: RwLock<BTreeMap<Arc<str>, (Arc<SeasonLeaderboard>, Arc<str>)>>,
+
+    pub ready: watch::Receiver<ReadyState>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct GatherState {
     pub nodes: RwLock<Arc<GatherSpots>>,
     pub etag: RwLock<Arc<str>>,
+
+    pub ready: watch::Receiver<ReadyState>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct DropsState {
     pub drops: RwLock<Arc<ItemDrops>>,
     pub etag: RwLock<Arc<str>>,
+
+    pub ready: watch::Receiver<ReadyState>,
 }

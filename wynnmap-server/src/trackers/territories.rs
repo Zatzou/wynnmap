@@ -9,7 +9,7 @@ use axum::response::sse::Event;
 use jiff::Timestamp;
 use opentelemetry::{global, metrics::Histogram};
 use serde::Deserialize;
-use tokio::sync::{RwLock, broadcast};
+use tokio::sync::{broadcast, watch};
 use tracing::{Instrument, error, info_span};
 use uuid::Uuid;
 use wynnmap_types::{
@@ -24,13 +24,16 @@ use crate::{
     AnyError,
     config::Config,
     etag::sha224_etag_json,
+    readywatch::ReadyState,
     state::{GuildState, TerritoryState},
     trackers::util::{self, ResponseExt},
 };
 
 pub struct TerritoryTracker {
     client: reqwest::Client,
-    guilds: Arc<RwLock<BTreeMap<Arc<str>, Guild>>>,
+    guilds_state: Arc<GuildState>,
+
+    ready: watch::Sender<ReadyState>,
 
     terrs_updated: Histogram<f64>,
 
@@ -42,8 +45,10 @@ pub struct TerritoryTracker {
 }
 
 impl TerritoryTracker {
-    pub fn with_config(config: &Config, guild_state: &GuildState) -> Self {
+    pub fn with_config(config: &Config, guild_state: &Arc<GuildState>) -> Self {
         let client = util::reqwest_client_from_conf(config);
+
+        let (ready_tx, ready_rx) = watch::channel(ReadyState::Waiting);
 
         let (bc_events, _) = broadcast::channel(100);
         let bc_events = Arc::new(bc_events);
@@ -62,7 +67,9 @@ impl TerritoryTracker {
 
         Self {
             client,
-            guilds: guild_state.guilds.clone(),
+            guilds_state: guild_state.clone(),
+
+            ready: ready_tx,
 
             terrs_updated: meter
                 .f64_histogram("wynnmap.terrs.updated")
@@ -90,6 +97,8 @@ impl TerritoryTracker {
             state: Arc::new(TerritoryState {
                 inner: Default::default(),
 
+                ready: ready_rx,
+
                 bc_events,
             }),
         }
@@ -102,11 +111,21 @@ impl TerritoryTracker {
         tokio::spawn(async move {
             let tracker = self;
 
+            // wait for guilds to finish so we have colors on the first full request
+            let _ = tracker
+                .guilds_state
+                .ready
+                .clone()
+                .wait_for(ReadyState::ready)
+                .await;
+            tracker.ready.send_replace(ReadyState::Loading);
+
             loop {
                 let res = tracker.query_territories().await;
 
                 let waittime = match res {
                     Ok(expires) => {
+                        tracker.ready.send_replace(ReadyState::Ready);
                         if let Some(exp) = expires {
                             let now = Timestamp::now();
 
@@ -171,7 +190,7 @@ impl TerritoryTracker {
 
         // create owner data
         let state = {
-            let guildlock = self.guilds.read().await;
+            let guildlock = self.guilds_state.guilds.read().await;
 
             data.clone()
                 .into_iter()

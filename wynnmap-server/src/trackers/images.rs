@@ -6,6 +6,7 @@ use reqwest::{StatusCode, header};
 use serde::Deserialize;
 use tokio::{
     join,
+    sync::watch,
     task::{JoinSet, spawn_blocking},
 };
 use tracing::{error, info};
@@ -16,6 +17,7 @@ use crate::{
     AnyError,
     config::Config,
     etag::{sha224_etag, sha224_etag_json},
+    readywatch::ReadyState,
     state::ImageState,
     trackers::util::{self, ResponseExt},
 };
@@ -23,6 +25,8 @@ use crate::{
 pub struct ImageTracker {
     client: Arc<reqwest::Client>,
     base_url: Arc<str>,
+
+    ready: watch::Sender<ReadyState>,
 
     list_etag: HeaderValue,
     etag_cache: HashMap<Arc<str>, Arc<str>>,
@@ -34,14 +38,23 @@ impl ImageTracker {
     pub fn with_config(config: &Config) -> Self {
         let client = Arc::new(util::reqwest_client_from_conf(config));
 
+        let (ready_tx, ready_rx) = watch::channel(ReadyState::Loading);
+
         Self {
             state: Arc::new(ImageState {
                 use_webp: config.images.use_webp,
-                ..Default::default()
+
+                ready: ready_rx,
+
+                maps: Default::default(),
+                maps_etag: Default::default(),
+                map_cache: Default::default(),
             }),
 
             client,
             base_url: config.server.base_url.clone(),
+
+            ready: ready_tx,
 
             list_etag: HeaderValue::from_static(""),
             etag_cache: Default::default(),
@@ -58,7 +71,10 @@ impl ImageTracker {
                 let res = tracker.query_images().await;
 
                 let waittime = match res {
-                    Ok(_) => Duration::from_hours(1),
+                    Ok(_) => {
+                        tracker.ready.send_replace(ReadyState::Ready);
+                        Duration::from_hours(1)
+                    }
                     Err(e) => {
                         error!(error = ?e, "Error occured while querying images");
                         Duration::from_mins(10)

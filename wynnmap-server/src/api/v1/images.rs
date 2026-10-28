@@ -9,12 +9,13 @@ use axum::{
     routing::get,
 };
 
-use crate::{ImageState, etag::check_etag};
+use crate::{ImageState, etag::check_etag, readywatch::ReadyLayer};
 
 pub fn router(state: Arc<ImageState>) -> axum::Router {
     axum::Router::new()
         .route("/maps.json", get(maps_json))
         .route("/{name}", get(get_image))
+        .layer(ReadyLayer::new(state.ready.clone()))
         .with_state(state)
 }
 

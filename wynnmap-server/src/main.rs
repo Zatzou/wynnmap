@@ -24,6 +24,7 @@ mod config;
 mod etag;
 mod file_cache;
 mod otel;
+mod readywatch;
 mod state;
 mod trackers;
 pub(crate) mod util;

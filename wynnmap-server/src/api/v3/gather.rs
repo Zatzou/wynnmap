@@ -10,11 +10,12 @@ use axum::{
 };
 use reqwest::StatusCode;
 
-use crate::{etag::check_etag, state::GatherState};
+use crate::{etag::check_etag, readywatch::ReadyLayer, state::GatherState};
 
 pub fn router(state: Arc<GatherState>) -> axum::Router {
     axum::Router::new()
         .route("/nodes", get(node_list))
+        .layer(ReadyLayer::new(state.ready.clone()))
         .with_state(state)
 }
 

@@ -5,18 +5,22 @@ use std::{
 };
 
 use serde::Deserialize;
+use tokio::sync::watch;
 use tracing::{Instrument, error, info_span};
 use wynnmap_types::drops::{DropArea, Item, ItemDrops};
 
 use crate::{
     config::Config,
     etag::sha224_etag_json,
+    readywatch::ReadyState,
     state::DropsState,
     trackers::util::{self, ResponseExt},
 };
 
 pub struct DropsTracker {
     client: reqwest::Client,
+
+    ready: watch::Sender<ReadyState>,
 
     state: Arc<DropsState>,
 }
@@ -25,9 +29,17 @@ impl DropsTracker {
     pub fn with_config(config: &Config) -> Self {
         let client = util::reqwest_client_from_conf(config);
 
+        let (ready_tx, ready_rx) = watch::channel(ReadyState::Loading);
+
         Self {
             client,
-            state: Default::default(),
+            ready: ready_tx,
+            state: Arc::new(DropsState {
+                drops: Default::default(),
+                etag: Default::default(),
+
+                ready: ready_rx,
+            }),
         }
     }
 
@@ -41,7 +53,10 @@ impl DropsTracker {
                 let res = tracker.query_items().await;
 
                 let waittime = match res {
-                    Ok(_) => Duration::from_hours(1),
+                    Ok(_) => {
+                        tracker.ready.send_replace(ReadyState::Ready);
+                        Duration::from_hours(1)
+                    }
                     Err(e) => {
                         error!(error = ?e, "Error occured while querying drops");
                         Duration::from_mins(10)

@@ -9,12 +9,13 @@ use axum::{
 };
 use reqwest::{StatusCode, header};
 
-use crate::{etag::check_etag, state::LeaderboardState};
+use crate::{etag::check_etag, readywatch::ReadyLayer, state::LeaderboardState};
 
 pub fn router(state: Arc<LeaderboardState>) -> axum::Router {
     axum::Router::new()
         .route("/seasons", get(season_list))
         .route("/season/{name}", get(season_lb))
+        .layer(ReadyLayer::new(state.ready.clone()))
         .with_state(state)
 }
 

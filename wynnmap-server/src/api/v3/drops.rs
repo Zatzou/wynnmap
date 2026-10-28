@@ -10,11 +10,12 @@ use axum::{
 };
 use reqwest::StatusCode;
 
-use crate::{etag::check_etag, state::DropsState};
+use crate::{etag::check_etag, readywatch::ReadyLayer, state::DropsState};
 
 pub fn router(state: Arc<DropsState>) -> axum::Router {
     axum::Router::new()
         .route("/drops", get(drops_list))
+        .layer(ReadyLayer::new(state.ready.clone()))
         .with_state(state)
 }
 

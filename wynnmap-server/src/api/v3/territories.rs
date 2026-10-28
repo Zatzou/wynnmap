@@ -11,13 +11,14 @@ use reqwest::StatusCode;
 use tokio_stream::wrappers::BroadcastStream;
 use wynnmap_types::terr::MapState;
 
-use crate::{etag::check_etag, state::TerritoryState, util::header_date};
+use crate::{etag::check_etag, readywatch::ReadyLayer, state::TerritoryState, util::header_date};
 
 pub fn router(state: Arc<TerritoryState>) -> axum::Router {
     axum::Router::new()
         .route("/list", get(terr_list))
         .route("/state", get(map_state))
         .route("/state/sse", get(sse_handler))
+        .layer(ReadyLayer::new(state.ready.clone()))
         .with_state(state)
 }
 

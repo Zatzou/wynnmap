@@ -2,10 +2,7 @@ use std::{collections::BTreeMap, sync::Arc, time::Duration};
 
 use jiff::Timestamp;
 use serde::Deserialize;
-use tokio::{
-    join,
-    sync::{RwLock, watch},
-};
+use tokio::{join, sync::watch};
 use tracing::{Instrument, error, info, info_span, warn};
 use uuid::Uuid;
 use wynnmap_types::{
@@ -16,39 +13,53 @@ use wynnmap_types::{
 use crate::{
     config::Config,
     etag::sha224_etag_json,
+    readywatch::ReadyState,
     state::{GuildList, GuildState, LeaderboardState},
     trackers::util::{self, ResponseExt},
 };
 
 pub struct LeaderboardTracker {
     client: reqwest::Client,
+    guilds_state: Arc<GuildState>,
 
-    guilds: Arc<RwLock<GuildList>>,
-    guilds_done: watch::Receiver<bool>,
+    ready: watch::Sender<ReadyState>,
 
     state: Arc<LeaderboardState>,
 }
 
 impl LeaderboardTracker {
-    pub fn with_config(config: &Config, guild_state: &GuildState) -> Self {
+    pub fn with_config(config: &Config, guild_state: &Arc<GuildState>) -> Self {
         let client = util::reqwest_client_from_conf(config);
+
+        let (ready_tx, ready_rx) = watch::channel(ReadyState::Waiting);
 
         Self {
             client,
+            guilds_state: guild_state.clone(),
 
-            guilds: guild_state.guilds.clone(),
-            guilds_done: guild_state.done.clone(),
+            ready: ready_tx,
 
-            state: Default::default(),
+            state: Arc::new(LeaderboardState {
+                season_list: Default::default(),
+                season_lb: Default::default(),
+
+                ready: ready_rx,
+            }),
         }
     }
 
-    pub fn run(mut self) -> Arc<LeaderboardState> {
+    pub fn run(self) -> Arc<LeaderboardState> {
         let state2 = self.state.clone();
 
         tokio::spawn(async move {
             // wait for guilds to finish so we get accurate colors
-            let _ = self.guilds_done.wait_for(|done| *done).await;
+            let _ = self
+                .guilds_state
+                .ready
+                .clone()
+                .wait_for(ReadyState::ready)
+                .await;
+            self.ready.send_replace(ReadyState::Loading);
 
             let tracker = self;
 
@@ -57,6 +68,7 @@ impl LeaderboardTracker {
 
                 let waittime = match res {
                     Ok(_) => {
+                        tracker.ready.send_replace(ReadyState::Ready);
                         info!("Completed leaderboard update");
                         Duration::from_hours(1)
                     }
@@ -113,7 +125,7 @@ impl LeaderboardTracker {
         let season_lb = async {
             let mut leaderboards = BTreeMap::new();
 
-            let guilds = self.guilds.read().await;
+            let guilds = self.guilds_state.guilds.read().await;
 
             // during first fetch get all leaderboards otherwise only get ones which have either not ended or have ended in the last 10h
             for season in seasons.iter().filter(|s| {
