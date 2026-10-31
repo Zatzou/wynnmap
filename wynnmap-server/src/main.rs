@@ -55,7 +55,11 @@ async fn main() {
         .allow_origin(cors::Any)
         .allow_methods([Method::GET]);
 
-    let index_svc = ServeFile::new(PathBuf::from(config.server.fe_dir.as_ref()).join("index.html"));
+    let index_svc = ServiceBuilder::new()
+        .layer(middleware::from_fn(file_cache::file_cache_control))
+        .service(ServeFile::new(
+            PathBuf::from(config.server.fe_dir.as_ref()).join("index.html"),
+        ));
 
     let app = Router::new()
         .nest_service(
